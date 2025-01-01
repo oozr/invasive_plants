@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+.search-container {
+    max-width: 600px;
+    margin: 40px auto;
+}
+
+.results-container {
+    margin-top: 40px;
+}
+
+.select2-container {
+    width: 100% !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="search-container">
+        <h2>Search Regulated Weeds</h2>
+        <p class="lead mb-4">Enter a weed name to find where it's regulated</p>
+        
+        <select id="weedSearch" class="form-control">
+            <option></option>
+        </select>
+    </div>
+
+    <div id="results" class="results-container d-none">
+        <h3 id="weedTitle"></h3>
+        <p id="weedCategory" class="text-muted mb-4"></p>
+        
+        <h4>Regulated in:</h4>
+        <div id="statesList" class="list-group">
+            <!-- States will be inserted here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ url_for('static', filename='js/species_search.js') }}"></script>
+{% endblock %}

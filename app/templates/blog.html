@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="mb-3">Blog</h1>
+            <p class="lead mb-4">
+                Latest updates and research about regulated weeds
+            </p>
+
+            <!-- Categories/Tags Filter -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="/blog" class="btn btn-sm {% if not current_tag %}btn-primary{% else %}btn-outline-primary{% endif %} me-2">
+                            All Posts
+                        </a>
+                        {% for tag, count in all_tags.items() %}
+                            <a href="/blog?tag={{ tag }}" 
+                               class="btn btn-sm {% if tag == current_tag %}btn-primary{% else %}btn-outline-primary{% endif %} me-2">
+                                {{ tag }} ({{ count }})
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blog Posts List -->
+            {% for post in blog_posts %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h2 class="h3">{{ post.title }}</h2>
+                        <p class="text-muted small">
+                            <strong>Published:</strong> {{ post.date }} 
+                            <span class="mx-2">|</span> 
+                            <strong>Author:</strong> {{ post.author }}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ post.excerpt }}
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% for tag in post.tags %}
+                                <a href="/blog?tag={{ tag }}" 
+                                   class="badge bg-light text-dark text-decoration-none me-1">
+                                    {{ tag }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                        
+                        <a href="{{ url_for('blog.post', slug=post.slug) }}" 
+                           class="btn btn-primary btn-sm">
+                            Read more
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if not blog_posts %}
+                <div class="text-center mt-4">
+                    <p class="text-muted">No posts found for this category.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

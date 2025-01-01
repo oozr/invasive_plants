@@ -1,0 +1,29 @@
+# app/config.py
+from dotenv import load_dotenv
+import os
+
+load_dotenv(override=False)
+
+class Config:
+   # Secret key for sessions/cookies
+   SECRET_KEY = os.getenv('SECRET_KEY', 'a3ed33e1cb2bee0b25c62741bbc3d671')
+   
+   # Site configuration
+   SITE_NAME = "Regulated Weeds Database"
+   SITE_AUTHOR = "Regulated Weeds Database Team"
+   BASE_URL = os.getenv('BASE_URL', 'https://oozr.com')
+
+   # Development vs Production
+   DEBUG = os.getenv('FLASK_DEBUG', False)
+   
+   # Cache settings
+   SEND_FILE_MAX_AGE_DEFAULT = 0
+   CACHE_CONTROL = 'no-store, no-cache, must-revalidate'
+   PRAGMA = 'no-cache'
+   EXPIRES = '-1'
+   
+   # Directory paths
+   BLOG_DIR = "app/blog_posts"
+
+   # Blog settings
+   POSTS_PER_PAGE = 10

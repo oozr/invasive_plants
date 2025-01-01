@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Blog Post Header -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h1 class="h2">{{ post.title }}</h1>
+                    <div class="text-muted mb-3">
+                        <small>
+                            <strong>Published:</strong> {{ post.date }}
+                            <span class="mx-2">|</span>
+                            <strong>Author:</strong> {{ post.author }}
+                        </small>
+                    </div>
+                    
+                    {% if post.tags %}
+                    <div class="mb-3">
+                        {% for tag in post.tags %}
+                            <a href="{{ url_for('blog.index', tag=tag) }}" 
+                               class="badge bg-light text-dark text-decoration-none me-1">
+                                {{ tag }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Blog Post Content -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <article class="blog-content">
+                        {{ post.content|safe }}
+                        
+                        {% for image_url in post.image_urls %}
+                            <div class="text-center my-4">
+                                <img src="{{ image_url }}" alt="Image" class="img-fluid rounded">
+                            </div>
+                        {% endfor %}
+                    </article>
+
+                    <!-- Citation -->
+                    <div class="alert alert-light mt-4">
+                        <small class="text-muted">
+                            To cite this article: Regulated Weeds Database ({{ post.date }}). {{ post.title }}.
+                        </small>
+                    </div>
+
+                    <hr>
+
+                    <!-- Navigation -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('blog.index') }}" 
+                           class="btn btn-outline-primary">
+                            ← Back to Blog
+                        </a>
+                        
+                        <div>
+                            <a href="https://twitter.com/intent/tweet?text={{ post.title|urlencode }}&url={{ request.url|urlencode }}"
+                               class="btn btn-primary"
+                               target="_blank">
+                                Share on X
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SEO Metadata -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "{{ post.title }}",
+    "datePublished": "{{ post.date }}",
+    "author": {
+        "@type": "Person",
+        "name": "{{ post.author }}"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "Regulated Weeds Database"
+    },
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "{{ request.url }}"
+    },
+    "description": "{{ post.excerpt }}",
+    "keywords": "{{ post.tags|join(', ') if post.tags else '' }}"
+}
+</script>
+{% endblock %}
