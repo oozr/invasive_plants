@@ -1,27 +1,7 @@
 {% extends "base.html" %}
-
-{% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
-.search-container {
-    max-width: 600px;
-    margin: 40px auto;
-}
-
-.results-container {
-    margin-top: 40px;
-}
-
-.select2-container {
-    width: 100% !important;
-}
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container">
-    <div class="search-container">
-        <h2>Search Regulated Weeds</h2>
+<div class="main-container">
+    <h1 class="page-title">Search Regulated Weeds</h1>
         <p class="lead mb-4">Enter a weed name to find where it's regulated</p>
         
         <select id="weedSearch" class="form-control">
