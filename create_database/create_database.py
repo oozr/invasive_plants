@@ -1,4 +1,3 @@
-# create_database.py
 import sqlite3
 import csv
 import os
@@ -10,43 +9,44 @@ def create_database(csv_file: str = 'weeds.csv'):
     conn = sqlite3.connect('weeds.db')
     cursor = conn.cursor()
 
+    print("Dropping existing table if it exists...")
+    cursor.execute('DROP TABLE IF EXISTS weeds')
+
     print("Creating weeds table...")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS weeds (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usage_key INTEGER NOT NULL,
+            canonical_name TEXT NOT NULL,
             state TEXT NOT NULL,
-            weed_name TEXT NOT NULL,
-            category TEXT NOT NULL
+            common_name TEXT NOT NULL,
+            family_name TEXT NOT NULL
         )
     ''')
 
     print("Creating indices...")
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_usage_key ON weeds(usage_key)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_state ON weeds(state)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_weed_name ON weeds(weed_name)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_canonical_name ON weeds(canonical_name)')
 
     try:
         print(f"Reading CSV file: {csv_file}")
-        with open(csv_file, 'r', newline='') as file:
-            # Read CSV with specific field names to avoid empty columns
-            csv_reader = csv.DictReader(file, fieldnames=['State', 'WeedName', 'Category'])
+        # Changed encoding to 'latin-1' which is more permissive
+        with open(csv_file, 'r', newline='', encoding='latin-1') as file:
+            csv_reader = csv.DictReader(file)
             
-            # Skip the header row
-            next(csv_reader)
-            
-            # Clear existing data
-            cursor.execute('DELETE FROM weeds')
-            
-            # Insert rows
             count = 0
             for row in csv_reader:
                 if all(row.values()): # Check if all required fields have values
                     cursor.execute('''
-                        INSERT INTO weeds (state, weed_name, category)
-                        VALUES (?, ?, ?)
+                        INSERT INTO weeds (usage_key, canonical_name, state, common_name, family_name)
+                        VALUES (?, ?, ?, ?, ?)
                     ''', (
-                        row['State'].strip(),
-                        row['WeedName'].strip(),
-                        row['Category'].strip()
+                        int(row['usageKeyFedList']),
+                        row['canonicalName'].strip(),
+                        row['state'].strip(),
+                        row['commonName'].strip(),
+                        row['familyName'].strip()
                     ))
                     count += 1
                     
@@ -62,7 +62,7 @@ def create_database(csv_file: str = 'weeds.csv'):
         cursor.execute('SELECT COUNT(DISTINCT state) FROM weeds')
         total_states = cursor.fetchone()[0]
         
-        cursor.execute('SELECT COUNT(DISTINCT weed_name) FROM weeds')
+        cursor.execute('SELECT COUNT(DISTINCT canonical_name) FROM weeds')
         total_species = cursor.fetchone()[0]
         
         print("\nDatabase created successfully!")

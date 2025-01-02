@@ -27,8 +27,8 @@
             <table id="species-table" class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Weed Name</th>
-                        <th>Category</th>
+                        <th>Common Name</th>
+                        <th>Family</th>
                     </tr>
                 </thead>
             </table>
@@ -50,5 +50,4 @@
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="{{ url_for('static', filename='js/map.js') }}"></script>
-<script src="{{ url_for('static', filename='js/search.js') }}"></script>
 {% endblock %}

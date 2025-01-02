@@ -13,7 +13,7 @@ class WeedDatabase:
     def get_all_weeds(self) -> List[Dict]:
         conn = self.get_connection()
         try:
-            cursor = conn.execute('SELECT * FROM weeds ORDER BY state, weed_name')
+            cursor = conn.execute('SELECT * FROM weeds ORDER BY state, common_name')
             return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
@@ -22,9 +22,10 @@ class WeedDatabase:
         conn = self.get_connection()
         try:
             cursor = conn.execute('''
-                SELECT * FROM weeds 
+                SELECT common_name, family_name, usage_key 
+                FROM weeds 
                 WHERE state = ? 
-                ORDER BY weed_name
+                ORDER BY common_name
             ''', (state,))
             return [dict(row) for row in cursor.fetchall()]
         finally:
@@ -46,12 +47,14 @@ class WeedDatabase:
         conn = self.get_connection()
         try:
             cursor = conn.execute('''
-                SELECT DISTINCT weed_name, category 
+                SELECT DISTINCT common_name, canonical_name, family_name, usage_key 
                 FROM weeds 
-                WHERE weed_name LIKE ? OR category LIKE ?
-                GROUP BY weed_name, category
-                ORDER BY weed_name
-            ''', (f'%{query}%', f'%{query}%'))
+                WHERE common_name LIKE ? 
+                OR canonical_name LIKE ?
+                OR family_name LIKE ?
+                GROUP BY common_name, canonical_name, family_name, usage_key
+                ORDER BY common_name
+            ''', (f'%{query}%', f'%{query}%', f'%{query}%'))
             return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
@@ -62,9 +65,21 @@ class WeedDatabase:
             cursor = conn.execute('''
                 SELECT DISTINCT state 
                 FROM weeds 
-                WHERE weed_name = ?
+                WHERE common_name = ?
                 ORDER BY state
             ''', (weed_name,))
             return [row['state'] for row in cursor.fetchall()]
+        finally:
+            conn.close()
+
+    def get_weeds_by_usage_key(self, usage_key: int) -> List[Dict]:
+        conn = self.get_connection()
+        try:
+            cursor = conn.execute('''
+                SELECT * FROM weeds 
+                WHERE usage_key = ? 
+                ORDER BY state
+            ''', (usage_key,))
+            return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
