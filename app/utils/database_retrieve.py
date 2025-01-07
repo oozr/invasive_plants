@@ -46,15 +46,39 @@ class WeedDatabase:
     def search_weeds(self, query: str) -> List[Dict]:
         conn = self.get_connection()
         try:
+            # We'll use multiple search patterns for different priority levels
+            exact_match = query.lower()
+            starts_with = f"{query.lower()}%"
+            contains = f"%{query.lower()}%"
+            
             cursor = conn.execute('''
-                SELECT DISTINCT common_name, canonical_name, family_name, usage_key 
+                SELECT DISTINCT 
+                    common_name,
+                    canonical_name,
+                    family_name,
+                    usage_key,
+                    -- Create a priority score for each result
+                    CASE 
+                        -- Exact matches get highest priority (3)
+                        WHEN LOWER(common_name) = ? OR LOWER(canonical_name) = ? THEN 3
+                        -- Names that start with the query get medium priority (2)
+                        WHEN LOWER(common_name) LIKE ? OR LOWER(canonical_name) LIKE ? THEN 2
+                        -- Names that contain the query get lowest priority (1)
+                        ELSE 1
+                    END as search_priority
                 FROM weeds 
-                WHERE common_name LIKE ? 
-                OR canonical_name LIKE ?
-                OR family_name LIKE ?
+                WHERE LOWER(common_name) LIKE ? 
+                    OR LOWER(canonical_name) LIKE ?
                 GROUP BY common_name, canonical_name, family_name, usage_key
-                ORDER BY common_name
-            ''', (f'%{query}%', f'%{query}%', f'%{query}%'))
+                -- Order by priority first, then alphabetically by common name
+                ORDER BY search_priority DESC, common_name
+                LIMIT 10
+            ''', (
+                exact_match, exact_match,           # For exact matches
+                starts_with, starts_with,           # For starts-with matches
+                contains, contains                  # For contains matches
+            ))
+            
             return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
