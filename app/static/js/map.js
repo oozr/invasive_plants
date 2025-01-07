@@ -59,20 +59,28 @@ document.addEventListener('DOMContentLoaded', function() {
                                             data: weeds,
                                             columns: [
                                                 { 
-                                                    data: 'weed_name', 
-                                                    title: 'Weed Name',
-                                                    width: '50%'  // Set column width
+                                                    data: 'common_name',
+                                                    title: 'Common Name',
+                                                    width: '50%',
+                                                    // This render function creates a clickable link for each common name
+                                                    render: function(data, type, row) {
+                                                        if (type === 'display') {
+                                                            // Create an anchor tag with the GBIF link using the usage_key from the row data
+                                                            return `<a href="https://www.gbif.org/species/${row.usage_key}" target="_blank">${data}</a>`;
+                                                        }
+                                                        return data;
+                                                    }
                                                 },
                                                 { 
-                                                    data: 'category', 
-                                                    title: 'Category',
-                                                    width: '50%'  // Set column width
+                                                    data: 'family_name',
+                                                    title: 'Family',
+                                                    width: '50%'
                                                 }
                                             ],
                                             pageLength: 10,
                                             order: [[0, 'asc']],
-                                            autoWidth: false,  // Disable auto width calculation
-                                            width: '100%'      // Set table width
+                                            autoWidth: false,
+                                            width: '100%'
                                         });
                             
                                         document.getElementById('state-species').classList.remove('d-none');
