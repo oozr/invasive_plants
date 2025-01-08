@@ -1,4 +1,9 @@
-
+---
+title: Dresden Nexus Conference 2025
+date: 2024-01-01
+author: Publishing team
+tags: ["DNC", "conference", "dresden","UNU"]
+---
 # Dresden Nexus Conference 2025
 
 ![](https://unu.edu/sites/default/files/styles/16_9_large/public/2024-10/DNC%202025%20Visual%20ID.%20.webp?h=d2db33e5&itok=xAUaQtxq)
@@ -9,7 +14,7 @@ The **Dresden Nexus Conference (DNC) 2025** will take place from **3–5 June 20
 
 The Dresden Nexus Conference is a biennial event that focuses on the **Nexus Approach to resource management**, addressing the interconnected challenges of water, soil, waste, and energy management. This innovative approach fosters cross-disciplinary collaboration to achieve the **UN Sustainable Development Goals (SDGs)**, offering actionable solutions to promote resilient and sustainable societies.
 
-## **Theme for 2025: The Future of rResources and the Resources for the Future**
+## **Theme for 2025: The Future of Resources and the Resources for the Future**
 
 The theme for DNC 2025 [insert theme here, e.g., "Building Resilience Through Integrated Solutions"] underscores the importance of integrating social, economic, and environmental dimensions to address complex global challenges. From climate change adaptation to urban sustainability, the conference will explore strategies for achieving systemic transformation.
 

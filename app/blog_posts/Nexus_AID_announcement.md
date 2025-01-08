@@ -1,8 +1,8 @@
 ---
-title: Lorem Ipsum 1
+title: United Nations University’s Sustainability Nexus Analytics, Informatics, and Data (AID) Programme
 date: 2024-01-01
-author: Regulated Weeds
-tags: ["lorem", "ipsum", "dolor"]
+author: Publishing team
+tags: ["UNU", "weeds", "data","analytics","informatics"]
 ---
 ![](https://static.wixstatic.com/media/19946b_0e0add0c4e4d4408bb27693678638614~mv2.png/v1/crop/x_13,y_0,w_1019,h_500/fill/w_324,h_159,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/UNU_LOGO_BK.png)
 ### United Nations University’s Sustainability Nexus Analytics, Informatics, and Data (AID) Programme
