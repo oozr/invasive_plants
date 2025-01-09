@@ -266,7 +266,8 @@
 .sources-toggle {
    width: 100%;
    padding: 1rem;
-   border: 1px;
+   background-color: white;
+   border: 1px solid #dee2e6;  /* complete border definition */
    border-radius: 4px;
    cursor: pointer;
    display: flex;
