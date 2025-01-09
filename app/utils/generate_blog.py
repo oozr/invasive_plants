@@ -43,11 +43,35 @@ class BlogGenerator:
             # Generate excerpt if not provided
             excerpt = metadata.get('excerpt')
             if not excerpt:
-                content_without_headers = "\n".join(
-                    line for line in content.splitlines() 
-                    if not line.strip().startswith('#')
-                )
-                excerpt = " ".join(content_without_headers.split()[:50]) + "..."
+                # Filter out image markdown lines and headers
+                content_lines = [
+                    line.strip() 
+                    for line in content.splitlines() 
+                    if not (line.strip().startswith('#') or 
+                        line.strip().startswith('![') or
+                        line.strip().startswith('![]'))
+                ]
+                
+                # Join the filtered lines
+                filtered_content = " ".join(content_lines)
+                
+                # Remove markdown formatting
+                # Extract only the text from markdown links [text](url)
+                while '[' in filtered_content and '](' in filtered_content:
+                    start = filtered_content.find('[')
+                    middle = filtered_content.find('](')
+                    end = filtered_content.find(')', middle)
+                    if start != -1 and middle != -1 and end != -1:
+                        link_text = filtered_content[start + 1:middle]
+                        filtered_content = filtered_content[:start] + link_text + filtered_content[end + 1:]
+                    else:
+                        break
+                
+                # Remove asterisks
+                filtered_content = filtered_content.replace('*', '')
+                
+                # Get first 50 words
+                excerpt = " ".join(filtered_content.split()[:50]) + "..."
 
             # Convert Markdown to HTML
             html_content = markdown.markdown(

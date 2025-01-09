@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
             processResults: function(data) {
                 return {
                     results: data.map(weed => ({
-                        id: weed.common_name,  // We'll keep common_name as ID for compatibility
+                        id: weed.common_name,  // Keeping common_name as ID for compatibility
                         // Format the text to show both names
                         text: `${weed.common_name} (${weed.canonical_name})`,
                         common_name: weed.common_name,
@@ -40,7 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // The rest of your event handling code remains the same
     $('#weedSearch').on('select2:select', function(e) {
         const selectedWeed = e.params.data;
         
