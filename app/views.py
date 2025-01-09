@@ -1,5 +1,7 @@
 # views.py
-from flask import Blueprint, render_template, jsonify, request
+import csv
+import os
+from flask import Blueprint, render_template, jsonify, current_app, request
 from app import db
 from app.utils.generate_blog import BlogGenerator
 from app.config import Config
@@ -73,4 +75,20 @@ def post(slug):
 # About routes
 @about.route('/')
 def index():
-    return render_template('about.html')
+    states = []
+    csv_path = os.path.join(current_app.root_path, 'static', 'data', 'ref4eachstate.csv')
+
+    with open(csv_path, 'r') as file:
+        csv_reader = csv.DictReader(file)
+        for row in csv_reader:
+            state = {
+                'name': row['state'],
+                'authority': row['Issueing Authority'],
+                'updated': row['Last Updated YR']
+            }
+            states.append(state)
+    
+    # Sort states alphabetically by name
+    states.sort(key=lambda x: x['name'])
+    
+    return render_template('about.html', states=states)
