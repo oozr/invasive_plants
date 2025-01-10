@@ -163,6 +163,10 @@
 }
 
 /* Post Content */
+.blog-post--single {
+   border-bottom: none;
+}
+
 .blog-post-content {
    min-width: 0;
 }

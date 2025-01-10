@@ -4,7 +4,7 @@
 {% block content %}
 <div class="main-container">
     <!-- Blog Post Header -->
-    <article class="blog-post">
+    <article class="blog-post blog-post--single">
         <header class="post-header">
             <h1 class="page-title">{{ post.title }}</h1>
             <div class="post-meta">
@@ -42,31 +42,21 @@
             {% endfor %}
         </div>
 
-        <!-- Citation -->
-        <div class="post-citation mt-5">
-            <h5>Citation</h5>
-            <p class="text-muted">
-                To cite this article: Regulated Weeds Database ({{ post.date }}). {{ post.title }}.
-            </p>
-        </div>
-
         <hr class="my-4">
 
         <!-- Navigation -->
         <footer class="post-footer">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between w-100">
                 <a href="{{ url_for('blog.index') }}" 
-                   class="btn btn-outline-primary">
+                class="btn-read-more">
                     ← Back to Blog
                 </a>
                 
-                <div>
-                    <a href="https://twitter.com/intent/tweet?text={{ post.title|urlencode }}&url={{ request.url|urlencode }}"
-                       class="btn btn-primary"
-                       target="_blank">
-                        Share on X
-                    </a>
-                </div>
+                <a href="https://twitter.com/intent/tweet?text={{ post.title|urlencode }}&url={{ request.url|urlencode }}"
+                class="btn-read-more"
+                target="_blank">
+                    Share on X
+                </a>
             </div>
         </footer>
     </article>
