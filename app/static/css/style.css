@@ -22,29 +22,13 @@
     min-height: 100vh;
  }
  
- /* Global Container Styles */
- .navbar > .container,
- .content,
- .footer > .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 48px;
-    width: 100%;
- }
- 
- /* Content Area */
- .content {
-    flex: 1 0 auto;
-    display: flex;
-    flex-direction: column;
- }
- 
- /* Main Container */
- .main-container {
-    width: 100%;
-    flex: 1 0 auto;
- }
- 
+/* Content Area */
+.content {
+   flex: 1 0 auto;
+   display: flex;
+   flex-direction: column;
+}
+
  /* Navbar */
  .navbar {
     background-color: #212529;
