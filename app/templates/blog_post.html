@@ -23,6 +23,12 @@
                 {% endfor %}
             </div>
             {% endif %}
+            <!-- Add feature image if exists -->
+            {% if post.image %}
+            <div class="post-feature-image">
+                <img src="{{ post.image }}" alt="{{ post.title }}" class="img-fluid rounded">
+            </div>
+            {% endif %}
         </header>
 
         <!-- Blog Post Content -->

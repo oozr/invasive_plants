@@ -41,7 +41,7 @@
             
         <div class="sources-container">
             <button class="sources-toggle" id="sourcesToggle" aria-expanded="false">
-                <span>View State Sources</span>
+                <span>View Sources</span>
                 <svg class="chevron-icon" viewBox="0 0 24 24" width="24" height="24">
                     <path d="M6 9l6 6 6-6"></path>
                 </svg>
@@ -52,8 +52,10 @@
                     {% for state in states %}
                     <div class="state-item">
                         <span class="state-name">{{ state.name }}</span>
-                        <span class="authority">{{ state.authority }}</span>
-                        <span class="year">({{ state.updated }})</span>
+                        <div class="details">
+                            <span class="authority">{{ state.authority }}</span>
+                            <span class="year">last updated {{ state.updated }}</span>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
