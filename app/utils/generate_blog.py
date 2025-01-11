@@ -27,6 +27,11 @@ class BlogGenerator:
     def get_posts_by_tag(self, tag):
         """Filter posts by tag"""
         return [post for post in self.blog_posts if tag in post.get('tags', [])]
+    
+    def get_post_image_path(self, image_filename):
+        """Generate the correct path for blog post images"""
+        path = f'/static/blog_images/{image_filename}'
+        return path
 
     def generate_blog_posts(self):
         """Generate list of blog posts from markdown files"""
@@ -39,6 +44,20 @@ class BlogGenerator:
             
             metadata = post.metadata
             content = post.content
+
+            # Create slug from filename first (for file paths)
+            file_slug = os.path.splitext(filename)[0]
+            
+            # Handle feature image using file_slug for directory
+            image = metadata.get('image')
+            if image:
+                if not image.startswith('/'):
+                    image = self.get_post_image_path(image)
+
+            # Create URL-friendly slug from title for URLs
+            url_slug = metadata.get('title', 'Untitled').lower()
+            url_slug = ''.join(c if c.isalnum() or c.isspace() else '' for c in url_slug)
+            url_slug = '-'.join(url_slug.split())
 
             # Generate excerpt if not provided
             excerpt = metadata.get('excerpt')
@@ -79,11 +98,6 @@ class BlogGenerator:
                 extensions=['extra', 'toc', 'meta']
             )
 
-            # Create URL-friendly slug from title
-            slug = metadata.get('title', 'Untitled').lower()
-            slug = ''.join(c if c.isalnum() or c.isspace() else '' for c in slug)
-            slug = '-'.join(slug.split())
-
             blog_posts.append({
                 "title": metadata.get('title', 'Untitled'),
                 "date": metadata.get('date', datetime.now().strftime('%Y-%m-%d')),
@@ -91,7 +105,8 @@ class BlogGenerator:
                 "tags": metadata.get('tags', []),
                 "excerpt": excerpt,
                 "content": html_content,
-                "slug": slug
+                "slug": url_slug,
+                "image": image
             })
 
         return sorted(blog_posts, key=lambda x: x['date'], reverse=True)

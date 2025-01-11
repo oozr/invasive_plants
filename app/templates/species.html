@@ -1,36 +1,34 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="main-container">
-    <h1 class="page-title">Search Regulated Weeds</h1>
-    <p class="lead">
-        Enter a weed name to find where it's regulated
-    </p>
-    
-    <div class="row">
-        <div class="col-12">
-            <div class="search-box">
-                <select id="weedSearch" class="form-control">
-                    <option></option>
-                </select>
-            </div>
+<h1 class="page-title">Search Regulated Weeds</h1>
+<p class="lead">
+    Enter a weed name to find where it's regulated
+</p>
+
+<div class="row">
+    <div class="col-12">
+        <div class="search-box">
+            <select id="weedSearch" class="form-control">
+                <option></option>
+            </select>
         </div>
     </div>
+</div>
 
-    <div class="row mt-4">
-        <div class="col-12">
-            <div id="results" class="results-container d-none">
-                <h3 id="weedTitle"></h3>
-                <div class="scientific-details">
-                    <p><strong>Scientific Name: </strong><span id="weedCanonicalName"></span></p>
-                    <p><strong>Family Name: </strong><span id="weedFamily"></span></p>
-                    <p><strong>More Information: </strong><a id="gbifLink" href="#" target="_blank">View on GBIF</a></p>
-                </div>
-                
-                <h4>Regulated in:</h4>
-                <div id="statesList" class="list-group">
-                    <!-- States will be inserted here -->
-                </div>
+<div class="row mt-4">
+    <div class="col-12">
+        <div id="results" class="results-container d-none">
+            <h3 id="weedTitle"></h3>
+            <div class="scientific-details">
+                <p><strong>Scientific Name: </strong><span id="weedCanonicalName"></span></p>
+                <p><strong>Family Name: </strong><span id="weedFamily"></span></p>
+                <p><strong>More Information: </strong><a id="gbifLink" href="#" target="_blank">View on GBIF</a></p>
+            </div>
+            
+            <h4>Regulated in:</h4>
+            <div id="statesList" class="list-group">
+                <!-- States will be inserted here -->
             </div>
         </div>
     </div>
