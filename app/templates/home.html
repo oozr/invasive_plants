@@ -2,25 +2,23 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}" />
 {% endblock %}
 
 {% block content %}
 <h1 class="page-title">Regulated Weeds Database</h1>
-    <p class="lead">
-        Explore the official list of regulated weed species across N. America
-    </p>
+<p class="lead mb-4">
+    Explore the official list of regulated weed species across N. America
+</p>
 
-
-<div class="row mt-4">
-    <div class="col-12">
-        <div id="map" style="height: 500px;" class="rounded shadow"></div>
-    </div>
+<div class="map-wrapper">
+    <div id="map" class="rounded shadow"></div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-12">
-        <div id="state-species" class="d-none">
-            <h3 id="state-title"></h3>
+<div class="results-container">
+    <div id="state-species" class="d-none">
+        <h3 id="state-title" class="mb-3"></h3>
+        <div class="table-responsive">
             <table id="species-table" class="table table-striped">
                 <thead>
                     <tr>
@@ -33,9 +31,9 @@
     </div>
 </div>
 
-<div class="row mt-4"> 
-    <h2>Project Description</h2>
-    <p>
+<div class="mt-5"> 
+    <h2 class="h3">Project Description</h2>
+    <p class="text-muted">
         This database provides comprehensive information about regulated weed species 
         across different states. It serves as a resource for researchers, agricultural 
         professionals, and the public to understand the distribution and regulation status 
