@@ -13,7 +13,7 @@ The Dresden Nexus Conference is a biennial event that focuses on the **Nexus App
 
 ### Theme for 2025: The Future of Resources and the Resources for the Future
 
-The theme for DNC 2025 [insert theme here, e.g., "Building Resilience Through Integrated Solutions"] underscores the importance of integrating social, economic, and environmental dimensions to address complex global challenges. From climate change adaptation to urban sustainability, the conference will explore strategies for achieving systemic transformation.
+The theme for DNC 2025 underscores the importance of integrating social, economic, and environmental dimensions to address complex global challenges. From climate change adaptation to urban sustainability, the conference will explore strategies for achieving systemic transformation.
 
 ### Why Attend DNC 2025?
 
@@ -45,6 +45,8 @@ DNC 2025 is not just a conference—it’s a movement towards integrated, sustai
 **Save the Date:**  
 🗓 **3–5 June 2025**  
 📍 **Dresden, Germany**
+
+**Register: http://dresden-nexus-conference.org/**
 
 Stay tuned for more details, including the agenda, speakers, and registration information. Together, we can create innovative solutions that drive sustainable development and foster resilience in our communities.
 
