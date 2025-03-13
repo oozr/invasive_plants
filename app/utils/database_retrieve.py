@@ -13,7 +13,7 @@ class WeedDatabase:
     def get_all_weeds(self) -> List[Dict]:
         conn = self.get_connection()
         try:
-            cursor = conn.execute('SELECT * FROM weeds ORDER BY state, common_name')
+            cursor = conn.execute('SELECT * FROM weeds ORDER BY state, canonical_name')
             return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
@@ -22,7 +22,10 @@ class WeedDatabase:
         conn = self.get_connection()
         try:
             cursor = conn.execute('''
-                SELECT common_name, family_name, usage_key 
+                SELECT 
+                    COALESCE(common_name, canonical_name) as common_name, 
+                    family_name, 
+                    usage_key 
                 FROM weeds 
                 WHERE state = ? 
                 ORDER BY common_name
@@ -53,7 +56,7 @@ class WeedDatabase:
             
             cursor = conn.execute('''
                 SELECT DISTINCT 
-                    common_name,
+                    COALESCE(common_name, canonical_name) as common_name,
                     canonical_name,
                     family_name,
                     usage_key,
@@ -69,10 +72,10 @@ class WeedDatabase:
                 FROM weeds 
                 WHERE LOWER(common_name) LIKE ? 
                     OR LOWER(canonical_name) LIKE ?
-                GROUP BY common_name, canonical_name, family_name, usage_key
-                -- Order by priority first, then alphabetically by common name
+                GROUP BY canonical_name, family_name, usage_key
+                -- Order by priority first, then alphabetically by name
                 ORDER BY search_priority DESC, common_name
-                LIMIT 10
+                LIMIT 20
             ''', (
                 exact_match, exact_match,           # For exact matches
                 starts_with, starts_with,           # For starts-with matches
@@ -89,9 +92,9 @@ class WeedDatabase:
             cursor = conn.execute('''
                 SELECT DISTINCT state 
                 FROM weeds 
-                WHERE common_name = ?
+                WHERE common_name = ? OR canonical_name = ?
                 ORDER BY state
-            ''', (weed_name,))
+            ''', (weed_name, weed_name))
             return [row['state'] for row in cursor.fetchall()]
         finally:
             conn.close()

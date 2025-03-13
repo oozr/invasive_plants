@@ -21,6 +21,7 @@ wheels/
 .installed.cfg
 *.egg
 venv/
+weeds_env/
 
 # Flask
 instance/

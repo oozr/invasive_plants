@@ -12,11 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
     setMapHeight();
     window.addEventListener('resize', setMapHeight);
 
-    // Initialize map
+    // Initialize map with a center position that shows both US and Canada
     const map = L.map('map', {
         dragging: !L.Browser.mobile,
         tap: !L.Browser.mobile
-    }).setView([37.8, -96], 4);
+    }).setView([45, -95], 3);  // Centered to show both US and Canada
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
@@ -34,153 +34,195 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/api/state-weed-counts')
         .then(response => response.json())
         .then(stateWeedCount => {
-            fetch('/static/data/us-states.geojson')
-                .then(response => response.json())
-                .then(geojsonData => {
-                    function getColor(d) {
-                        return d > 100 ? '#800026' :
-                               d > 50  ? '#BD0026' :
-                               d > 20  ? '#E31A1C' :
-                               d > 10  ? '#FC4E2A' :
-                               d > 5   ? '#FD8D3C' :
-                               d > 0   ? '#FEB24C' :
-                                        '#FFEDA0';
+            console.log('State weed counts received:', stateWeedCount);
+            console.log('Available states in API data:', Object.keys(stateWeedCount).sort());
+
+            // Load both US states and Canadian provinces
+            Promise.all([
+                fetch('/static/data/us-states.geojson').then(response => response.json()),
+                fetch('/static/data/canada-provinces.geojson').then(response => response.json())
+            ])
+            .then(([usData, canadaData]) => {
+                // Print all state/province names from GeoJSON
+                console.log('US state names in GeoJSON:');
+                usData.features.forEach(feature => {
+                    console.log(feature.properties.name || feature.properties.NAME);
+                });
+                
+                console.log('Canadian province names in GeoJSON:');
+                canadaData.features.forEach(feature => {
+                    console.log(feature.properties.name || feature.properties.NAME);
+                });
+                // Combine the features from both datasets
+                const combinedGeoJSON = {
+                    type: 'FeatureCollection',
+                    features: [...usData.features, ...canadaData.features]
+                };
+                
+                function getColor(d) {
+                    return d > 100 ? '#800026' :
+                           d > 50  ? '#BD0026' :
+                           d > 20  ? '#E31A1C' :
+                           d > 10  ? '#FC4E2A' :
+                           d > 5   ? '#FD8D3C' :
+                           d > 0   ? '#FEB24C' :
+                                     '#FFEDA0';
+                }
+
+                function style(feature) {
+                    let stateName = feature.properties.name || feature.properties.NAME;
+                    stateName = stateName ? stateName.trim() : '';
+                    console.log('Looking up state/province:', stateName);
+                    let weedCount = stateWeedCount[stateName] || 0;
+                    
+                    if (weedCount === 0) {
+                        console.log(`No match found for "${stateName}" in weed count data`);
                     }
 
-                    function style(feature) {
-                        let stateName = feature.properties.name.trim();
-                        let weedCount = stateWeedCount[stateName] || 0;
-                        return {
-                            fillColor: getColor(weedCount),
-                            weight: 1,
-                            opacity: 1,
-                            color: 'white',
-                            fillOpacity: 0.7
-                        };
-                    }
+                    return {
+                        fillColor: getColor(weedCount),
+                        weight: 1,
+                        opacity: 1,
+                        color: 'white',
+                        fillOpacity: 0.7
+                    };
+                }
 
-                    let previouslyClickedLayer = null;
-                    let geojsonLayer = L.geoJson(geojsonData, {
-                        style: style,
-                        onEachFeature: function(feature, layer) {
-                            let stateName = feature.properties.name.trim();
+                let previouslyClickedLayer = null;
+                let geojsonLayer = L.geoJson(combinedGeoJSON, {
+                    style: style,
+                    onEachFeature: function(feature, layer) {
+                        let stateName = feature.properties.name || feature.properties.NAME;
+                        stateName = stateName ? stateName.trim() : '';
+                        
+                        layer.on('click', function(e) {
+                            // Reset style of previously clicked state
+                            if (previouslyClickedLayer) {
+                                geojsonLayer.resetStyle(previouslyClickedLayer);
+                            }
+
+                            // Store current layer as previously clicked
+                            previouslyClickedLayer = layer;
                             
-                            layer.on('click', function(e) {
-                                // Reset style of previously clicked state
-                                if (previouslyClickedLayer) {
-                                    geojsonLayer.resetStyle(previouslyClickedLayer);
-                                }
+                            // Handle special case for Federal (all Canada)
+                            let apiStateName = stateName;
+                            if (stateName === 'Federal (all Canada)') {
+                                apiStateName = 'Federal (all Canada)';
+                            }
 
-                                // Store current layer as previously clicked
-                                previouslyClickedLayer = layer;
-
-                                fetch(`/api/state/${stateName}`)
-                                    .then(response => response.json())
-                                    .then(weeds => {
-                                        document.getElementById('state-title').textContent = `Regulated Weeds in ${stateName}`;
-                                        
-                                        // Clear the table first
-                                        const table = document.getElementById('species-table');
-                                        
-                                        // Destroy existing DataTable if it exists
-                                        if ($.fn.DataTable.isDataTable(table)) {
-                                            $(table).DataTable().destroy();
-                                            // Clear the table contents after destroying
-                                            $(table).empty();
-                                            // Re-add the header structure
-                                            $(table).html('<thead><tr><th>Common Name</th><th>Family</th></tr></thead>');
-                                        }
-                            
-                                        // Initialize new DataTable
-                                        $(table).DataTable({
-                                            stripe: false,
-                                            hover: true,
-                                            stripeClasses: [],
-                                            rowClass: '',
-                                            data: weeds,
-                                            columns: [
-                                                { 
-                                                    data: 'common_name',
-                                                    title: 'Common Name',
-                                                    width: '50%',
-                                                    render: function(data, type, row) {
-                                                        if (type === 'display') {
-                                                            return `<a href="https://www.gbif.org/species/${row.usage_key}" target="_blank">${data}</a>`;
-                                                        }
-                                                        return data;
+                            fetch(`/api/state/${encodeURIComponent(apiStateName)}`)
+                                .then(response => response.json())
+                                .then(weeds => {
+                                    document.getElementById('state-title').textContent = `Regulated Weeds in ${stateName}`;
+                                    
+                                    // Clear the table first
+                                    const table = document.getElementById('species-table');
+                                    
+                                    // Destroy existing DataTable if it exists
+                                    if ($.fn.DataTable.isDataTable(table)) {
+                                        $(table).DataTable().destroy();
+                                        // Clear the table contents after destroying
+                                        $(table).empty();
+                                        // Re-add the header structure
+                                        $(table).html('<thead><tr><th>Common Name</th><th>Family</th></tr></thead>');
+                                    }
+                        
+                                    // Initialize new DataTable
+                                    $(table).DataTable({
+                                        stripe: false,
+                                        hover: true,
+                                        stripeClasses: [],
+                                        rowClass: '',
+                                        data: weeds,
+                                        columns: [
+                                            { 
+                                                data: 'common_name',
+                                                title: 'Common Name',
+                                                width: '50%',
+                                                render: function(data, type, row) {
+                                                    if (type === 'display' && row.usage_key) {
+                                                        return `<a href="https://www.gbif.org/species/${row.usage_key}" target="_blank">${data || 'Unknown'}</a>`;
                                                     }
-                                                },
-                                                { 
-                                                    data: 'family_name',
-                                                    title: 'Family',
-                                                    width: '50%'
-                                                }
-                                            ],
-                                            pageLength: 10,
-                                            order: [[0, 'asc']],
-                                            autoWidth: false,
-                                            width: '100%',
-                                            language: {
-                                                search: 'Search:',
-                                                lengthMenu: 'Show _MENU_ entries',
-                                                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
-                                                paginate: {
-                                                    first: '«',
-                                                    previous: '‹',
-                                                    next: '›',
-                                                    last: '»'
+                                                    return data || 'Unknown';
                                                 }
                                             },
-                                            initComplete: function() {
-                                                document.getElementById('state-species').classList.remove('d-none');
-                                                highlightResults();
-                                                if (L.Browser.mobile) {
-                                                    document.getElementById('state-species')
-                                                        .scrollIntoView({ 
-                                                            behavior: 'smooth',
-                                                            block: 'start'
-                                                        });
+                                            { 
+                                                data: 'family_name',
+                                                title: 'Family',
+                                                width: '50%',
+                                                render: function(data, type, row) {
+                                                    return data || 'Unknown';
                                                 }
                                             }
-                                        });
+                                        ],
+                                        pageLength: 10,
+                                        order: [[0, 'asc']],
+                                        autoWidth: false,
+                                        width: '100%',
+                                        language: {
+                                            search: 'Search:',
+                                            lengthMenu: 'Show _MENU_ entries',
+                                            info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                                            paginate: {
+                                                first: '«',
+                                                previous: '‹',
+                                                next: '›',
+                                                last: '»'
+                                            }
+                                        },
+                                        initComplete: function() {
+                                            document.getElementById('state-species').classList.remove('d-none');
+                                            highlightResults();
+                                            if (L.Browser.mobile) {
+                                                document.getElementById('state-species')
+                                                    .scrollIntoView({ 
+                                                        behavior: 'smooth',
+                                                        block: 'start'
+                                                    });
+                                            }
+                                        }
                                     });
-                            });
+                                });
+                        });
 
-                            // Hover effects
-                            layer.on('mouseover', function(e) {
+                        // Hover effects
+                        layer.on('mouseover', function(e) {
+                            layer.setStyle({
+                                weight: 2,
+                                fillOpacity: 0.9
+                            });
+                        });
+
+                        layer.on('mouseout', function(e) {
+                            geojsonLayer.resetStyle(layer);
+                            if (layer === previouslyClickedLayer) {
                                 layer.setStyle({
                                     weight: 2,
                                     fillOpacity: 0.9
                                 });
-                            });
+                            }
+                        });
+                    }
+                }).addTo(map);
 
-                            layer.on('mouseout', function(e) {
-                                geojsonLayer.resetStyle(layer);
-                                if (layer === previouslyClickedLayer) {
-                                    layer.setStyle({
-                                        weight: 2,
-                                        fillOpacity: 0.9
-                                    });
-                                }
-                            });
-                        }
-                    }).addTo(map);
+                // Add legend
+                let legend = L.control({ position: 'bottomright' });
+                legend.onAdd = function() {
+                    let div = L.DomUtil.create('div', 'legend');
+                    let grades = [0, 5, 10, 20, 50, 100];
+                    
+                    for (let i = 0; i < grades.length; i++) {
+                        div.innerHTML +=
+                            '<div><i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] : '+') + '</div>';
+                    }
 
-                    // Add legend
-                    let legend = L.control({ position: 'bottomright' });
-                    legend.onAdd = function() {
-                        let div = L.DomUtil.create('div', 'legend');
-                        let grades = [0, 5, 10, 20, 50, 100];
-                        
-                        for (let i = 0; i < grades.length; i++) {
-                            div.innerHTML +=
-                                '<div><i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-                                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] : '+') + '</div>';
-                        }
-
-                        return div;
-                    };
-                    legend.addTo(map);
-                });
+                    return div;
+                };
+                legend.addTo(map);
+            })
+            .catch(error => {
+                console.error("Error loading GeoJSON files:", error);
+            });
         });
 });

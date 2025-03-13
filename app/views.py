@@ -22,7 +22,26 @@ def index():
 
 @home.route('/api/state-weed-counts')
 def state_weed_counts():
+    print("DEBUG: Fetching state weed counts")
     counts = db.get_state_weed_counts()
+    print(f"DEBUG: Retrieved counts: {counts}")
+    print(f"DEBUG: Type of counts: {type(counts)}")
+    
+    # Check if any states have counts
+    if counts:
+        print(f"DEBUG: Sample state: {next(iter(counts))}, Count: {counts[next(iter(counts))]}")
+    else:
+        print("DEBUG: No state counts found")
+    
+    # Check the state names format
+    conn = db.get_connection()
+    try:
+        cursor = conn.execute("SELECT DISTINCT state FROM weeds LIMIT 5")
+        states = [row['state'] for row in cursor.fetchall()]
+        print(f"DEBUG: Sample states in database: {states}")
+    finally:
+        conn.close()
+    
     return jsonify(counts)
 
 # Species routes
@@ -92,3 +111,24 @@ def index():
     states.sort(key=lambda x: x['name'])
     
     return render_template('about.html', states=states)
+
+@home.route('/debug/table-check')
+def check_tables():
+    conn = db.get_connection()
+    try:
+        # Check if table exists
+        cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='weeds'")
+        tables = cursor.fetchall()
+        
+        # Count rows in weeds table if it exists
+        row_count = 0
+        if tables:
+            cursor = conn.execute("SELECT COUNT(*) as count FROM weeds")
+            row_count = cursor.fetchone()['count']
+            
+        return jsonify({
+            'tables_found': [dict(t) for t in tables],
+            'row_count': row_count
+        })
+    finally:
+        conn.close()
