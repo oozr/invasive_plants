@@ -21,45 +21,45 @@ class WeedDatabase:
     def get_weeds_by_state(self, state: str) -> List[Dict]:
         conn = self.get_connection()
         try:
-            # First determine the country for this state/province
-            cursor = conn.execute('''
-                SELECT DISTINCT country FROM weeds WHERE state = ?
-            ''', (state,))
-            result = cursor.fetchone()
+            # Determine which country this state/province belongs to
+            canadian_regions = ['Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 
+                            'Newfoundland & Labrador', 'Nova Scotia', 'Northwest Territories', 
+                            'Nunavut', 'Ontario', 'Prince Edward Island', 'Quebec', 
+                            'Saskatchewan', 'Yukon Territory']
             
-            # If no matching state is found, return empty list
-            if not result:
-                return []
+            country = 'Canada' if state in canadian_regions else 'US'
+            
+            # Get both state-specific and federal regulations for this country
+            cursor = conn.execute('''
+                SELECT canonical_name, common_name, family_name, usage_key, state
+                FROM weeds 
+                WHERE (state = ? OR (state = 'federal' AND country = ?))
+                ORDER BY state DESC, canonical_name
+            ''', (state, country))
+            
+            # Use a dictionary to track unique species based on canonical_name
+            seen_species = {}
+            for row in cursor:
+                row_dict = dict(row)
+                canonical_name = row_dict['canonical_name']
                 
-            country = result['country']
+                # If we haven't seen this species yet, or if this is a state regulation (prioritize over federal)
+                if canonical_name not in seen_species or row_dict['state'] == state:
+                    seen_species[canonical_name] = row_dict
             
-            # Get regulations with no duplicates by canonical_name
-            cursor = conn.execute('''
-                WITH ranked_weeds AS (
-                    SELECT 
-                        canonical_name,
-                        common_name, 
-                        family_name, 
-                        usage_key,
-                        state,
-                        CASE WHEN state = ? THEN 'State/Province' ELSE 'Federal' END as level,
-                        -- Rank by state first, then by classification if there are multiple entries
-                        ROW_NUMBER() OVER (
-                            PARTITION BY canonical_name 
-                            ORDER BY 
-                                CASE WHEN state = ? THEN 0 ELSE 1 END,
-                                classification
-                        ) as rank
-                    FROM weeds 
-                    WHERE (state = ? OR (state = 'federal' AND country = ?))
-                )
-                SELECT canonical_name, common_name, family_name, usage_key, level
-                FROM ranked_weeds
-                WHERE rank = 1
-                ORDER BY level, canonical_name
-            ''', (state, state, state, country))
+            # Format the results with proper field names
+            results = []
+            for species in seen_species.values():
+                results.append({
+                    'canonical_name': species['canonical_name'],  # Use consistent field name
+                    'family_name': species['family_name'],
+                    'usage_key': species['usage_key'],
+                    'level': 'State/Province' if species['state'] == state else 'Federal'
+                })
             
-            return [dict(row) for row in cursor.fetchall()]
+            # Sort by level then by canonical_name 
+            return sorted(results, key=lambda x: (0 if x['level'] == 'State/Province' else 1, 
+                                                x['canonical_name'] or ""))
         finally:
             conn.close()
 
@@ -145,30 +145,6 @@ class WeedDatabase:
                 starts_with, starts_with,           # For starts-with matches
                 contains, contains                  # For contains matches
             ))
-            
-            return [dict(row) for row in cursor.fetchall()]
-        finally:
-            conn.close()
-    
-    def get_weeds_by_state(self, state: str) -> List[Dict]:
-        conn = self.get_connection()
-        try:
-            # Determine which country this state/province belongs to
-            canadian_regions = ['Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 
-                            'Newfoundland & Labrador', 'Nova Scotia', 'Northwest Territories', 
-                            'Nunavut', 'Ontario', 'Prince Edward Island', 'Quebec', 
-                            'Saskatchewan', 'Yukon Territory']
-            
-            country = 'Canada' if state in canadian_regions else 'US'
-            
-            # Get both state-specific and federal regulations for this country
-            cursor = conn.execute('''
-                SELECT common_name, family_name, usage_key,
-                    CASE WHEN state = ? THEN 'State/Province' ELSE 'Federal' END as level
-                FROM weeds 
-                WHERE (state = ? OR (state = 'federal' AND country = ?))
-                ORDER BY level, common_name
-            ''', (state, state, country))
             
             return [dict(row) for row in cursor.fetchall()]
         finally:

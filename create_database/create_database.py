@@ -38,17 +38,18 @@ def create_database(csv_folder="./data"):
 
     print("Creating weeds table...")
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS weeds (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usage_key INTEGER,
-            canonical_name TEXT NOT NULL,
-            state TEXT NOT NULL,
-            common_name TEXT,
-            family_name TEXT,
-            country TEXT NOT NULL,
-            classification TEXT,
-            taxon_level TEXT
-        )
+    CREATE TABLE IF NOT EXISTS weeds (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        usage_key INTEGER,
+        canonical_name TEXT NOT NULL,
+        state TEXT NOT NULL,
+        common_name TEXT,
+        family_name TEXT,
+        country TEXT NOT NULL,
+        classification TEXT,
+        taxon_level TEXT,
+        synonyms TEXT
+    )
     ''')
 
     print("Creating indices...")
@@ -79,9 +80,9 @@ def create_database(csv_folder="./data"):
                 cursor.execute('''
                     INSERT INTO weeds (
                         usage_key, canonical_name, state, common_name, 
-                        family_name, country, classification, taxon_level
+                        family_name, country, classification, taxon_level, synonyms
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     usage_key,
                     clean_value(row['prefName']),
@@ -90,7 +91,8 @@ def create_database(csv_folder="./data"):
                     clean_value(row.get('family')),
                     clean_value(row.get('country')) or 'Unknown',
                     clean_value(row.get('classification')),
-                    clean_value(row.get('taxonLevel'))
+                    clean_value(row.get('taxonLevel')),
+                    clean_value(row.get('synonyms'))
                 ))
                 
                 record_count += 1

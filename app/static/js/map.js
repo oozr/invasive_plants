@@ -7,11 +7,11 @@ document.addEventListener('DOMContentLoaded', function() {
         zoom: 3,
         colors: {
             us: {
-                thresholds: [0, 110, 150, 190, 230, 270],  // Adjusted for maximum of ~290
+                thresholds: [0, 100, 135, 170, 205, 240],  // Equal bins from ~100 to ~270
                 scheme: ['#FFEDA0', '#FEB24C', '#FD8D3C', '#FC4E2A', '#E31A1C', '#BD0026', '#800026']
             },
             canada: {
-                thresholds: [0, 110, 150, 190, 230, 270],  // Same thresholds as US
+                thresholds: [0, 100, 135, 170, 205, 240],  // Same thresholds for Canada
                 scheme: ['#f2f0f7', '#d8daeb', '#bcbddc', '#9e9ac8', '#807dba', '#6a51a3', '#4a1486']
             }
         }
@@ -189,8 +189,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                         data: weeds,
                                         columns: [
                                             { 
-                                                data: 'common_name',
-                                                title: 'Common Name',
+                                                data: 'canonical_name',
+                                                title: 'Scientific Name',
                                                 width: '50%',
                                                 render: function(data, type, row) {
                                                     if (type === 'display' && row.usage_key) {
