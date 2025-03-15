@@ -7,9 +7,10 @@ from app.utils.species_database import SpeciesDatabase
 from app.utils.generate_blog import BlogGenerator
 from app.config import Config
 
-# Initialize specialized database instances
-state_db = StateDatabase()
-species_db = SpeciesDatabase()
+# Databases:
+from app.config import Config
+state_db = StateDatabase(db_path=Config.DATABASE_PATH)
+species_db = SpeciesDatabase(db_path=Config.DATABASE_PATH)
 
 # Initialize blueprints
 home = Blueprint('home', __name__)

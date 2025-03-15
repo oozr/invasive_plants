@@ -54,13 +54,14 @@ class StateDatabase(DatabaseBase):
         finally:
             conn.close()
 
-    def get_state_weed_counts(self) -> Dict[str, int]:
+    def get_state_weed_counts(self) -> Dict[str, Dict]:
         """
         Get counts of regulated weeds for all states/provinces.
         Includes both state/province-specific and federal regulations.
+        Also includes country information for each state/province.
         
         Returns:
-        Dict[str, int]: Dictionary mapping state/province names to weed counts
+        Dict[str, Dict]: Dictionary mapping state/province names to data including weed counts and country
         """
         conn = self.get_connection()
         try:
@@ -102,7 +103,7 @@ class StateDatabase(DatabaseBase):
                 
                 # For states with no state-specific weeds, use federal count
                 if state_count == 0:
-                    combined_counts[state] = federal_count
+                    weed_count = federal_count
                 else:
                     # For states with state-specific weeds, get combined count of unique species
                     cursor = conn.execute('''
@@ -111,7 +112,13 @@ class StateDatabase(DatabaseBase):
                         WHERE (state = ? OR (state = 'federal' AND country = ?))
                     ''', (state, country))
                     
-                    combined_counts[state] = cursor.fetchone()['count']
+                    weed_count = cursor.fetchone()['count']
+                
+                # Store both the count and the country information
+                combined_counts[state] = {
+                    'count': weed_count,
+                    'country': country
+                }
             
             return combined_counts
         finally:

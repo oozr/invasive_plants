@@ -1,4 +1,6 @@
 import sqlite3
+import json
+import os
 from typing import List, Dict, Optional
 
 class DatabaseBase:
@@ -7,6 +9,7 @@ class DatabaseBase:
     def __init__(self, db_path: str = 'weeds.db'):
         self.db_path = db_path
         self._ensure_states_country_table()
+        self._sync_territories_from_geojson()
     
     def get_connection(self):
         """Create and return a database connection with row factory set"""
@@ -46,25 +49,61 @@ class DatabaseBase:
                 conn.commit()
         finally:
             conn.close()
-            
-    def add_state_country_mapping(self, state: str, country: str):
+    
+    def _sync_territories_from_geojson(self):
         """
-        Adds or updates a state-to-country mapping.
+        Synchronizes all US states and Canadian provinces from GeoJSON files to ensure
+        all mappable territories are in the states_country table, even if they don't
+        have specific weed entries.
+        """
+        # Paths to GeoJSON files (adjust as needed based on your project structure)
+        us_geojson_path = os.path.join('app', 'static', 'data', 'us-states.geojson')
+        canada_geojson_path = os.path.join('app', 'static', 'data', 'canada-provinces.geojson')
         
-        Parameters:
-        state (str): The state or province name
-        country (str): The country code (e.g., 'US', 'Canada')
-        """
-        conn = self.get_connection()
+        territories = []
+        
+        # Try to load US states
         try:
-            conn.execute('''
-                INSERT OR REPLACE INTO states_country (state, country)
-                VALUES (?, ?)
-            ''', (state, country))
-            conn.commit()
-        finally:
-            conn.close()
-            
+            if os.path.exists(us_geojson_path):
+                with open(us_geojson_path, 'r') as f:
+                    data = json.load(f)
+                    for feature in data['features']:
+                        name = feature['properties'].get('name') or feature['properties'].get('NAME')
+                        if name:
+                            territories.append((name.strip(), 'US'))
+            else:
+                print(f"Warning: US GeoJSON file not found at {us_geojson_path}")
+        except Exception as e:
+            print(f"Error loading US GeoJSON: {e}")
+        
+        # Try to load Canadian provinces
+        try:
+            if os.path.exists(canada_geojson_path):
+                with open(canada_geojson_path, 'r') as f:
+                    data = json.load(f)
+                    for feature in data['features']:
+                        name = feature['properties'].get('name') or feature['properties'].get('NAME')
+                        if name:
+                            territories.append((name.strip(), 'Canada'))
+            else:
+                print(f"Warning: Canada GeoJSON file not found at {canada_geojson_path}")
+        except Exception as e:
+            print(f"Error loading Canada GeoJSON: {e}")
+        
+        # If we found territories, add them to the database
+        if territories:
+            conn = self.get_connection()
+            try:
+                for territory, country in territories:
+                    conn.execute('''
+                        INSERT OR IGNORE INTO states_country (state, country)
+                        VALUES (?, ?)
+                    ''', (territory, country))
+                conn.commit()
+                print(f"Added {len(territories)} territories to states_country table")
+            finally:
+                conn.close()
+    
     def get_country_for_state(self, state: str) -> str:
         """
         Get the country for a given state/province name.
@@ -100,6 +139,9 @@ class DatabaseBase:
             result = cursor.fetchone()
             if result:
                 return result['country']
+            
+            # Add debug logging to help troubleshoot territory matching issues
+            print(f"Warning: Could not determine country for state/province: '{state}'")
             
             # Default to US if we can't determine the country
             # This is a fallback and should be improved with a more complete mapping
