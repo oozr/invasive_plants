@@ -60,9 +60,10 @@ def state_weeds(state):
     weeds = db.get_weeds_by_state(state)
     return jsonify(weeds)
 
-@species.route('/api/weed-states/<weed_name>')
-def weed_states(weed_name):
-    results = db.get_states_by_weed(weed_name)
+@species.route('/api/weed-states/by-key/<int:usage_key>')
+def weed_states_by_key(usage_key):
+    """Get states where a weed is regulated by GBIF usage key (more accurate)"""
+    results = db.get_states_by_usage_key(usage_key)
     return jsonify(results)
 
 # Blog routes

@@ -15,10 +15,12 @@ document.addEventListener('DOMContentLoaded', function() {
             processResults: function(data) {
                 return {
                     results: data.map(weed => ({
-                        id: weed.common_name,  // Keeping common_name as ID for compatibility
+                        id: weed.usage_key,  // Changed to usage_key for better data handling
                         // Format the text to show both names
-                        text: `${weed.common_name} (${weed.canonical_name})`,
-                        common_name: weed.common_name,
+                        text: weed.common_name ? 
+                              `${weed.common_name} (${weed.canonical_name})` : 
+                              weed.canonical_name,
+                        common_name: weed.common_name || weed.canonical_name,
                         canonical_name: weed.canonical_name,
                         family_name: weed.family_name,
                         usage_key: weed.usage_key
@@ -31,10 +33,14 @@ document.addEventListener('DOMContentLoaded', function() {
         templateResult: function(weed) {
             if (!weed.id) return weed.text; // Return unchanged if it's the placeholder
             
+            // Handle cases where common_name might be missing
+            const commonName = weed.common_name || '';
+            const canonicalName = weed.canonical_name || '';
+            
             return $(`
                 <div>
-                    <div class="common-name">${weed.common_name}</div>
-                    <div class="canonical-name text-muted small">${weed.canonical_name}</div>
+                    ${commonName ? `<div class="common-name">${commonName}</div>` : ''}
+                    <div class="canonical-name ${commonName ? 'text-muted small' : ''}">${canonicalName}</div>
                 </div>
             `);
         }
@@ -45,26 +51,55 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.getElementById('weedTitle').textContent = selectedWeed.common_name;
         document.getElementById('weedCanonicalName').textContent = selectedWeed.canonical_name;
-        document.getElementById('weedFamily').textContent = selectedWeed.family_name;
+        document.getElementById('weedFamily').textContent = selectedWeed.family_name || 'Not available';
         
         const gbifLink = document.getElementById('gbifLink');
         gbifLink.href = `https://www.gbif.org/species/${selectedWeed.usage_key}`;
         
-        fetch(`/species/api/weed-states/${encodeURIComponent(selectedWeed.common_name)}`)
-            .then(response => response.json())
+        // Use the usage_key instead of common_name for more accurate results
+        fetch(`/species/api/weed-states/by-key/${selectedWeed.usage_key}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(states => {
                 const statesList = document.getElementById('statesList');
                 statesList.innerHTML = '';
                 
-                states.forEach(state => {
-                    statesList.innerHTML += `
+                if (states.length === 0) {
+                    statesList.innerHTML = `
                         <div class="list-group-item">
-                            <h5 class="mb-1">${state}</h5>
+                            <p class="mb-1">No regulations found for this species.</p>
                         </div>
                     `;
-                });
+                } else {
+                    states.forEach(state => {
+                        statesList.innerHTML += `
+                            <div class="list-group-item">
+                                <h5 class="mb-1">${state}</h5>
+                            </div>
+                        `;
+                    });
+                }
                 
                 document.getElementById('results').classList.remove('d-none');
+            })
+            .catch(error => {
+                console.error('Error fetching weed states:', error);
+                const statesList = document.getElementById('statesList');
+                statesList.innerHTML = `
+                    <div class="list-group-item text-danger">
+                        <p class="mb-1">Error loading data. Please try again.</p>
+                    </div>
+                `;
+                document.getElementById('results').classList.remove('d-none');
             });
+    });
+    
+    // Clear results when dropdown is cleared
+    $('#weedSearch').on('select2:clear', function() {
+        document.getElementById('results').classList.add('d-none');
     });
 });
