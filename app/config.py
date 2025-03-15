@@ -8,6 +8,9 @@ class Config:
    # Secret key for sessions/cookies
    SECRET_KEY = os.getenv('SECRET_KEY', 'a3ed33e1cb2bee0b25c62741bbc3d671')
    
+   # Database configuration
+   DATABASE_PATH = os.getenv('DATABASE_PATH', 'weeds.db')
+   
    # Site configuration
    SITE_NAME = "Regulated Weeds Database"
    SITE_AUTHOR = "Regulated Weeds Database Team"

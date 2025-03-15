@@ -1,13 +1,12 @@
-# Updated __init__.py
+# __init__.py
 from flask import Flask
-from app.utils.database_retrieve import WeedDatabase
-
-db = WeedDatabase()
+from app.config import Config
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'your-secret-key-here'
+    app.config.from_object(Config)  # Use configuration from Config class
 
+    # Import and register blueprints
     from app.views import home, species, blog, about
     app.register_blueprint(home)
     app.register_blueprint(species)

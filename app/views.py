@@ -2,9 +2,14 @@
 import csv
 import os
 from flask import Blueprint, render_template, jsonify, current_app, request
-from app import db
+from app.utils.state_database import StateDatabase
+from app.utils.species_database import SpeciesDatabase
 from app.utils.generate_blog import BlogGenerator
 from app.config import Config
+
+# Initialize specialized database instances
+state_db = StateDatabase()
+species_db = SpeciesDatabase()
 
 # Initialize blueprints
 home = Blueprint('home', __name__)
@@ -23,26 +28,14 @@ def index():
 @home.route('/api/state-weed-counts')
 def state_weed_counts():
     print("DEBUG: Fetching state weed counts")
-    counts = db.get_state_weed_counts()
+    counts = state_db.get_state_weed_counts()
     print(f"DEBUG: Retrieved counts: {counts}")
-    print(f"DEBUG: Type of counts: {type(counts)}")
-    
-    # Check if any states have counts
-    if counts:
-        print(f"DEBUG: Sample state: {next(iter(counts))}, Count: {counts[next(iter(counts))]}")
-    else:
-        print("DEBUG: No state counts found")
-    
-    # Check the state names format
-    conn = db.get_connection()
-    try:
-        cursor = conn.execute("SELECT DISTINCT state FROM weeds LIMIT 5")
-        states = [row['state'] for row in cursor.fetchall()]
-        print(f"DEBUG: Sample states in database: {states}")
-    finally:
-        conn.close()
-    
     return jsonify(counts)
+
+@home.route('/api/state/<state>')
+def state_weeds(state):
+    weeds = state_db.get_weeds_by_state(state)
+    return jsonify(weeds)
 
 # Species routes
 @species.route('/')
@@ -52,18 +45,13 @@ def index():
 @species.route('/api/search')
 def search_species():
     query = request.args.get('q', '')
-    results = db.search_weeds(query)
+    results = species_db.search_weeds(query)
     return jsonify(results)
-
-@home.route('/api/state/<state>')
-def state_weeds(state):
-    weeds = db.get_weeds_by_state(state)
-    return jsonify(weeds)
 
 @species.route('/api/weed-states/by-key/<int:usage_key>')
 def weed_states_by_key(usage_key):
     """Get states where a weed is regulated by GBIF usage key (more accurate)"""
-    results = db.get_states_by_usage_key(usage_key)
+    results = species_db.get_states_by_usage_key(usage_key)
     return jsonify(results)
 
 # Blog routes
@@ -115,7 +103,7 @@ def index():
 
 @home.route('/debug/table-check')
 def check_tables():
-    conn = db.get_connection()
+    conn = state_db.get_connection()
     try:
         # Check if table exists
         cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='weeds'")
