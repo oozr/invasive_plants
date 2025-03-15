@@ -189,7 +189,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             fetch(`/api/state/${encodeURIComponent(stateName)}`)
                                 .then(response => response.json())
                                 .then(weeds => {
-                                    document.getElementById('state-title').textContent = `Regulated Weeds in ${stateName}`;
+                                    // Get the country for this state/province
+                                    const stateData = stateWeedData[stateName] || {};
+                                    const country = stateData.country || '';
+                                    
+                                    // Update title with both state and country
+                                    document.getElementById('state-title').textContent = 
+                                        `Regulated Weeds in ${stateName}${country ? `, ${country}` : ''}`;
                                     
                                     // Clear the table first
                                     const table = document.getElementById('species-table');
@@ -216,8 +222,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 title: 'Scientific Name',
                                                 width: '50%',
                                                 render: function(data, type, row) {
-                                                    if (type === 'display' && row.usage_key) {
-                                                        return `<a href="https://www.gbif.org/species/${row.usage_key}" target="_blank">${data || 'Unknown'}</a>`;
+                                                    if (type === 'display' && data) {
+                                                        // Pass the canonical name as a parameter
+                                                        return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank">${data || 'Unknown'}</a>`;
                                                     }
                                                     return data || 'Unknown';
                                                 }

@@ -55,6 +55,12 @@ def weed_states_by_key(usage_key):
     results = species_db.get_states_by_usage_key(usage_key)
     return jsonify(results)
 
+@species.route('/api/weed-states/by-name/<string:weed_name>')
+def weed_states_by_name(weed_name):
+    """Get states where a weed is regulated by common or canonical name"""
+    results = species_db.get_states_by_weed(weed_name)
+    return jsonify(results)
+
 # Blog routes
 @blog.route('/')
 def index():
