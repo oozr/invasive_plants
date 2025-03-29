@@ -63,14 +63,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to display weed details and fetch states
     function displayWeedDetails(selectedWeed) {
-        document.getElementById('weedTitle').textContent = selectedWeed.common_name;
+        // Display common name - truncate if needed
+        const commonName = selectedWeed.common_name || '';
+        const commonNameParts = commonName.split(',');
+        const truncatedCommonName = commonNameParts.length > 3 
+            ? commonNameParts.slice(0, 3).join(', ')
+            : commonName;
+        
+        document.getElementById('weedTitle').textContent = truncatedCommonName;
         document.getElementById('weedCanonicalName').textContent = selectedWeed.canonical_name;
         document.getElementById('weedFamily').textContent = selectedWeed.family_name || 'Not available';
         
+        // Handle synonyms display - limit to first 3
         const synonymsSection = document.getElementById('synonymsSection');
         const weedSynonyms = document.getElementById('weedSynonyms');
+        
         if (selectedWeed.synonyms && selectedWeed.synonyms.trim() !== '') {
-            weedSynonyms.textContent = selectedWeed.synonyms;
+            // Split by commas, take first 3, join with commas
+            const allSynonyms = selectedWeed.synonyms.split(',');
+            const truncatedSynonyms = allSynonyms.length > 3 
+                ? allSynonyms.slice(0, 3).join(', ') 
+                : selectedWeed.synonyms;
+                
+            weedSynonyms.textContent = truncatedSynonyms;
             synonymsSection.classList.remove('d-none');
         } else {
             synonymsSection.classList.add('d-none');
