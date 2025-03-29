@@ -292,6 +292,14 @@ table.dataTable tbody td a:hover {
    font-size: 0.8rem;
 }
 
+.sources-toggle .chevron-icon {
+   transition: transform 0.3s ease;
+}
+
+.sources-toggle[aria-expanded="true"] .chevron-icon {
+   transform: rotate(180deg);
+}
+
 @media (max-width: 768px) {
    .sources-content.open {
        grid-template-columns: 1fr;

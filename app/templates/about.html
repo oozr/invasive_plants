@@ -1,74 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="page-title">About</h1>
-<p class="lead">Get in touch and find out more about the project</p>
+<p class="lead">Learn about our project and get in touch</p>
 
 <section class="about-section">
     <h2>What is the Regulated Weeds Database?</h2>
-    <p>The Regulated Weeds Database is a comprehensive resource that tracks and displays information about regulated weed species across different U.S. states. Our goal is to provide researchers, agricultural professionals, and the public with easy access to information about which weeds are regulated in different states.</p>
-    <p>This project compiles data from state agricultural authorities to create an interactive map and searchable database of regulated weed species.</p>
+    <p>The Regulated Weeds Database is a comprehensive resource that tracks and displays information about regulated weed species across different U.S. states, Canadian provinces, and Australia. Our goal is to provide researchers, agricultural professionals, and the public with easy access to information about which weeds are regulated in different jurisdictions.</p>
+    <p>This project compiles data from governmental agricultural authorities to create an interactive map and searchable database of regulated weed species.</p>
 </section>
-
 
 <section class="about-section">
-    <h2>Method</h2>
-        <p>
-        To comprehensively identify regulated weed species, we conducted systematic research using authoritative and reliable sources. Our approach included the following steps:
-        </p>
-            <ul class="data-list">
-                <li><b>Data Collection from Authoritative Sources:</b> We reviewed and extracted information from government websites (e.g., state departments of agriculture, environmental protection, and natural resources), academic institutions (e.g., university extension programs specializing in invasive and noxious weeds), and reputable non-governmental organizations (NGOs) focused on plant conservation and invasive species management.
-                </li>
-
-                <li><b>Compilation of State-Specific Lists:</b> For each state, we compiled a list of regulated weed species, ensuring that our data captured variations in regulatory definitions (e.g., noxious weeds, invasive plants) and species classifications unique to each jurisdiction.
-                </li>
-
-                <li><b>Comparison with the Federal List:</b> The compiled state-specific lists were systematically compared with the federal noxious weed list published by the United States Department of Agriculture (USDA). This allowed us to identify discrepancies, overlaps, and gaps between state and federal regulations.
-                </li>
-
-                <li><b>Verification and Cross-Referencing:</b> We cross-referenced the findings to ensure accuracy and consistency. This included validating species names and classifications to account for synonyms and taxonomic updates.
-                </li>
-            </ul>
-        <p>
-            This method ensured a comprehensive and accurate assessment of regulated weed species, providing insights into the alignment and divergence of weed management policies across state and federal jurisdictions in the United States.
-        </p>
+    <h2>The Team</h2>
+    <p>The Regulated Weeds Database is a project led by researchers specializing in plant ecology, invasive species management, and agricultural policy. Our interdisciplinary team combines expertise in botany, data science, and regulatory frameworks to create a comprehensive resource for understanding weed regulations.</p>
 </section>
-<section class="about-section">
-    <h2>Data Sources</h2>
-    <p>Our database is compiled from official state regulatory lists and is regularly updated to reflect the latest regulations. The data includes:</p>
-    <ul class="data-list">
-        <li>Common and scientific names of regulated weed species</li>
-        <li>State-by-state regulation status</li>
-        <li>Distribution information across states</li>
-    </ul>
 
-    <div class="sources-container">
-        <button class="sources-toggle" id="sourcesToggle" aria-expanded="false">
-            <span>View Sources</span>
-            <svg class="chevron-icon" viewBox="0 0 24 24" width="24" height="24">
-                <path d="M6 9l6 6 6-6"></path>
-            </svg>
-        </button>
-        
-        <div class="sources-content" id="sourcesContent">
-            <div class="sources-grid">
-                {% for state in states %}
-                <div class="state-item">
-                    <span class="state-name">{{ state.name }}</span>
-                    <div class="details">
-                        <span class="authority">{{ state.authority }}</span>
-                        <span class="year">last updated {{ state.updated }}</span>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</section>
 <section class="about-section">
     <h2>Contact</h2>
     <p>For questions, suggestions, or corrections, please contact us at: <a href="mailto:contact@example.com">contact@example.com</a></p>
+    
+    <div class="contact-details">
+        <p><strong>Mailing Address:</strong><br>
+        Regulated Weeds Database<br>
+        Department of Plant Sciences<br>
+        University Example<br>
+        City, State 12345</p>
+        
+        <p><strong>Phone:</strong> (123) 456-7890</p>
+    </div>
 </section>
 
-<script src="{{ url_for('static', filename='js/sources.js') }}"></script>
-
+<section class="about-section">
+    <h2>Acknowledgements</h2>
+    <p>This project was made possible through the support and collaboration of various organizations and individuals who contributed data, expertise, and resources:</p>
+    
+    <ul class="data-list">
+        <li>State and provincial agricultural departments across North America</li>
+        <li>National invasive species councils</li>
+        <li>University extension services</li>
+        <li>Botanical researchers</li>
+        <li>Agricultural policy experts</li>
+    </ul>
+    
+    <p>We are grateful for their contributions to this ongoing effort.</p>
+</section>
 {% endblock %}

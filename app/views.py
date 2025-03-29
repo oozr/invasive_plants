@@ -16,6 +16,7 @@ species_db = SpeciesDatabase(db_path=Config.DATABASE_PATH)
 home = Blueprint('home', __name__)
 species = Blueprint('species', __name__, url_prefix='/species')
 blog = Blueprint('blog', __name__, url_prefix='/blog')
+method = Blueprint('method', __name__, url_prefix='/method')
 about = Blueprint('about', __name__, url_prefix='/about')
 
 # Initialize blog generator
@@ -91,26 +92,35 @@ def post(slug):
         )
     return "Post not found", 404
 
-# About routes
+# Method, About and Home routes
+@method.route('/')
+def index():
+    sources = []
+    csv_path = os.path.join(current_app.root_path, 'static', 'data', 'regulatory_sources.csv')
+    
+    try:
+        with open(csv_path, 'r', encoding='utf-8-sig') as file:  # Use utf-8-sig to handle BOM
+            csv_reader = csv.DictReader(file)
+            
+            for row in csv_reader:
+                source = {
+                    'country': row.get('country', 'Unknown'),
+                    'name': row.get('state_province', 'Unknown'),
+                    'authority': row.get('authority_name', 'Unknown'),
+                    'source_url': row.get('source_url', '#'),
+                    'updated': row.get('last_updated_year', row.get('last_updated', 'Unknown'))
+                }
+                sources.append(source)
+        
+    except Exception as e:
+        print(f"Error reading CSV: {e}")
+        return render_template('method.html', sources=[])
+    
+    return render_template('method.html', sources=sources)
+
 @about.route('/')
 def index():
-    states = []
-    csv_path = os.path.join(current_app.root_path, 'static', 'data', 'ref4eachstate.csv')
-
-    with open(csv_path, 'r') as file:
-        csv_reader = csv.DictReader(file)
-        for row in csv_reader:
-            state = {
-                'name': row['state'],
-                'authority': row['Issueing Authority'],
-                'updated': row['Last Updated YR']
-            }
-            states.append(state)
-    
-    # Sort states alphabetically by name
-    states.sort(key=lambda x: x['name'])
-    
-    return render_template('about.html', states=states)
+    return render_template('about.html')
 
 @home.route('/debug/table-check')
 def check_tables():
