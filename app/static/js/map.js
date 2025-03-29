@@ -1,11 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     /******************************
-     * CONFIGURATION & CONSTANTS
+     * CONFIGURATION
      ******************************/
     const mapConfig = {
-        center: [45, -95],
-        zoom: 3,
-        // Default color schemes that can be extended
+        center: [30, 0],
+        zoom: 2,
         countryColors: {
             'US': {
                 thresholds: [0, 100, 135, 170, 205, 240],
@@ -15,25 +14,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 thresholds: [0, 100, 135, 170, 205, 240],
                 scheme: ['#f2f0f7', '#d8daeb', '#bcbddc', '#9e9ac8', '#807dba', '#6a51a3', '#4a1486']
             },
-            // Default scheme for any new countries - can be customized later
-            'default': {
+            'Australia': {
                 thresholds: [0, 100, 135, 170, 205, 240],
                 scheme: ['#edf8e9', '#c7e9c0', '#a1d99b', '#74c476', '#41ab5d', '#238b45', '#005a32']
+            },
+            'default': {
+                thresholds: [0, 100, 135, 170, 205, 240],
+                scheme: ['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5']
             }
         }
     };
 
-    // Store our state data globally for reference
+    // Store state data globally
     let stateWeedData = {};
-    // Track unique countries for legend creation
-    let countriesInData = new Set();
-
+    
     /******************************
      * UTILITY FUNCTIONS
      ******************************/
     // Get color based on data value and country
     function getColor(d, country) {
-        // Get the color scheme for this country, fall back to default if not defined
         const colorConfig = mapConfig.countryColors[country] || mapConfig.countryColors['default'];
         const { thresholds, scheme } = colorConfig;
         
@@ -46,48 +45,30 @@ document.addEventListener('DOMContentLoaded', function() {
         return scheme[0];
     }
 
-    // Get the country for a state/province from our data
-    function getCountryForState(stateName) {
-        return (stateWeedData[stateName] && stateWeedData[stateName].country) || 'default';
-    }
-
     // Set map height based on screen size
     function setMapHeight() {
         const mapElement = document.getElementById('map');
-        if (window.innerWidth <= 768) {
-            mapElement.style.height = '300px';
-        } else {
-            mapElement.style.height = '500px';
-        }
-    }
-
-    // Highlight results after data loads
-    function highlightResults() {
-        const element = document.getElementById('state-species');
-        element.classList.add('updated');
-        setTimeout(() => {
-            element.classList.remove('updated');
-        }, 1000);
+        mapElement.style.height = window.innerWidth <= 768 ? '300px' : '500px';
     }
 
     // Style function for GeoJSON features
     function styleFeature(feature) {
-        let stateName = feature.properties.name || feature.properties.NAME;
-        stateName = stateName ? stateName.trim() : '';
-        console.log('Looking up state/province:', stateName);
+        // Try different property names for state names
+        const possibleNameProps = ['name', 'NAME', 'STATE_NAME', 'state', 'STATE'];
+        let stateName = null;
+        
+        for (const prop of possibleNameProps) {
+            if (feature.properties[prop]) {
+                stateName = feature.properties[prop].trim();
+                break;
+            }
+        }
+        
+        if (!stateName) return { fillColor: '#cccccc', weight: 1, opacity: 1, color: 'white', fillOpacity: 0.5 };
         
         const stateData = stateWeedData[stateName] || { count: 0, country: 'default' };
         const weedCount = stateData.count || 0;
-        const country = stateData.country;
-        
-        if (weedCount === 0) {
-            console.log(`No match found for "${stateName}" in weed count data`);
-        }
-
-        // Track this country for legend creation
-        if (country) {
-            countriesInData.add(country);
-        }
+        const country = stateData.country || 'default';
 
         return {
             fillColor: getColor(weedCount, country),
@@ -101,56 +82,48 @@ document.addEventListener('DOMContentLoaded', function() {
     /******************************
      * MAP INITIALIZATION
      ******************************/
-    // Set initial map height
     setMapHeight();
     window.addEventListener('resize', setMapHeight);
 
-    // Initialize map
     const map = L.map('map', {
         dragging: !L.Browser.mobile,
-        tap: !L.Browser.mobile
+        tap: !L.Browser.mobile,
+        worldCopyJump: true
     }).setView(mapConfig.center, mapConfig.zoom);
 
-    // Add tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
     /******************************
-     * DATA LOADING & PROCESSING
+     * DATA LOADING
      ******************************/
-    // Fetch state weed counts
     fetch('/api/state-weed-counts')
         .then(response => response.json())
         .then(data => {
-            // Store the data globally for reference
             stateWeedData = data;
-            console.log('State weed data received:', stateWeedData);
             
-            // Extract list of all countries represented in the data
-            Object.values(stateWeedData).forEach(stateData => {
-                if (stateData.country) {
-                    countriesInData.add(stateData.country);
-                }
-            });
-            console.log('Countries in data:', [...countriesInData]);
-
-            // Load all available GeoJSON files
-            // This assumes you have a standard naming convention for GeoJSON files
-            // Or you could create an endpoint that returns a list of available GeoJSON files
-            const geoJsonPromises = [];
+            // Get list of geojson files
+            const geojsonPath = '/static/data/';
+            const knownFiles = [
+                'us-states.geojson', 
+                'canada-provinces.geojson', 
+                'australia.geojson'
+                // Add new files here as needed
+            ];
             
-            // Add core GeoJSON files - in a more advanced implementation, you might
-            // fetch a list of available files from the server
-            geoJsonPromises.push(fetch('/static/data/us-states.geojson').then(response => response.json()));
-            geoJsonPromises.push(fetch('/static/data/canada-provinces.geojson').then(response => response.json()));
-            
-            // You could extend this with additional files as your application grows
-            // geoJsonPromises.push(fetch('/static/data/mexico-states.geojson').then(response => response.json()));
+            const geoJsonPromises = knownFiles.map(filename => 
+                fetch(geojsonPath + filename)
+                    .then(response => response.ok ? response.json() : Promise.reject(`Failed to load ${filename}`))
+                    .catch(error => {
+                        console.error(`Error loading ${filename}:`, error);
+                        return { type: 'FeatureCollection', features: [] };
+                    })
+            );
             
             Promise.all(geoJsonPromises)
             .then((results) => {
-                // Combine all features from all GeoJSON files
+                // Combine features from all geojson files
                 const combinedFeatures = [];
                 results.forEach(result => {
                     if (result.features && Array.isArray(result.features)) {
@@ -164,57 +137,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 /******************************
-                 * MAP LAYER CREATION
+                 * MAP INTERACTION
                  ******************************/
                 let previouslyClickedLayer = null;
                 let geojsonLayer = L.geoJson(combinedGeoJSON, {
                     style: styleFeature,
                     onEachFeature: function(feature, layer) {
-                        let stateName = feature.properties.name || feature.properties.NAME;
-                        stateName = stateName ? stateName.trim() : '';
+                        // Get state name from properties
+                        const possibleNameProps = ['name', 'NAME', 'STATE_NAME', 'state', 'STATE'];
+                        let stateName = null;
                         
-                        /******************************
-                         * EVENT HANDLERS
-                         ******************************/
+                        for (const prop of possibleNameProps) {
+                            if (feature.properties[prop]) {
+                                stateName = feature.properties[prop].trim();
+                                break;
+                            }
+                        }
+                        
+                        if (!stateName) return;
+                        
                         // Click event
                         layer.on('click', function(e) {
-                            // Reset style of previously clicked state
                             if (previouslyClickedLayer) {
                                 geojsonLayer.resetStyle(previouslyClickedLayer);
                             }
-
-                            // Store current layer as previously clicked
                             previouslyClickedLayer = layer;
-
+                            
                             fetch(`/api/state/${encodeURIComponent(stateName)}`)
                                 .then(response => response.json())
                                 .then(weeds => {
-                                    // Get the country for this state/province
                                     const stateData = stateWeedData[stateName] || {};
                                     const country = stateData.country || '';
                                     
-                                    // Update title with both state and country
                                     document.getElementById('state-title').textContent = 
                                         `Regulated Weeds in ${stateName}${country ? `, ${country}` : ''}`;
                                     
-                                    // Clear the table first
                                     const table = document.getElementById('species-table');
                                     
-                                    // Destroy existing DataTable if it exists
                                     if ($.fn.DataTable.isDataTable(table)) {
                                         $(table).DataTable().destroy();
-                                        // Clear the table contents after destroying
                                         $(table).empty();
-                                        // Re-add the header structure
                                         $(table).html('<thead><tr><th>Scientific Name</th><th>Family</th></tr></thead>');
                                     }
                         
-                                    // Initialize new DataTable
                                     $(table).DataTable({
-                                        stripe: false,
-                                        hover: true,
-                                        stripeClasses: [],
-                                        rowClass: '',
                                         data: weeds,
                                         columns: [
                                             { 
@@ -223,7 +189,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 width: '50%',
                                                 render: function(data, type, row) {
                                                     if (type === 'display' && data) {
-                                                        // Pass the canonical name as a parameter
                                                         return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank">${data || 'Unknown'}</a>`;
                                                     }
                                                     return data || 'Unknown';
@@ -233,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 data: 'family_name',
                                                 title: 'Family',
                                                 width: '50%',
-                                                render: function(data, type, row) {
+                                                render: function(data) {
                                                     return data || 'Unknown';
                                                 }
                                             }
@@ -242,90 +207,72 @@ document.addEventListener('DOMContentLoaded', function() {
                                         order: [[0, 'asc']],
                                         autoWidth: false,
                                         width: '100%',
-                                        language: {
-                                            search: 'Search:',
-                                            lengthMenu: 'Show _MENU_ entries',
-                                            info: 'Showing _START_ to _END_ of _TOTAL_ entries',
-                                            paginate: {
-                                                first: '«',
-                                                previous: '‹',
-                                                next: '›',
-                                                last: '»'
-                                            }
-                                        },
                                         initComplete: function() {
-                                            document.getElementById('state-species').classList.remove('d-none');
-                                            highlightResults();
+                                            const element = document.getElementById('state-species');
+                                            element.classList.remove('d-none');
+                                            element.classList.add('updated');
+                                            setTimeout(() => element.classList.remove('updated'), 1000);
+                                            
                                             if (L.Browser.mobile) {
-                                                document.getElementById('state-species')
-                                                    .scrollIntoView({ 
-                                                        behavior: 'smooth',
-                                                        block: 'start'
-                                                    });
+                                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                             }
                                         }
                                     });
+                                })
+                                .catch(error => {
+                                    console.error("Error fetching state data:", error);
+                                    document.getElementById('state-title').textContent = 
+                                        `Error loading data for ${stateName}`;
                                 });
                         });
 
                         // Hover effects
-                        layer.on('mouseover', function(e) {
-                            layer.setStyle({
-                                weight: 2,
-                                fillOpacity: 0.9
-                            });
+                        layer.on('mouseover', function() {
+                            layer.setStyle({ weight: 2, fillOpacity: 0.9 });
                         });
 
-                        layer.on('mouseout', function(e) {
+                        layer.on('mouseout', function() {
                             geojsonLayer.resetStyle(layer);
                             if (layer === previouslyClickedLayer) {
-                                layer.setStyle({
-                                    weight: 2,
-                                    fillOpacity: 0.9
-                                });
+                                layer.setStyle({ weight: 2, fillOpacity: 0.9 });
                             }
                         });
                     }
                 }).addTo(map);
-
-                /******************************
-                 * LEGEND CREATION
-                 ******************************/
-                let legend = L.control({ position: 'bottomright' });
-                legend.onAdd = function() {
-                    let div = L.DomUtil.create('div', 'legend');
-                    
-                    // Create legend entries for each country in the data
-                    // Sort them alphabetically for consistent display
-                    [...countriesInData].sort().forEach(country => {
-                        // Get the color scheme for this country
-                        const colorConfig = mapConfig.countryColors[country] || mapConfig.countryColors['default'];
-                        
-                        // Add a header for this country
-                        div.innerHTML += `<div style="margin-bottom:5px;"><strong>${country}</strong></div>`;
-                        
-                        // Add legend entries for each threshold
-                        for (let i = 0; i < colorConfig.thresholds.length; i++) {
-                            const threshold = colorConfig.thresholds[i];
-                            const nextThreshold = colorConfig.thresholds[i+1];
-                            
-                            div.innerHTML +=
-                                '<div><i style="background:' + getColor(threshold + 1, country) + '"></i> ' +
-                                threshold + (nextThreshold ? '&ndash;' + nextThreshold : '+') + '</div>';
-                        }
-                        
-                        // Add some spacing between countries
-                        if (country !== [...countriesInData].sort().pop()) {
-                            div.innerHTML += '<div style="margin:8px 0 5px 0;"></div>';
-                        }
-                    });
-
-                    return div;
-                };
-                legend.addTo(map);
+                
+                // Fit to a tighter view to zoom in more
+                const northAmerica = L.latLngBounds([
+                    [15, -140], // Southwest corner
+                    [70, -50]   // Northeast corner
+                ]);
+                
+                const australia = L.latLngBounds([
+                    [-45, 110], // Southwest corner
+                    [-10, 155]  // Northeast corner
+                ]);
+                
+                // Create a bounds object that encompasses both regions
+                // This creates a view that shows both continents clearly
+                map.fitBounds(northAmerica.extend(australia), {
+                    padding: [20, 20],
+                    maxZoom: 3
+                });
             })
             .catch(error => {
-                console.error("Error loading GeoJSON files:", error);
+                console.error("Error processing GeoJSON:", error);
+                const mapElement = document.getElementById('map');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'map-error-message';
+                errorDiv.innerHTML = '<strong>Error:</strong> Failed to load map data.';
+                mapElement.appendChild(errorDiv);
             });
+        })
+        .catch(error => {
+            console.error("Error fetching state data:", error);
+            const mapElement = document.getElementById('map');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'map-error-message';
+            errorDiv.innerHTML = '<strong>Error:</strong> Failed to load weed count data.';
+            mapElement.appendChild(errorDiv);
         });
 });
