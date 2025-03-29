@@ -229,6 +229,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Hover effects
                         layer.on('mouseover', function() {
                             layer.setStyle({ weight: 2, fillOpacity: 0.9 });
+                            
+                            // Get weed count data for tooltip
+                            const stateData = stateWeedData[stateName] || {};
+                            const weedCount = stateData.count || 0;
+                            const country = stateData.country || '';
+                            
+                            // Create tooltip content
+                            const tooltipContent = `
+                                <strong>${stateName}${country ? `, ${country}` : ''}</strong><br>
+                                Regulated Weeds: ${weedCount}
+                            `;
+                            
+                            // Add or update tooltip
+                            layer.bindTooltip(tooltipContent, {
+                                sticky: true,
+                                direction: 'top',
+                                opacity: 0.9
+                            }).openTooltip();
                         });
 
                         layer.on('mouseout', function() {
@@ -240,23 +258,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }).addTo(map);
                 
-                // Fit to a tighter view to zoom in more
-                const northAmerica = L.latLngBounds([
-                    [15, -140], // Southwest corner
-                    [70, -50]   // Northeast corner
-                ]);
-                
-                const australia = L.latLngBounds([
-                    [-45, 110], // Southwest corner
-                    [-10, 155]  // Northeast corner
-                ]);
-                
-                // Create a bounds object that encompasses both regions
-                // This creates a view that shows both continents clearly
-                map.fitBounds(northAmerica.extend(australia), {
-                    padding: [20, 20],
-                    maxZoom: 3
-                });
+                try {
+                    map.fitBounds(geojsonLayer.getBounds(), {
+                        padding: [20, 20],
+                        maxZoom: 3 // Limit max zoom level
+                    });
+                    
+                    setTimeout(() => {
+                        const currentZoom = map.getZoom();
+                        map.setZoom(currentZoom + 1.5);
+                        
+                        const center = map.getCenter();
+                        map.panTo([center.lat, center.lng - 30]);
+                    }, 100);
+                } catch (e) {
+                    console.error('Error fitting map to bounds:', e);
+                    map.setView([30, -30], 3);
+                }
             })
             .catch(error => {
                 console.error("Error processing GeoJSON:", error);
