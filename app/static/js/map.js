@@ -258,23 +258,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }).addTo(map);
                 
-                try {
-                    map.fitBounds(geojsonLayer.getBounds(), {
-                        padding: [20, 20],
-                        maxZoom: 3 // Limit max zoom level
-                    });
+                const northAmericaAndAustraliaBounds = [
+                    [-45, -170],  // Southwest corner - includes Australia and North America
+                    [70, 155]     // Northeast corner - includes Australia and North America
+                ];
+                
+                map.fitBounds(northAmericaAndAustraliaBounds, {
+                    padding: [20, 20],
+                    maxZoom: 3
+                });
+                
+                setTimeout(() => {
+                    // Add debugging to verify execution
+                    console.log("Adjusting map view...");
                     
-                    setTimeout(() => {
-                        const currentZoom = map.getZoom();
-                        map.setZoom(currentZoom + 1.5);
-                        
+                    const isMobile = window.innerWidth < 768;
+                    const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+                    
+                    if (isMobile) {
+                        map.setView([25, -60], 1);
+                    } else if (isTablet) {
+                        map.setView([25, -60], 1.5);
+                    } else {
                         const center = map.getCenter();
-                        map.panTo([center.lat, center.lng - 30]);
-                    }, 100);
-                } catch (e) {
-                    console.error('Error fitting map to bounds:', e);
-                    map.setView([30, -30], 3);
-                }
+                        map.panTo([center.lat - 5, center.lng - 15]);
+                        map.setZoom(2.2); // Specific zoom level that works well for this data
+                    }
+                }, 200);
             })
             .catch(error => {
                 console.error("Error processing GeoJSON:", error);
