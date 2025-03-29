@@ -162,43 +162,52 @@ class SpeciesDatabase(DatabaseBase):
         finally:
             conn.close()
 
-    def get_states_by_usage_key(self, usage_key: int) -> List[str]:
+    def get_states_by_usage_key(self, usage_key: int) -> Dict[str, List[str]]:
         """
-        Get states where a weed with a specific usage key is regulated.
+        Get states where a weed with a specific usage key is regulated,
+        grouped by country.
         
         Parameters:
         usage_key (int): The GBIF usage key
         
         Returns:
-        List[str]: List of state/province names where the weed is regulated
+        Dict[str, List[str]]: Dictionary with countries as keys and list of states as values
+                             If federally regulated, returns "Federal Level" as the only state
         """
         conn = self.get_connection()
         try:
-            # Get all state regulations
+            # Get all regulations for this usage key
             cursor = conn.execute('''
                 SELECT DISTINCT w.state, w.country
                 FROM weeds w
                 WHERE w.usage_key = ?
-                ORDER BY 
-                    CASE WHEN w.state = 'federal' THEN 1 ELSE 0 END,
-                    w.country,
-                    w.state
+                ORDER BY w.state
             ''', (usage_key,))
             
             results = cursor.fetchall()
             
-            # Format state names
-            formatted_states = []
+            # Group by country
+            regulations_by_country = {}
+            
             for row in results:
                 state = row['state']
                 country = row['country']
                 
+                # Initialize country entry if it doesn't exist
+                if country not in regulations_by_country:
+                    regulations_by_country[country] = []
+                
+                # If there's a federal regulation, we'll handle it specially
                 if state == 'federal':
-                    formatted_states.append(f"Federal ({country})")
-                else:
-                    # Here you could map state codes to full names if desired
-                    formatted_states.append(state)
+                    # Clear any existing states for this country and just use "Federal Level"
+                    regulations_by_country[country] = ["Federal Level"]
+                    # Skip adding more states for this country since it's federally regulated
+                    continue
+                
+                # Only add the state if the country isn't already set to federal level
+                if regulations_by_country[country] != ["Federal Level"]:
+                    regulations_by_country[country].append(state)
             
-            return formatted_states
+            return regulations_by_country
         finally:
             conn.close()

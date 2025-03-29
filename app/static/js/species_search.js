@@ -77,24 +77,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return response.json();
             })
-            .then(states => {
+            .then(regulationsByCountry => {
                 const statesList = document.getElementById('statesList');
                 statesList.innerHTML = '';
                 
-                if (states.length === 0) {
+                if (Object.keys(regulationsByCountry).length === 0) {
                     statesList.innerHTML = `
                         <div class="list-group-item">
                             <p class="mb-1">No regulations found for this species.</p>
                         </div>
                     `;
                 } else {
-                    states.forEach(state => {
-                        statesList.innerHTML += `
-                            <div class="list-group-item">
-                                <h5 class="mb-1">${state}</h5>
-                            </div>
-                        `;
-                    });
+                    // For each country, display the regulations
+                    for (const [country, states] of Object.entries(regulationsByCountry)) {
+                        // Create a card for each country
+                        let countryElement = document.createElement('div');
+                        countryElement.className = 'list-group-item';
+                        
+                        // Create country header
+                        let countryHeader = document.createElement('h5');
+                        countryHeader.className = 'mb-2';
+                        countryHeader.textContent = country;
+                        countryElement.appendChild(countryHeader);
+                        
+                        // Add states info
+                        if (states.length === 1 && states[0] === "Federal Level") {
+                            // If federally regulated, display a special message
+                            let federalInfo = document.createElement('p');
+                            federalInfo.className = 'mb-0 text-primary';
+                            federalInfo.textContent = 'Regulated at the Federal Level';
+                            countryElement.appendChild(federalInfo);
+                        } else {
+                            // Create a paragraph to hold all states as a row
+                            let statesRow = document.createElement('p');
+                            statesRow.className = 'mb-0';
+                            statesRow.textContent = states.join(', ');
+                            countryElement.appendChild(statesRow);
+                        }
+                        
+                        statesList.appendChild(countryElement);
+                    }
                 }
                 
                 document.getElementById('results').classList.remove('d-none');

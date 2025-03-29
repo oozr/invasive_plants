@@ -51,9 +51,13 @@ def search_species():
 
 @species.route('/api/weed-states/by-key/<int:usage_key>')
 def weed_states_by_key(usage_key):
-    """Get states where a weed is regulated by GBIF usage key (more accurate)"""
-    results = species_db.get_states_by_usage_key(usage_key)
-    return jsonify(results)
+    """Get states where a weed is regulated by GBIF usage key grouped by country"""
+    try:
+        regulations_by_country = species_db.get_states_by_usage_key(usage_key)
+        return jsonify(regulations_by_country)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching states for usage key {usage_key}: {str(e)}")
+        return jsonify({"error": "Failed to fetch states"}), 500
 
 @species.route('/api/weed-states/by-name/<string:weed_name>')
 def weed_states_by_name(weed_name):
