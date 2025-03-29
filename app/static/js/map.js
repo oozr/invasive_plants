@@ -7,19 +7,19 @@ document.addEventListener('DOMContentLoaded', function() {
         zoom: 2,
         countryColors: {
             'US': {
-                thresholds: [0, 100, 135, 170, 205, 240],
+                thresholds: [0, 100, 150, 200, 250, 300],
                 scheme: ['#FFEDA0', '#FEB24C', '#FD8D3C', '#FC4E2A', '#E31A1C', '#BD0026', '#800026']
             },
             'Canada': {
-                thresholds: [0, 100, 135, 170, 205, 240],
+                thresholds: [0, 100, 150, 200, 250, 300],
                 scheme: ['#f2f0f7', '#d8daeb', '#bcbddc', '#9e9ac8', '#807dba', '#6a51a3', '#4a1486']
             },
             'Australia': {
-                thresholds: [0, 100, 135, 170, 205, 240],
+                thresholds: [0, 100, 150, 200, 250, 300],
                 scheme: ['#edf8e9', '#c7e9c0', '#a1d99b', '#74c476', '#41ab5d', '#238b45', '#005a32']
             },
             'default': {
-                thresholds: [0, 100, 135, 170, 205, 240],
+                thresholds: [0, 100, 150, 200, 250, 300],
                 scheme: ['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5']
             }
         }
