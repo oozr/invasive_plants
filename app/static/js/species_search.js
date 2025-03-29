@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         common_name: weed.common_name || weed.canonical_name,
                         canonical_name: weed.canonical_name,
                         family_name: weed.family_name,
+                        synonyms: weed.synonyms,
                         usage_key: weed.usage_key
                     }))
                 };
@@ -65,6 +66,15 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('weedTitle').textContent = selectedWeed.common_name;
         document.getElementById('weedCanonicalName').textContent = selectedWeed.canonical_name;
         document.getElementById('weedFamily').textContent = selectedWeed.family_name || 'Not available';
+        
+        const synonymsSection = document.getElementById('synonymsSection');
+        const weedSynonyms = document.getElementById('weedSynonyms');
+        if (selectedWeed.synonyms && selectedWeed.synonyms.trim() !== '') {
+            weedSynonyms.textContent = selectedWeed.synonyms;
+            synonymsSection.classList.remove('d-none');
+        } else {
+            synonymsSection.classList.add('d-none');
+        }
         
         const gbifLink = document.getElementById('gbifLink');
         gbifLink.href = `https://www.gbif.org/species/${selectedWeed.usage_key}`;

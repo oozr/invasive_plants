@@ -41,6 +41,7 @@ class SpeciesDatabase(DatabaseBase):
                     COALESCE(common_name, canonical_name) as common_name,
                     canonical_name,
                     family_name,
+                    synonyms,
                     usage_key,
                     -- Create a priority score for each result
                     CASE 
