@@ -85,11 +85,15 @@ document.addEventListener('DOMContentLoaded', function() {
     setMapHeight();
     window.addEventListener('resize', setMapHeight);
 
+    // Initialize map with options to prevent wrapping around the world
     const map = L.map('map', {
         dragging: !L.Browser.mobile,
         tap: !L.Browser.mobile,
-        worldCopyJump: true
-    }).setView(mapConfig.center, mapConfig.zoom);
+        worldCopyJump: false,
+        maxBoundsViscosity: 1.0, // Makes the bounds "hard" - can't drag outside them
+        attributionControl: true,
+        zoomControl: true
+    });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
@@ -258,31 +262,62 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }).addTo(map);
                 
+                // Use a specific bounds that focuses just on the three countries we care about
                 const northAmericaAndAustraliaBounds = [
                     [-45, -170],  // Southwest corner - includes Australia and North America
                     [70, 155]     // Northeast corner - includes Australia and North America
                 ];
                 
+                // Set the view to our specific bounds
                 map.fitBounds(northAmericaAndAustraliaBounds, {
                     padding: [20, 20],
                     maxZoom: 3
                 });
                 
+                // Restrict the map to show our target areas only once (no wrapping)
+                map.setMaxBounds([
+                    [-90, -190],  // Southwest corner - slightly beyond our data
+                    [90, 190]     // Northeast corner - slightly beyond our data
+                ]);
+                
+                // Turn off world wrapping to prevent duplicate continents
+                map.options.worldCopyJump = false;
+                
+                // Center the view slightly to better frame the continents
                 setTimeout(() => {
-                    // Add debugging to verify execution
                     console.log("Adjusting map view...");
                     
+                    // Check device width to provide better mobile experience
                     const isMobile = window.innerWidth < 768;
                     const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
                     
                     if (isMobile) {
-                        map.setView([25, -60], 1);
+                        // For mobile, use a view that shows one continent clearly
+                        // and allows panning to the other
+                        console.log("Mobile device detected - using mobile-specific view");
+                        
+                        // Start with a view centered on North America
+                        map.setView([40, -100], 2.5);
+                        
+                        // Add instructions for mobile users
+                        const mapElement = document.getElementById('map');
+                        const mobileMsg = document.createElement('div');
+                        mobileMsg.className = 'mobile-map-instructions';
+                        mobileMsg.innerHTML = '<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.8); padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 1000; width: 80%; text-align: center;">Pan right to see Australia</div>';
+                        mapElement.appendChild(mobileMsg);
+                        
+                        // Auto-remove the message after 5 seconds
+                        setTimeout(() => {
+                            mobileMsg.style.display = 'none';
+                        }, 5000);
                     } else if (isTablet) {
-                        map.setView([25, -60], 1.5);
+                        // Tablet-specific view
+                        console.log("Tablet device detected - using tablet-specific view");
+                        map.setView([30, -80], 2);
                     } else {
-                        const center = map.getCenter();
-                        map.panTo([center.lat - 5, center.lng - 15]);
-                        map.setZoom(2.2); // Specific zoom level that works well for this data
+                        // Desktop - adjust view to show both continents
+                        console.log("Desktop detected - adjusting desktop view");
+                        map.setView([20, -60], 2.2); // Specific zoom level that works well for this data
                     }
                 }, 200);
             })
