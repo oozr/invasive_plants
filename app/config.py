@@ -11,6 +11,10 @@ class Config:
    # Database configuration
    DATABASE_PATH = os.getenv('DATABASE_PATH', 'weeds.db')
    
+   # Email configuration
+   EMAIL_USERNAME = os.environ.get('EMAIL_USERNAME')
+   EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+
    # Site configuration
    SITE_NAME = "Regulated Weeds Database"
    SITE_AUTHOR = "Regulated Weeds Database Team"

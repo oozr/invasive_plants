@@ -1,46 +1,130 @@
 {% extends "base.html" %}
+{% block title %}About - Regulated Plants Database{% endblock %}
+
 {% block content %}
-<h1 class="page-title">About</h1>
-<p class="lead">Learn about our project and get in touch</p>
+<h1 class="page-title">About the Regulated Plants Database</h1>
+<p class="lead">Learn about our project, methodology, and get in touch with our team</p>
 
-<section class="about-section">
-    <h2>What is the Regulated Weeds Database?</h2>
-    <p>The Regulated Weeds Database is a comprehensive resource that tracks and displays information about regulated weed species across different U.S. states, Canadian provinces, and Australia. Our goal is to provide researchers, agricultural professionals, and the public with easy access to information about which weeds are regulated in different jurisdictions.</p>
-    <p>This project compiles data from governmental agricultural authorities to create an interactive map and searchable database of regulated weed species.</p>
-</section>
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <section class="about-section">
+            <h2>What is the Regulated Plants Database?</h2>
+            <p>The Regulated Plants Database is a comprehensive resource that tracks and displays information about regulated invasive plant species across different U.S. states, Canadian provinces, and Australia. Our goal is to provide researchers, agricultural professionals, and the public with easy access to information about which plants are regulated in different jurisdictions.</p>
+            <p>This project compiles data from governmental agricultural authorities to create an interactive map and searchable database of regulated invasive species, making it easier to understand the complex regulatory landscape surrounding these plants.</p>
+        </section>
 
-<section class="about-section">
-    <h2>The Team</h2>
-    <p>The Regulated Weeds Database is a project led by researchers specializing in plant ecology, invasive species management, and agricultural policy. Our interdisciplinary team combines expertise in botany, data science, and regulatory frameworks to create a comprehensive resource for understanding weed regulations.</p>
-</section>
+        <section class="about-section">
+            <h2>Our Mission</h2>
+            <p>Our mission is to create a centralized, accessible repository of information about regulated invasive plants to help:</p>
+            <ul class="data-list">
+                <li>Researchers track regulatory trends across regions</li>
+                <li>Agricultural professionals identify plants of concern</li>
+                <li>Policymakers develop informed regulation strategies</li>
+                <li>Gardeners and land managers make responsible planting decisions</li>
+                <li>Educational institutions teach about invasive species management</li>
+            </ul>
+        </section>
 
-<section class="about-section">
-    <h2>Contact</h2>
-    <p>For questions, suggestions, or corrections, please contact us at: <a href="mailto:contact@example.com">contact@example.com</a></p>
-    
-    <div class="contact-details">
-        <p><strong>Mailing Address:</strong><br>
-        Regulated Weeds Database<br>
-        Department of Plant Sciences<br>
-        University Example<br>
-        City, State 12345</p>
-        
-        <p><strong>Phone:</strong> (123) 456-7890</p>
+        <section class="about-section">
+            <h2>The Team</h2>
+            <p>The Regulated Plants Database is a project led by researchers at the University of California, Davis Department of Plant Sciences, specializing in plant ecology, invasive species management, and agricultural policy. Our interdisciplinary team combines expertise in botany, data science, and regulatory frameworks to create a comprehensive resource for understanding plant regulations.</p>
+            
+            <div class="team-members mt-4">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="team-member">
+                            <h4>Dr. Jane Smith</h4>
+                            <p class="text-muted">Project Lead, Plant Ecologist</p>
+                            <p>Specializing in invasive species dynamics and ecological impacts of non-native plants.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="team-member">
+                            <h4>Dr. Michael Chen</h4>
+                            <p class="text-muted">Data Scientist</p>
+                            <p>Expert in biodiversity data management and geospatial analysis of species distributions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="about-section">
+            <h2>Acknowledgements</h2>
+            <p>This project was made possible through the support and collaboration of various organizations and individuals who contributed data, expertise, and resources:</p>
+            
+            <ul class="data-list">
+                <li>State and provincial agricultural departments across North America</li>
+                <li>The United Nations University Institute for Water, Environment and Health</li>
+                <li>National invasive species councils</li>
+                <li>University extension services</li>
+                <li>Botanical researchers and taxonomists</li>
+                <li>Agricultural policy experts</li>
+            </ul>
+            
+            <p>We are grateful for their contributions to this ongoing effort.</p>
+        </section>
     </div>
-</section>
 
-<section class="about-section">
-    <h2>Acknowledgements</h2>
-    <p>This project was made possible through the support and collaboration of various organizations and individuals who contributed data, expertise, and resources:</p>
-    
-    <ul class="data-list">
-        <li>State and provincial agricultural departments across North America</li>
-        <li>National invasive species councils</li>
-        <li>University extension services</li>
-        <li>Botanical researchers</li>
-        <li>Agricultural policy experts</li>
-    </ul>
-    
-    <p>We are grateful for their contributions to this ongoing effort.</p>
-</section>
+    <div class="col-lg-4">
+        <div class="contact-card">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title">Contact Us</h3>
+                    <p>Have questions, suggestions, or corrections? Get in touch with our team.</p>
+                    
+                    <form id="contact-form" class="mt-4" method="POST" action="{{ url_for('about.contact') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject</label>
+                            <select class="form-select" id="subject" name="subject">
+                                <option value="general">General Inquiry</option>
+                                <option value="data">Data Correction</option>
+                                <option value="collaboration">Collaboration Request</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                        </div>
+                        <!-- Honeypot field to catch bots -->
+                        <div style="display:none;">
+                            <label for="website">Website</label>
+                            <input type="text" name="website" id="website">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Send Message</button>
+                    </form>
+                    
+                    <div class="contact-details mt-4">
+                        <h5>Alternative Contact Methods</h5>
+                        <p><strong>Email:</strong><br>
+                        <a href="mailto:contact@regulatedplants.org">contact@regulatedplants.org</a></p>
+                        
+                        <p><strong>Mailing Address:</strong><br>
+                        Regulated Plants Database<br>
+                        Department of Plant Sciences<br>
+                        University of California, Davis<br>
+                        One Shields Avenue<br>
+                        Davis, CA 95616</p>
+                        
+                        <p><strong>Phone:</strong> (530) 555-1234</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/contact_form.js') }}"></script>
 {% endblock %}

@@ -1,7 +1,10 @@
 # views.py
 import csv
 import os
-from flask import Blueprint, render_template, jsonify, current_app, request
+from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect
+from flask_mail import Message
+from app import mail, limiter
+
 from app.utils.state_database import StateDatabase
 from app.utils.species_database import SpeciesDatabase
 from app.utils.generate_blog import BlogGenerator
@@ -118,9 +121,71 @@ def index():
     
     return render_template('method.html', sources=sources)
 
+# About routes
 @about.route('/')
 def index():
     return render_template('about.html')
+
+@about.route('/contact', methods=['POST'])
+@limiter.limit("5 per hour")  # Apply rate limiting to this route
+def contact():
+    """Handle contact form submission and send email"""
+    # Check for honeypot field (bot detection)
+    if request.form.get('website'):
+        # This is likely a bot as real users won't fill the hidden field
+        return redirect(url_for('about.index'))
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        subject_type = request.form.get('subject')
+        message_text = request.form.get('message')
+        
+        # Form validation
+        if not all([name, email, subject_type, message_text]):
+            flash('All fields are required', 'error')
+            return redirect(url_for('about.index'))
+        
+        # Create email subject based on the form's subject dropdown
+        subject_map = {
+            'general': 'General Inquiry',
+            'data': 'Data Correction Request',
+            'collaboration': 'Collaboration Request',
+            'other': 'Other Inquiry'
+        }
+        
+        email_subject = f"[Regulated Plants] {subject_map.get(subject_type, 'Contact Form')}"
+        
+        # Compose email message
+        email_body = f"""
+        You have received a new message from the Regulated Plants contact form:
+        
+        Name: {name}
+        Email: {email}
+        Subject: {subject_map.get(subject_type, 'Not specified')}
+        
+        Message:
+        {message_text}
+        """
+        
+        try:
+            # Create a message object
+            msg = Message(
+                subject=email_subject,
+                recipients=[current_app.config.get('EMAIL_USERNAME')],  # Use your configured email
+                body=email_body,
+                reply_to=email  # Set reply-to as the sender's email
+            )
+            
+            # Send the email
+            mail.send(msg)
+            
+            flash('Thank you for your message! We will get back to you soon.', 'success')
+        except Exception as e:
+            current_app.logger.error(f"Error sending email: {str(e)}")
+            flash('There was an issue sending your message. Please try again later.', 'error')
+        
+        return redirect(url_for('about.index'))
 
 @home.route('/debug/table-check')
 def check_tables():

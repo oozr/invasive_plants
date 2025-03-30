@@ -13,3 +13,8 @@ python-dotenv==1.0.0
 # Blog Processing
 markdown==3.4.3
 python-frontmatter==1.0.0
+
+# Contact Form
+Flask-Mail==0.9.1
+Flask-Limiter==2.8.1
+Flask-WTF==1.0.1
