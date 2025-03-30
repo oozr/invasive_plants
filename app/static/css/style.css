@@ -341,13 +341,27 @@ table.dataTable tbody td a:hover {
    margin-bottom: 2rem;
 }
 
-/* Team Member Styling */
+/* Team Photo Styling */
+.team-photo-container {
+   text-align: center;
+   margin-bottom: 1rem;
+}
+
+.team-photo {
+   width: 120px;
+   height: 120px;
+   object-fit: cover;
+   border: 3px solid #fff;
+   box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
 .team-member {
    padding: 1.25rem;
    border-radius: 0.5rem;
    background-color: #f8f9fa;
    height: 100%;
    transition: all 0.3s ease;
+   text-align: center;
 }
 
 .team-member:hover {
@@ -358,6 +372,21 @@ table.dataTable tbody td a:hover {
 .team-member h4 {
    margin-bottom: 0.5rem;
    color: #212529;
+}
+
+/* Mobile Responsiveness for Team */
+@media (max-width: 767.98px) {
+   .team-member {
+       margin-bottom: 1.5rem;
+       max-width: 400px;
+       margin-left: auto;
+       margin-right: auto;
+   }
+   
+   .team-photo {
+       width: 100px;
+       height: 100px;
+   }
 }
 
 /* Contact Card */
