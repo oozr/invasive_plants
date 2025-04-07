@@ -18,7 +18,7 @@ class Config:
    # Site configuration
    SITE_NAME = "Regulated Weeds Database"
    SITE_AUTHOR = "Regulated Weeds Database Team"
-   BASE_URL = os.getenv('BASE_URL', 'https://oozr.com')
+   BASE_URL = os.getenv('BASE_URL', 'https://regulatedplants.org')
 
    # Development vs Production
    DEBUG = os.getenv('FLASK_DEBUG', False)
