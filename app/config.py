@@ -16,8 +16,8 @@ class Config:
    EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 
    # Site configuration
-   SITE_NAME = "Regulated Weeds Database"
-   SITE_AUTHOR = "Regulated Weeds Database Team"
+   SITE_NAME = "Regulated Plants Database"
+   SITE_AUTHOR = "Regulated Plants Database Team"
    BASE_URL = os.getenv('BASE_URL', 'https://regulatedplants.org')
 
    # Development vs Production
