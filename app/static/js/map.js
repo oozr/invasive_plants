@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     const country = stateData.country || '';
                                     
                                     document.getElementById('state-title').textContent = 
-                                        `Regulated Weeds in ${stateName}${country ? `, ${country}` : ''}`;
+                                        `Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
                                     
                                     const table = document.getElementById('species-table');
                                     
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Create tooltip content
                             const tooltipContent = `
                                 <strong>${stateName}${country ? `, ${country}` : ''}</strong><br>
-                                Regulated Weeds: ${weedCount}
+                                Regulated Plants: ${weedCount}
                             `;
                             
                             // Add or update tooltip
