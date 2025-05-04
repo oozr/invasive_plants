@@ -3,7 +3,7 @@ import csv
 import os
 from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect
 from flask_mail import Message
-from app import mail, limiter
+from app import mail, limiter, recaptcha
 
 from app.utils.state_database import StateDatabase
 from app.utils.species_database import SpeciesDatabase
@@ -133,6 +133,11 @@ def contact():
     # Check for honeypot field (bot detection)
     if request.form.get('website'):
         # This is likely a bot as real users won't fill the hidden field
+        return redirect(url_for('about.index'))
+    
+    # Verify reCAPTCHA
+    if not recaptcha.verify():
+        flash('Please complete the reCAPTCHA verification.', 'error')
         return redirect(url_for('about.index'))
     
     if request.method == 'POST':
