@@ -6,7 +6,7 @@ load_dotenv(override=False)
 
 class Config:
    # Secret key for sessions/cookies
-   SECRET_KEY = os.getenv('SECRET_KEY', 'a3ed33e1cb2bee0b25c62741bbc3d671')
+   SECRET_KEY = os.getenv('SECRET_KEY')
    
    # Database configuration
    DATABASE_PATH = os.getenv('DATABASE_PATH', 'weeds.db')
@@ -16,8 +16,8 @@ class Config:
    EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 
    # reCAPTCHA configuration  
-   RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY', '6Ld2jS0rAAAAAGS3OJw-NZQyN9--6z4PxlZ69mqM')
-   RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '6Ld2jS0rAAAAANSb4IvHqVTnEEs_o7zTTydv00iF')
+   RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY')
+   RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY')
 
    # Site configuration
    SITE_NAME = "Regulated Plants Database"
