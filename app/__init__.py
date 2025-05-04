@@ -5,7 +5,7 @@ from flask_wtf.csrf import CSRFProtect
 from app.config import Config
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_recaptcha import ReCaptcha
+from app.utils.custom_recaptcha import CustomReCaptcha
 
 mail = Mail()
 csrf = CSRFProtect()
@@ -13,7 +13,7 @@ limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200 per day", "50 per hour"]
 )
-recaptcha = ReCaptcha()
+recaptcha = CustomReCaptcha()
 
 __all__ = ['mail', 'csrf', 'limiter', 'recaptcha', 'create_app']
 
@@ -32,7 +32,6 @@ def create_app():
     # reCAPTCHA configuration
     app.config['RECAPTCHA_SITE_KEY'] = app.config.get('RECAPTCHA_SITE_KEY')
     app.config['RECAPTCHA_SECRET_KEY'] = app.config.get('RECAPTCHA_SECRET_KEY')
-    app.config['RECAPTCHA_OPTIONS'] = {'theme': 'light'}
     
     # Initialize extensions
     mail.init_app(app)
