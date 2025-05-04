@@ -15,9 +15,9 @@ class Config:
    EMAIL_USERNAME = os.environ.get('EMAIL_USERNAME')
    EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 
-   # reCAPTCHA configuration
-   RECAPTCHA_SITE_KEY = os.environ.get('6Ld2jS0rAAAAAGS3OJw-NZQyN9--6z4PxlZ69mqM')
-   RECAPTCHA_SECRET_KEY = os.environ.get('6Ld2jS0rAAAAANSb4IvHqVTnEEs_o7zTTydv00iF')
+   # reCAPTCHA configuration  
+   RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY', '6Ld2jS0rAAAAAGS3OJw-NZQyN9--6z4PxlZ69mqM')
+   RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '6Ld2jS0rAAAAANSb4IvHqVTnEEs_o7zTTydv00iF')
 
    # Site configuration
    SITE_NAME = "Regulated Plants Database"
