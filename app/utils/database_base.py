@@ -56,9 +56,10 @@ class DatabaseBase:
         all mappable territories are in the states_country table, even if they don't
         have specific weed entries.
         """
-        # Paths to GeoJSON files (adjust as needed based on your project structure)
-        us_geojson_path = os.path.join('app', 'static', 'data', 'us-states.geojson')
-        canada_geojson_path = os.path.join('app', 'static', 'data', 'canada-provinces.geojson')
+        # Updated paths to match your current folder structure
+        us_geojson_path = os.path.join('app', 'static', 'data', 'geographic', 'us.geojson')
+        canada_geojson_path = os.path.join('app', 'static', 'data', 'geographic', 'canada.geojson')
+        australia_geojson_path = os.path.join('app', 'static', 'data', 'geographic', 'australia.geojson')
         
         territories = []
         
@@ -89,6 +90,20 @@ class DatabaseBase:
                 print(f"Warning: Canada GeoJSON file not found at {canada_geojson_path}")
         except Exception as e:
             print(f"Error loading Canada GeoJSON: {e}")
+        
+        # Try to load Australian states/territories
+        try:
+            if os.path.exists(australia_geojson_path):
+                with open(australia_geojson_path, 'r') as f:
+                    data = json.load(f)
+                    for feature in data['features']:
+                        name = feature['properties'].get('name') or feature['properties'].get('NAME')
+                        if name:
+                            territories.append((name.strip(), 'Australia'))
+            else:
+                print(f"Warning: Australia GeoJSON file not found at {australia_geojson_path}")
+        except Exception as e:
+            print(f"Error loading Australia GeoJSON: {e}")
         
         # If we found territories, add them to the database
         if territories:

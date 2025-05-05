@@ -108,10 +108,10 @@ document.addEventListener('DOMContentLoaded', function() {
             stateWeedData = data;
             
             // Get list of geojson files
-            const geojsonPath = '/static/data/';
+            const geojsonPath = '/static/data/geographic/';
             const knownFiles = [
-                'us-states.geojson', 
-                'canada-provinces.geojson', 
+                'us.geojson', 
+                'canada.geojson', 
                 'australia.geojson'
                 // Add new files here as needed
             ];
