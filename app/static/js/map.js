@@ -292,28 +292,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
                     
                     if (isMobile) {
-                        // For mobile, use a view that shows one continent clearly
-                        // and allows panning to the other
-                        console.log("Mobile device detected - using mobile-specific view");
+                        // For mobile, focus on the Americas while keeping a reasonable zoom level
+                        console.log("Mobile device detected - using Americas-centered view");
                         
-                        // Start with a view centered on North America
-                        map.setView([40, -100], 2.5);
+                        // Center on the Americas
+                        map.setView([30, -100], 1);
                         
-                        // Add instructions for mobile users
-                        const mapElement = document.getElementById('map');
-                        const mobileMsg = document.createElement('div');
-                        mobileMsg.className = 'mobile-map-instructions';
-                        mobileMsg.innerHTML = '<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.8); padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 1000; width: 80%; text-align: center;">Pan right to see Australia</div>';
-                        mapElement.appendChild(mobileMsg);
-                        
-                        // Auto-remove the message after 5 seconds
-                        setTimeout(() => {
-                            mobileMsg.style.display = 'none';
-                        }, 5000);
                     } else if (isTablet) {
                         // Tablet-specific view
                         console.log("Tablet device detected - using tablet-specific view");
-                        map.setView([30, -80], 2);
+                        map.setView([20, 0], 2);
                     } else {
                         // Desktop - adjust view to show both continents
                         console.log("Desktop detected - adjusting desktop view");
