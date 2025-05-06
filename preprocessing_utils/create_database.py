@@ -13,7 +13,7 @@ def clean_value(value):
         return None
     return value
 
-def create_database(csv_folder="./data"):
+def create_database(csv_folder=".data"):
     """Create SQLite database from the most recent weed list CSV in the specified folder"""
     # Find the most recent CSV file
     csv_files = glob.glob(os.path.join(csv_folder, "*.csv"))
@@ -141,7 +141,7 @@ def create_database(csv_folder="./data"):
 
 if __name__ == "__main__":
     # You can change this path to wherever you keep your CSV files
-    data_folder = "./data"
+    data_folder = "preprocessing_utils/data"
     
     # Create the data folder if it doesn't exist
     os.makedirs(data_folder, exist_ok=True)
