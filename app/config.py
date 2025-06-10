@@ -6,12 +6,23 @@ load_dotenv(override=False)
 
 class Config:
    # Secret key for sessions/cookies
-   SECRET_KEY = os.getenv('SECRET_KEY', 'a3ed33e1cb2bee0b25c62741bbc3d671')
+   SECRET_KEY = os.getenv('SECRET_KEY')
    
+   # Database configuration
+   DATABASE_PATH = os.getenv('DATABASE_PATH', 'weeds.db')
+   
+   # Email configuration
+   EMAIL_USERNAME = os.environ.get('EMAIL_USERNAME')
+   EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+
+   # reCAPTCHA configuration  
+   RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY')
+   RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY')
+
    # Site configuration
-   SITE_NAME = "Regulated Weeds Database"
-   SITE_AUTHOR = "Regulated Weeds Database Team"
-   BASE_URL = os.getenv('BASE_URL', 'https://oozr.com')
+   SITE_NAME = "Regulated Plants Database"
+   SITE_AUTHOR = "Regulated Plants Database Team"
+   BASE_URL = os.getenv('BASE_URL', 'https://regulatedplants.org')
 
    # Development vs Production
    DEBUG = os.getenv('FLASK_DEBUG', False)

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Methodology</h1>
+<p class="lead">Our systematic approach to compiling regulated plant species information</p>
+
+<!-- Debug information -->
+{% if debug_message %}
+<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin-bottom: 20px; border-radius: 4px;">
+    <h4>Debug Information (only visible during development):</h4>
+    <p>{{ debug_message }}</p>
+    <p>Number of countries: {{ grouped_sources|length }}</p>
+    <p>Countries: 
+    {% for country in grouped_sources.keys() %}
+        {{ country }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+    </p>
+</div>
+{% endif %}
+
+<section class="about-section">
+    <h2>Research Approach</h2>
+    <p>
+        To comprehensively identify regulated plant species, we conducted systematic research using authoritative and reliable sources. Our approach included the following steps:
+    </p>
+    <ul class="data-list">
+        <li><b>Data Collection from Authoritative Sources:</b> We reviewed and extracted information from government websites (e.g., state/provincial departments of agriculture, environmental protection, and natural resources), academic institutions (e.g., university extension programs specializing in invasive and noxious plants), and reputable non-governmental organizations (NGOs) focused on plant conservation and invasive species management.
+        </li>
+
+        <li><b>Compilation of Region-Specific Lists:</b> For each state, province, and country, we compiled a list of regulated plant species, ensuring that our data captured variations in regulatory definitions (e.g., noxious plants, invasive plants) and species classifications unique to each jurisdiction.
+        </li>
+
+        <li><b>Comparison with Federal Lists:</b> The compiled region-specific lists were systematically compared with the federal noxious plant lists published by relevant agencies (USDA in the US, Federal regulations in Canada, and national restrictions in Australia). This allowed us to identify discrepancies, overlaps, and gaps between regional and national regulations.
+        </li>
+
+        <li><b>Verification and Cross-Referencing:</b> We cross-referenced the findings to ensure accuracy and consistency. This included validating species names and classifications to account for synonyms and taxonomic updates.
+        </li>
+    </ul>
+    <p>
+        This method ensured a comprehensive and accurate assessment of regulated plant species, providing insights into the alignment and divergence of plant management policies across jurisdictions.
+    </p>
+</section>
+
+<section class="about-section">
+    <h2>Data Sources</h2>
+    <p>Our database is compiled from official regulatory lists and is regularly updated to reflect the latest regulations. The data includes:</p>
+    <ul class="data-list">
+        <li>Common and scientific names of regulated plant species</li>
+        <li>Regulation status across different jurisdictions</li>
+        <li>Distribution information across regions</li>
+    </ul>
+
+    <div class="sources-container">
+        {% for country, items in sources|groupby('country') %}
+        <button class="sources-toggle" id="sourcesToggle{{ country|replace(' ', '') }}" aria-expanded="false">
+            <span>View {{ country }} Sources</span>
+            <svg class="chevron-icon" viewBox="0 0 24 24" width="24" height="24">
+                <path d="M6 9l6 6 6-6"></path>
+            </svg>
+        </button>
+        
+        <div class="sources-content" id="sourcesContent{{ country|replace(' ', '') }}">
+            <div class="sources-grid">
+                {% for source in items %}
+                <div class="state-item">
+                    <span class="state-name">{{ source.name }}</span>
+                    <div class="details">
+                        <span class="authority">
+                            {% if source.authority == "No regulation" %}
+                                {{ source.authority }}
+                            {% else %}
+                                <a href="{{ source.source_url }}" target="_blank">{{ source.authority }}</a>
+                            {% endif %}
+                        </span>
+                        <span class="year">last updated {{ source.updated }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/sources.js') }}"></script>
+{% endblock %}

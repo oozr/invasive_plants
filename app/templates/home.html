@@ -1,14 +1,9 @@
 {% extends "base.html" %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}" />
-{% endblock %}
-
 {% block content %}
-<h1 class="page-title">Regulated Weeds Database</h1>
+<h1 class="page-title">Regulated Plants Database</h1>
 <p class="lead mb-4">
-    Explore the official list of regulated weed species across N. America
+    Explore the official list of regulated plant species across Australia, Canada and the United States.
 </p>
 
 <div class="map-wrapper">
@@ -22,7 +17,7 @@
             <table id="species-table" class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Common Name</th>
+                        <th>Scientific Name</th>
                         <th>Family</th>
                     </tr>
                 </thead>
@@ -34,10 +29,10 @@
 <div class="mt-5"> 
     <h2 class="h3">Project Description</h2>
     <p class="text-muted">
-        This database provides comprehensive information about regulated weed species 
-        across different countries. It serves as a resource for researchers, agricultural
+        This database provides comprehensive information about regulated plant species 
+        across different states. It serves as a resource for researchers, agricultural 
         professionals, and the public to understand the distribution and regulation status 
-        of various weed species.
+        of various plant species that can be considered to be invasive.
     </p>
 </div>
 {% endblock %}

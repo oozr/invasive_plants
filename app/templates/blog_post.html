@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock %}
-
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}">
+{% endblock %}
 {% block content %}
 <!-- Blog Post Header -->
 <article class="blog-post blog-post--single">
@@ -73,7 +75,7 @@
     },
     "publisher": {
         "@type": "Organization",
-        "name": "Regulated Weeds Database"
+        "name": "Regulated Plants Database"
     },
     "mainEntityOfPage": {
         "@type": "WebPage",

@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="page-title">Search Regulated Weeds</h1>
+<h1 class="page-title">Search Regulated Plants</h1>
 <p class="lead">
-    Enter a plant name to find if and where it's regulated.
+    Enter a plant name to find where it's regulated
 </p>
 
 <div class="row">
@@ -22,6 +22,7 @@
             <h3 id="weedTitle"></h3>
             <div class="scientific-details">
                 <p><strong>Scientific Name: </strong><span id="weedCanonicalName"></span></p>
+                <p id="synonymsSection" class="d-none"><strong>Scientific Name Synonyms: </strong><span id="weedSynonyms"></span></p>
                 <p><strong>Family Name: </strong><span id="weedFamily"></span></p>
                 <p><strong>More Information: </strong><a id="gbifLink" href="#" target="_blank">View on GBIF</a></p>
             </div>

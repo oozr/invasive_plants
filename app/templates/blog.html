@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}">
+{% endblock %}
 {% block content %}
 <h1 class="page-title">Blog</h1>
 <p class="lead mb-3">Latest updates and research from the team</p>
