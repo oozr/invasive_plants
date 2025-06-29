@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Format the text to show both names
                             text: displayCommonName ? 
                                   `${displayCommonName} (${weed.canonical_name})` : 
-                                  weed.canonical_name,
+                                  `(${weed.canonical_name})`,
                             common_name: displayCommonName || weed.canonical_name,
                             canonical_name: weed.canonical_name,
                             family_name: weed.family_name,
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return $(`
                 <div>
                     ${commonName ? `<div class="common-name">${commonName}</div>` : ''}
-                    <div class="canonical-name ${commonName ? 'text-muted small' : ''}">${canonicalName}</div>
+                    <div class="canonical-name ${commonName ? 'text-muted small' : ''}">${commonName ? canonicalName : `(${canonicalName})`}</div>
                 </div>
             `);
         }
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         id: weedData.usage_key,
                         text: displayCommonName ? 
                               `${displayCommonName} (${weedData.canonical_name})` : 
-                              weedData.canonical_name,
+                              `(${weedData.canonical_name})`,
                         common_name: displayCommonName || weedData.canonical_name,
                         canonical_name: weedData.canonical_name,
                         family_name: weedData.family_name,
