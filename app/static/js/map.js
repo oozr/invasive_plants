@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             { 
                                                 data: 'canonical_name',
                                                 title: 'Scientific Name',
-                                                width: '30%',
+                                                width: '25%',
                                                 render: function(data, type, row) {
                                                     if (type === 'display' && data) {
                                                         return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank"><em>${data || 'Unknown'}</em></a>`;
@@ -220,8 +220,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                             },
                                             { 
                                                 data: 'has_federal_regulation',
-                                                title: 'Federal',
-                                                width: '5%',
+                                                title: 'Federal Reg.',
+                                                width: '10%',
                                                 className: 'text-center',
                                                 render: function(data, type, row) {
                                                     if (type === 'display') {

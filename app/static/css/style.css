@@ -118,6 +118,16 @@ table.dataTable tbody tr:hover {
 }
 
 /* Links */
+a {
+   color: #fcbc04;
+   text-decoration: none;
+}
+
+a:hover {
+   color: #e6a603;
+   text-decoration: underline;
+}
+
 table.dataTable tbody td a {
    color: #fcbc04;
    text-decoration: none;
