@@ -177,8 +177,7 @@ table.dataTable tbody td a:hover {
 
 /* Results Options */
 .select2-container--default .select2-results__option--highlighted[aria-selected] {
-   background-color: white;
-   border: 1px solid black;
+   background-color: #f8f9fa;
 }
 
 .select2-container--default .select2-results__option--highlighted[aria-selected] .common-name,
