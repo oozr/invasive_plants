@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             { 
                                                 data: 'canonical_name',
                                                 title: 'Scientific Name',
-                                                width: '40%',
+                                                width: '30%',
                                                 render: function(data, type, row) {
                                                     if (type === 'display' && data) {
                                                         return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank"><em>${data || 'Unknown'}</em></a>`;
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             { 
                                                 data: 'common_name',
                                                 title: 'Common Name',
-                                                width: '35%',
+                                                width: '45%',
                                                 render: function(data, type, row) {
                                                     // Handle "No English common names available" message
                                                     if (!data || data.includes('No English common names available')) {
