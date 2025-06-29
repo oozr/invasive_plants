@@ -30,6 +30,10 @@ blog_generator = BlogGenerator()
 def index():
     return render_template('home.html')
 
+@home.route('/robots.txt')
+def robots_txt():
+    return current_app.send_static_file('robots.txt')
+
 @home.route('/api/state-weed-counts')
 def state_weed_counts():
     print("DEBUG: Fetching state weed counts")

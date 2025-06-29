@@ -130,7 +130,7 @@ table.dataTable tbody td a:hover {
 /* Search */
 .search-box {
    width: 100%;
-   padding: 1rem 0;
+   padding: 0;
 }
 
 .select2-container {
@@ -482,4 +482,72 @@ textarea.form-control {
    .team-member {
        margin-bottom: 1.5rem;
    }
+}
+
+/* Species Page Styles */
+.results-container {
+   margin-top: 2rem;
+}
+
+.species-results .scientific-details {
+   margin-bottom: 2.5rem;
+   padding-bottom: 1.5rem;
+   border-bottom: 1px solid #e9ecef;
+}
+
+.species-results .scientific-details p {
+   margin-bottom: 0.75rem;
+   color: #495057;
+   line-height: 1.5;
+}
+
+.species-results .scientific-details p:last-child {
+   margin-bottom: 0;
+}
+
+.species-results .scientific-details strong {
+   color: #212529;
+   font-weight: 600;
+}
+
+.species-results .scientific-details em {
+   font-style: italic;
+   color: #6c757d;
+}
+
+.species-results .scientific-details a {
+   color: #0d6efd;
+   text-decoration: none;
+}
+
+.species-results .scientific-details a:hover {
+   text-decoration: underline;
+}
+
+.species-results h4 {
+   color: #212529;
+   font-weight: 600;
+   margin-bottom: 1rem;
+   font-size: 1.125rem;
+}
+
+.species-results .list-group-item {
+   border-color: #e9ecef;
+   background-color: #ffffff;
+}
+
+.species-results .list-group-item h5 {
+   color: #212529;
+   font-weight: 600;
+   margin-bottom: 0.5rem;
+}
+
+.species-results .list-group-item p {
+   color: #495057;
+   margin-bottom: 0;
+   line-height: 1.4;
+}
+
+.text-primary {
+   color: #0d6efd !important;
 }

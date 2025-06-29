@@ -22,7 +22,7 @@ class Config:
    # Site configuration
    SITE_NAME = "Regulated Plants Database"
    SITE_AUTHOR = "Regulated Plants Database Team"
-   BASE_URL = os.getenv('BASE_URL', 'https://regulatedplants.org')
+   BASE_URL = os.getenv('BASE_URL', 'https://regulatedplants.unu.edu')
 
    # Development vs Production
    DEBUG = os.getenv('FLASK_DEBUG', False)

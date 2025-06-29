@@ -63,14 +63,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to display weed details and fetch states
     function displayWeedDetails(selectedWeed) {
-        // Display common name - truncate if needed
+        // Display common name - truncate if needed, or show "Not available" if empty
         const commonName = selectedWeed.common_name || '';
         const commonNameParts = commonName.split(',');
         const truncatedCommonName = commonNameParts.length > 3 
             ? commonNameParts.slice(0, 3).join(', ')
             : commonName;
         
-        document.getElementById('weedTitle').textContent = truncatedCommonName;
+        document.getElementById('weedTitle').textContent = truncatedCommonName || `(${selectedWeed.canonical_name || 'Unknown'})`;
         document.getElementById('weedCanonicalName').textContent = selectedWeed.canonical_name;
         document.getElementById('weedFamily').textContent = selectedWeed.family_name || 'Not available';
         
@@ -192,6 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         common_name: weedData.common_name || weedData.canonical_name,
                         canonical_name: weedData.canonical_name,
                         family_name: weedData.family_name,
+                        synonyms: weedData.synonyms,
                         usage_key: weedData.usage_key
                     };
                     

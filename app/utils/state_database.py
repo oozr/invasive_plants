@@ -40,17 +40,38 @@ class StateDatabase(DatabaseBase):
             # Format the results with proper field names
             results = []
             for species in seen_species.values():
+                # Take first two common names and combine with comma
+                combined_common_name = None
+                if species.get('common_name'):
+                    names = [name.strip() for name in species['common_name'].split(',')]
+                    first_two = names[:2]  # Take first two names
+                    if first_two:
+                        combined_common_name = ', '.join(first_two)
+                
+                # Check if this species has federal regulation
+                has_federal = False
+                if species['state'] == 'federal':
+                    has_federal = True
+                else:
+                    # Check if there's a federal regulation for this species in the same country
+                    temp_cursor = conn.execute('''
+                        SELECT COUNT(*) as count
+                        FROM weeds 
+                        WHERE canonical_name = ? AND state = 'federal' AND country = ?
+                    ''', (species['canonical_name'], country))
+                    has_federal = temp_cursor.fetchone()['count'] > 0
+                
                 results.append({
                     'canonical_name': species['canonical_name'],
-                    'common_name': species.get('common_name'),  # Include common name in results
+                    'common_name': combined_common_name,
                     'family_name': species['family_name'],
                     'usage_key': species['usage_key'],
-                    'level': 'State/Province' if species['state'] == state else 'Federal'
+                    'level': 'State/Province' if species['state'] == state else 'Federal',
+                    'has_federal_regulation': has_federal
                 })
             
-            # Sort by level then by canonical_name 
-            return sorted(results, key=lambda x: (0 if x['level'] == 'State/Province' else 1, 
-                                               x['canonical_name'] or ""))
+            # Sort alphabetically by canonical_name only
+            return sorted(results, key=lambda x: x['canonical_name'] or "")
         finally:
             conn.close()
 

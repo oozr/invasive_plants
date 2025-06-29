@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     if ($.fn.DataTable.isDataTable(table)) {
                                         $(table).DataTable().destroy();
                                         $(table).empty();
-                                        $(table).html('<thead><tr><th>Scientific Name</th><th>Family</th></tr></thead>');
+                                        $(table).html('<thead><tr><th>Scientific Name</th><th>Common Name</th><th>Family</th><th>Federal</th></tr></thead>');
                                     }
                         
                                     $(table).DataTable({
@@ -190,20 +190,40 @@ document.addEventListener('DOMContentLoaded', function() {
                                             { 
                                                 data: 'canonical_name',
                                                 title: 'Scientific Name',
-                                                width: '50%',
+                                                width: '40%',
                                                 render: function(data, type, row) {
                                                     if (type === 'display' && data) {
-                                                        return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank">${data || 'Unknown'}</a>`;
+                                                        return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank"><em>${data || 'Unknown'}</em></a>`;
                                                     }
                                                     return data || 'Unknown';
                                                 }
                                             },
                                             { 
+                                                data: 'common_name',
+                                                title: 'Common Name',
+                                                width: '35%',
+                                                render: function(data, type, row) {
+                                                    return data || `(${row.canonical_name || 'Unknown'})`;
+                                                }
+                                            },
+                                            { 
                                                 data: 'family_name',
                                                 title: 'Family',
-                                                width: '50%',
+                                                width: '20%',
                                                 render: function(data) {
                                                     return data || 'Unknown';
+                                                }
+                                            },
+                                            { 
+                                                data: 'has_federal_regulation',
+                                                title: 'Federal',
+                                                width: '5%',
+                                                className: 'text-center',
+                                                render: function(data, type, row) {
+                                                    if (type === 'display') {
+                                                        return data ? '<span style="color: #28a745; font-size: 1.1em;">✓</span>' : '<span style="color: #dc3545; font-size: 1.1em;">✗</span>';
+                                                    }
+                                                    return data ? 'Yes' : 'No';
                                                 }
                                             }
                                         ],
@@ -216,6 +236,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                             element.classList.remove('d-none');
                                             element.classList.add('updated');
                                             setTimeout(() => element.classList.remove('updated'), 1000);
+                                            
+                                            // Add PDF download button
+                                            addPDFDownloadButton(stateName, country, weeds);
                                             
                                             if (L.Browser.mobile) {
                                                 element.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -326,4 +349,211 @@ document.addEventListener('DOMContentLoaded', function() {
             errorDiv.innerHTML = '<strong>Error:</strong> Failed to load weed count data.';
             mapElement.appendChild(errorDiv);
         });
+
+    /******************************
+     * PDF DOWNLOAD FUNCTIONALITY
+     ******************************/
+    function addPDFDownloadButton(stateName, country, weedsData) {
+        // Remove existing PDF button if present
+        const existingButton = document.getElementById('pdf-download-btn');
+        if (existingButton) {
+            existingButton.remove();
+        }
+
+        // Create PDF download button
+        const pdfButton = document.createElement('button');
+        pdfButton.id = 'pdf-download-btn';
+        pdfButton.className = 'btn btn-primary btn-sm';
+        pdfButton.innerHTML = '<i class="fas fa-download"></i> Download PDF';
+        pdfButton.style.height = 'fit-content';
+        pdfButton.style.alignSelf = 'center';
+        
+        pdfButton.onclick = function() {
+            generatePDF(stateName, country, weedsData);
+        };
+
+        // Place button under the table pagination, right-aligned (no card)
+        const tableContainer = document.querySelector('.table-responsive');
+        if (tableContainer) {
+            // Create a simple container for the download button, aligned with pagination
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'd-flex justify-content-end mt-2';
+            buttonContainer.appendChild(pdfButton);
+            
+            // Insert button container after the table container
+            tableContainer.parentNode.insertBefore(buttonContainer, tableContainer.nextSibling);
+        }
+    }
+
+    function generatePDF(stateName, country, weedsData) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Document title
+        const title = `Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
+        
+        // Load and add logos
+        Promise.all([
+            loadImageAsBase64('/static/img/UCD-plant-science-logo.png'),
+            loadImageAsBase64('/static/img/UNU-INWEH_LOGO_NV.svg')
+        ]).then(([ucdLogo, unuLogo]) => {
+            // Add UC Davis logo (left side, above title) - wider but shorter
+            if (ucdLogo) {
+                // UC Davis logo: 80 width but much shorter height
+                const ucdWidth = 80;
+                const ucdHeight = 12;
+                doc.addImage(ucdLogo, 'PNG', 20, 15, ucdWidth, ucdHeight);
+            }
+            
+            // Add UNU logo (right side, above title) - make shorter and less wide 
+            if (unuLogo) {
+                // UNU logo: make narrower and shorter
+                const unuHeight = 12;
+                const unuWidth = 35;
+                doc.addImage(unuLogo, 'SVG', 155, 15, unuWidth, unuHeight);
+            }
+            
+            // Add title below logos - aligned with table left margin
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text(title, 20, 35);
+            
+            // Prepare table data with common name fallback
+            const tableData = weedsData.map(row => [
+                row.canonical_name || 'Unknown',
+                row.common_name || `(${row.canonical_name || 'Unknown'})`,
+                row.family_name || 'Unknown',
+                row.has_federal_regulation ? 'Yes' : 'No'
+            ]);
+            
+            // Add table with clean styling - narrower to align with logos
+            doc.autoTable({
+                startY: 40,
+                margin: { left: 20, right: 20 }, // Align with logo positions
+                head: [['Scientific Name', 'Common Name', 'Family', 'Federal']],
+                body: tableData,
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 3,
+                    lineColor: [200, 200, 200],
+                    lineWidth: 0.1
+                },
+                headStyles: {
+                    fillColor: [255, 255, 255],
+                    textColor: [0, 0, 0],
+                    fontStyle: 'bold',
+                    lineColor: [200, 200, 200],
+                    lineWidth: 0.5
+                },
+                bodyStyles: {
+                    fillColor: [255, 255, 255],
+                    textColor: [0, 0, 0]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'italic' }, // Scientific names in italics
+                    3: { halign: 'center' }     // Center federal column
+                },
+                alternateRowStyles: {
+                    fillColor: [255, 255, 255] // Remove alternating row colors
+                }
+            });
+            
+            // Add footer with date and attribution
+            const currentDate = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const footerY = doc.internal.pageSize.height - 20;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Provided by Regulated Plants Database, data is correct as of ${currentDate}`, 20, footerY);
+            
+            // Download the PDF
+            const filename = `Regulated_Plants_${stateName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+            
+        }).catch(error => {
+            console.error('Error loading logos:', error);
+            
+            // Generate PDF without logos if loading fails
+            const tableData = weedsData.map(row => [
+                row.canonical_name || 'Unknown',
+                row.common_name || `(${row.canonical_name || 'Unknown'})`,
+                row.family_name || 'Unknown',
+                row.has_federal_regulation ? 'Yes' : 'No'
+            ]);
+            
+            doc.autoTable({
+                startY: 50,
+                head: [['Scientific Name', 'Common Name', 'Family', 'Federal']],
+                body: tableData,
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 3,
+                    lineColor: [200, 200, 200],
+                    lineWidth: 0.1
+                },
+                headStyles: {
+                    fillColor: [255, 255, 255],
+                    textColor: [0, 0, 0],
+                    fontStyle: 'bold',
+                    lineColor: [200, 200, 200],
+                    lineWidth: 0.5
+                },
+                bodyStyles: {
+                    fillColor: [255, 255, 255],
+                    textColor: [0, 0, 0]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'italic' },
+                    3: { halign: 'center' }
+                },
+                alternateRowStyles: {
+                    fillColor: [255, 255, 255] // Remove alternating row colors
+                }
+            });
+            
+            const currentDate = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const footerY = doc.internal.pageSize.height - 20;
+            doc.setFontSize(10);
+            doc.text(`Provided by Regulated Plants Database, data is correct as of ${currentDate}`, 20, footerY);
+            
+            const filename = `Regulated_Plants_${stateName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+        });
+    }
+
+    function loadImageAsBase64(url) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                
+                try {
+                    const dataURL = canvas.toDataURL('image/png');
+                    resolve(dataURL);
+                } catch (error) {
+                    console.error('Error converting image to base64:', error);
+                    resolve(null);
+                }
+            };
+            img.onerror = function() {
+                console.error('Error loading image:', url);
+                resolve(null);
+            };
+            img.src = url;
+        });
+    }
 });
