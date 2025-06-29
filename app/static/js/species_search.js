@@ -22,18 +22,26 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             processResults: function(data) {
                 return {
-                    results: data.map(weed => ({
-                        id: weed.usage_key,  // Changed to usage_key for better data handling
-                        // Format the text to show both names
-                        text: weed.common_name ? 
-                              `${weed.common_name} (${weed.canonical_name})` : 
-                              weed.canonical_name,
-                        common_name: weed.common_name || weed.canonical_name,
-                        canonical_name: weed.canonical_name,
-                        family_name: weed.family_name,
-                        synonyms: weed.synonyms,
-                        usage_key: weed.usage_key
-                    }))
+                    results: data.map(weed => {
+                        // Handle "No English common names available" message
+                        let displayCommonName = weed.common_name;
+                        if (!displayCommonName || displayCommonName.includes('No English common names available')) {
+                            displayCommonName = null;
+                        }
+                        
+                        return {
+                            id: weed.usage_key,
+                            // Format the text to show both names
+                            text: displayCommonName ? 
+                                  `${displayCommonName} (${weed.canonical_name})` : 
+                                  weed.canonical_name,
+                            common_name: displayCommonName || weed.canonical_name,
+                            canonical_name: weed.canonical_name,
+                            family_name: weed.family_name,
+                            synonyms: weed.synonyms,
+                            usage_key: weed.usage_key
+                        };
+                    })
                 };
             },
             cache: true
@@ -42,8 +50,11 @@ document.addEventListener('DOMContentLoaded', function() {
         templateResult: function(weed) {
             if (!weed.id) return weed.text; // Return unchanged if it's the placeholder
             
-            // Handle cases where common_name might be missing
-            const commonName = weed.common_name || '';
+            // Handle cases where common_name might be missing or has the long message
+            let commonName = weed.common_name || '';
+            if (commonName.includes('No English common names available')) {
+                commonName = '';
+            }
             const canonicalName = weed.canonical_name || '';
             
             return $(`
@@ -70,7 +81,12 @@ document.addEventListener('DOMContentLoaded', function() {
             ? commonNameParts.slice(0, 3).join(', ')
             : commonName;
         
-        document.getElementById('weedTitle').textContent = truncatedCommonName || `(${selectedWeed.canonical_name || 'Unknown'})`;
+        // Handle the specific "No English common names available" message
+        let displayName = truncatedCommonName;
+        if (!displayName || displayName.includes('No English common names available')) {
+            displayName = `(${selectedWeed.canonical_name || 'Unknown'})`;
+        }
+        document.getElementById('weedTitle').textContent = displayName;
         document.getElementById('weedCanonicalName').textContent = selectedWeed.canonical_name;
         document.getElementById('weedFamily').textContent = selectedWeed.family_name || 'Not available';
         
@@ -184,12 +200,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (weedData) {
                     // Format the data as needed for Select2
+                    let displayCommonName = weedData.common_name;
+                    if (!displayCommonName || displayCommonName.includes('No English common names available')) {
+                        displayCommonName = null;
+                    }
+                    
                     const formattedData = {
                         id: weedData.usage_key,
-                        text: weedData.common_name ? 
-                              `${weedData.common_name} (${weedData.canonical_name})` : 
+                        text: displayCommonName ? 
+                              `${displayCommonName} (${weedData.canonical_name})` : 
                               weedData.canonical_name,
-                        common_name: weedData.common_name || weedData.canonical_name,
+                        common_name: displayCommonName || weedData.canonical_name,
                         canonical_name: weedData.canonical_name,
                         family_name: weedData.family_name,
                         synonyms: weedData.synonyms,

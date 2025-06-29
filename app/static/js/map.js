@@ -203,7 +203,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 title: 'Common Name',
                                                 width: '35%',
                                                 render: function(data, type, row) {
-                                                    return data || `(${row.canonical_name || 'Unknown'})`;
+                                                    // Handle "No English common names available" message
+                                                    if (!data || data.includes('No English common names available')) {
+                                                        return `(${row.canonical_name || 'Unknown'})`;
+                                                    }
+                                                    return data;
                                                 }
                                             },
                                             { 
@@ -419,12 +423,19 @@ document.addEventListener('DOMContentLoaded', function() {
             doc.text(title, 20, 35);
             
             // Prepare table data with common name fallback
-            const tableData = weedsData.map(row => [
-                row.canonical_name || 'Unknown',
-                row.common_name || `(${row.canonical_name || 'Unknown'})`,
-                row.family_name || 'Unknown',
-                row.has_federal_regulation ? 'Yes' : 'No'
-            ]);
+            const tableData = weedsData.map(row => {
+                let commonName = row.common_name;
+                // Handle "No English common names available" message
+                if (!commonName || commonName.includes('No English common names available')) {
+                    commonName = `(${row.canonical_name || 'Unknown'})`;
+                }
+                return [
+                    row.canonical_name || 'Unknown',
+                    commonName,
+                    row.family_name || 'Unknown',
+                    row.has_federal_regulation ? 'Yes' : 'No'
+                ];
+            });
             
             // Add table with clean styling - narrower to align with logos
             doc.autoTable({
@@ -478,12 +489,19 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error loading logos:', error);
             
             // Generate PDF without logos if loading fails
-            const tableData = weedsData.map(row => [
-                row.canonical_name || 'Unknown',
-                row.common_name || `(${row.canonical_name || 'Unknown'})`,
-                row.family_name || 'Unknown',
-                row.has_federal_regulation ? 'Yes' : 'No'
-            ]);
+            const tableData = weedsData.map(row => {
+                let commonName = row.common_name;
+                // Handle "No English common names available" message
+                if (!commonName || commonName.includes('No English common names available')) {
+                    commonName = `(${row.canonical_name || 'Unknown'})`;
+                }
+                return [
+                    row.canonical_name || 'Unknown',
+                    commonName,
+                    row.family_name || 'Unknown',
+                    row.has_federal_regulation ? 'Yes' : 'No'
+                ];
+            });
             
             doc.autoTable({
                 startY: 50,
