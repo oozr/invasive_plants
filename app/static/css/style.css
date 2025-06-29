@@ -102,13 +102,14 @@ table.dataTable tbody tr:hover {
 }
 
 .dataTables_paginate .paginate_button:hover {
-   background-color: #f8f9fa !important;
-   border-color: #dee2e6 !important;
+   background-color: white !important;
+   border-color: black !important;
+   color: black !important;
 }
 
 .dataTables_paginate .paginate_button.current {
-   background-color: #fcbc04 !important;
-   border-color: #fcbc04 !important;
+   background-color: white !important;
+   border-color: black !important;
    color: black !important;
 }
 
@@ -117,7 +118,7 @@ table.dataTable tbody tr:hover {
    cursor: not-allowed;
 }
 
-/* Links */
+/* Links - Only text hyperlinks get gold color */
 a {
    color: #fcbc04;
    text-decoration: none;
@@ -176,12 +177,13 @@ table.dataTable tbody td a:hover {
 
 /* Results Options */
 .select2-container--default .select2-results__option--highlighted[aria-selected] {
-   background-color: #fcbc04;
+   background-color: white;
+   border: 1px solid black;
 }
 
 .select2-container--default .select2-results__option--highlighted[aria-selected] .common-name,
 .select2-container--default .select2-results__option--highlighted[aria-selected] .canonical-name {
-   color: white !important;
+   color: black !important;
 }
 
 .select2-results__option .common-name {
@@ -194,9 +196,14 @@ table.dataTable tbody td a:hover {
 
 /* Focus States */
 .select2-container--default.select2-container--focus .select2-selection--single {
-   border-color: #fcbc04;
-   outline: 0;
-   box-shadow: 0 0 0 0.2rem rgba(252,188,4,0.25);
+   border-color: #dee2e6;
+   outline: none !important;
+   box-shadow: none !important;
+}
+
+.select2-container--default .select2-selection--single:focus {
+   outline: none !important;
+   box-shadow: none !important;
 }
 
 /* Placeholder */
@@ -430,8 +437,8 @@ table.dataTable tbody td a:hover {
 }
 
 .form-control:focus, .form-select:focus {
-   border-color: #fcbc04;
-   box-shadow: 0 0 0 0.25rem rgba(252, 188, 4, 0.25);
+   border-color: black;
+   box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25);
 }
 
 textarea.form-control {
@@ -440,16 +447,16 @@ textarea.form-control {
 
 .btn-primary {
    padding: 0.75rem 1.5rem;
-   background-color: #fcbc04;
-   border-color: #fcbc04;
-   color: black;
+   background-color: black;
+   border-color: black;
+   color: white;
    transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
-   background-color: #e6a603;
-   border-color: #e6a603;
-   color: black;
+   background-color: #333;
+   border-color: #333;
+   color: white;
    transform: translateY(-2px);
 }
 
@@ -561,5 +568,20 @@ textarea.form-control {
 }
 
 .text-primary {
-   color: #fcbc04 !important;
+   color: black !important;
+}
+
+/* Force override of Select2 focus states to black */
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default .select2-selection--single:focus,
+.select2-container .select2-selection--single:focus {
+   border-color: black !important;
+   outline: none !important;
+   box-shadow: 0 0 0 1px black !important;
+}
+
+.select2-search__field:focus {
+   outline: none !important;
+   box-shadow: none !important;
+   border-color: black !important;
 }
