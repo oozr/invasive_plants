@@ -405,26 +405,11 @@ table.dataTable tbody td a:hover {
    }
 }
 
-/* Contact Card */
-.contact-card {
-   position: sticky;
-   top: 2rem;
-}
-
-.contact-card .card {
-   border-radius: 0.5rem;
-   border: none;
-   overflow: hidden;
-   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.contact-card .card-body {
-   padding: 1.5rem;
-}
-
-.contact-card .card-title {
+/* Contact Section */
+.contact-details h5 {
    margin-bottom: 1rem;
    font-weight: 600;
+   color: #212529;
 }
 
 /* Enhanced Form Styling */
@@ -459,16 +444,49 @@ textarea.form-control {
    transform: translateY(-2px);
 }
 
-/* Contact Details */
-.contact-details {
-   margin-top: 1.5rem;
-   padding-top: 1.5rem;
-   border-top: 1px solid #dee2e6;
+/* reCAPTCHA responsive styling - force it to match form field width */
+.g-recaptcha {
+   width: 100% !important;
+   max-width: 100% !important;
+   overflow: hidden;
 }
 
-.contact-details h5 {
-   margin-bottom: 1rem;
-   font-weight: 600;
+.g-recaptcha > div {
+   width: 100% !important;
+   transform: scale(1);
+   transform-origin: 0 0;
+}
+
+/* Scale down reCAPTCHA on smaller screens to fit */
+@media (max-width: 400px) {
+   .g-recaptcha > div {
+       transform: scale(0.9);
+       transform-origin: 0 0;
+   }
+}
+
+@media (max-width: 350px) {
+   .g-recaptcha > div {
+       transform: scale(0.8);
+       transform-origin: 0 0;
+   }
+}
+
+/* Fix reCAPTCHA iframe to be responsive */
+.g-recaptcha iframe {
+   width: 100% !important;
+   max-width: 100% !important;
+   height: auto !important;
+}
+
+/* Simple Contact Details */
+.contact-details {
+   padding-left: 2rem;
+}
+
+.contact-details p {
+   color: #495057;
+   line-height: 1.6;
 }
 
 /* Alert styling for form messages */
@@ -492,8 +510,8 @@ textarea.form-control {
 
 /* Responsive adjustments */
 @media (max-width: 991.98px) {
-   .contact-card {
-       position: static;
+   .contact-details {
+       padding-left: 0;
        margin-top: 2rem;
    }
    
@@ -583,4 +601,35 @@ textarea.form-control {
    outline: none !important;
    box-shadow: none !important;
    border-color: black !important;
+}
+
+
+/* reCAPTCHA responsive styling - calculate scale to match form width */
+.g-recaptcha {
+   width: 100% \!important;
+   display: flex;
+   justify-content: flex-start;
+   overflow: hidden;
+}
+
+.g-recaptcha > div {
+   transform-origin: 0 0;
+   width: 304px; /* reCAPTCHA's default width */
+}
+
+/* For contact card specifically - scale to match form fields */
+.contact-card .g-recaptcha > div {
+   transform: scale(0.85); /* Scale down to better match form width */
+}
+
+@media (max-width: 576px) {
+   .contact-card .g-recaptcha > div {
+       transform: scale(0.75);
+   }
+}
+
+@media (max-width: 400px) {
+   .contact-card .g-recaptcha > div {
+       transform: scale(0.65);
+   }
 }

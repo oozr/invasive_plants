@@ -5,135 +5,136 @@
 <h1 class="page-title">About the Regulated Plants Database</h1>
 <p class="lead">Learn about our project, methodology, and get in touch with our team</p>
 
-<div class="row mt-4">
-    <div class="col-lg-8">
-        <section class="about-section">
-            <h2>What is the Regulated Plants Database?</h2>
-            <p>The Regulated Plants Database is a comprehensive resource that tracks and displays information about regulated invasive plant species across different U.S. states, Canadian provinces, and Australia. Our goal is to provide researchers, agricultural professionals, and the public with easy access to information about which plants are regulated in different jurisdictions.</p>
-            <p>This project compiles data from governmental agricultural authorities to create an interactive map and searchable database of regulated invasive species, making it easier to understand the complex regulatory landscape surrounding these plants.</p>
-        </section>
+<!-- About Content -->
+<section class="about-section">
+    <h2>What is the Regulated Plants Database?</h2>
+    <p>The Regulated Plants Database is a comprehensive resource that tracks and displays information about regulated invasive plant species across different U.S. states, Canadian provinces, and Australia. Our goal is to provide researchers, agricultural professionals, and the public with easy access to information about which plants are regulated in different jurisdictions.</p>
+    <p>This project compiles data from governmental agricultural authorities to create an interactive map and searchable database of regulated invasive species, making it easier to understand the complex regulatory landscape surrounding these plants.</p>
+</section>
 
-        <section class="about-section">
-            <h2>Our Mission</h2>
-            <p>Our mission is to create a centralized, accessible repository of information about regulated invasive plants to help:</p>
-            <ul class="data-list">
-                <li>Researchers track regulatory trends across regions</li>
-                <li>Agricultural professionals identify plants of concern</li>
-                <li>Policymakers develop informed regulation strategies</li>
-                <li>Gardeners and land managers make responsible planting decisions</li>
-                <li>Educational institutions teach about invasive species management</li>
-            </ul>
-        </section>
+<section class="about-section">
+    <h2>Our Mission</h2>
+    <p>Our mission is to create a centralized, accessible repository of information about regulated invasive plants to help:</p>
+    <ul class="data-list">
+        <li>Researchers track regulatory trends across regions</li>
+        <li>Agricultural professionals identify plants of concern</li>
+        <li>Policymakers develop informed regulation strategies</li>
+        <li>Gardeners and land managers make responsible planting decisions</li>
+        <li>Educational institutions teach about invasive species management</li>
+    </ul>
+</section>
 
-        <section class="about-section">
-            <h2>The Team</h2>
-            <p>The Regulated Plants Database is a project led by researchers at the University of California and the Institute for Water, Environment and Health at the United Nations University, specializing in plant ecology, invasive species management, and agricultural policy. Our interdisciplinary team combines expertise in botany, data science, and regulatory frameworks to create a comprehensive resource for understanding plant regulations.</p>
-            
-            <div class="team-members mt-4">
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-                        <div class="team-member">
-                            <h4>Philipp Robeck</h4>
-                            <p class="text-muted">Project Lead, University of Melbourne</p>
-                            <p>Environmental Data Science and Ecological Modeling in Urban Planning and Managing Biological Invasions</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="team-member">
-                            <h4>Mohsen B Mesgaran</h4>
-                            <p class="text-muted">Associate Professor, UC Davis</p>
-                            <p>Artificial intelligence, informatics, and data for agricultural and invasion science.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="team-member">
-                            <h4>George Lindley</h4>
-                            <p class="text-muted">Data Analyst & Web Developer</p>
-                            <p>Specializing in data visualization. Transforming complex information into compelling narratives.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="team-member">
-                            <h4>Farnaz Kordbacheh</h4>
-                            <p class="text-muted">Research Associate, UC Davis</p>
-                            <p>Quantitative Research in agricultural and invasion science.</p>
-                        </div>
-                    </div>
+<section class="about-section">
+    <h2>The Team</h2>
+    <p>The Regulated Plants Database is a project led by researchers at the University of California and the Institute for Water, Environment and Health at the United Nations University, specializing in plant ecology, invasive species management, and agricultural policy. Our interdisciplinary team combines expertise in botany, data science, and regulatory frameworks to create a comprehensive resource for understanding plant regulations.</p>
+    
+    <div class="team-members mt-4">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="team-member">
+                    <h4>Philipp Robeck</h4>
+                    <p class="text-muted">Project Lead, University of Melbourne</p>
+                    <p>Environmental Data Science and Ecological Modeling in Urban Planning and Managing Biological Invasions</p>
                 </div>
             </div>
-        </section>
-
-        <section class="about-section">
-            <h2>Acknowledgements</h2>
-            <p>This project was made possible through the support and collaboration of various organizations and individuals who contributed data, expertise, and resources:</p>
-            
-            <ul class="data-list">
-                <li>State and provincial agricultural departments across North America</li>
-                <li>The United Nations University Institute for Water, Environment and Health</li>
-                <li>National invasive species councils</li>
-                <li>University extension services</li>
-                <li>Botanical researchers and taxonomists</li>
-                <li>Agricultural policy experts</li>
-            </ul>
-            
-            <p>We are grateful for their contributions to this ongoing effort.</p>
-        </section>
-    </div>
-
-    <div class="col-lg-4">
-        <div class="contact-card">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h3 class="card-title">Contact Us</h3>
-                    <p>Have questions, suggestions, or corrections? Get in touch with our team.</p>
-                    
-                    <form id="contact-form" class="mt-4" method="POST" action="{{ url_for('about.contact') }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="subject" class="form-label">Subject</label>
-                            <select class="form-select" id="subject" name="subject">
-                                <option value="general">General Inquiry</option>
-                                <option value="data">Data Correction</option>
-                                <option value="collaboration">Collaboration Request</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="message" class="form-label">Message</label>
-                            <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
-                        </div>
-                        <!-- Honeypot field to catch bots -->
-                        <div style="display:none;">
-                            <label for="website">Website</label>
-                            <input type="text" name="website" id="website">
-                        </div>
-                        <div class="mb-3">
-                            {{ recaptcha }}
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Send Message</button>
-                    </form>
-                    
-                    <div class="contact-details mt-4">
-                        <h5>Address</h5>
-                        Regulated Plants Database<br>
-                        Department of Plant Sciences<br>
-                        University of California, Davis<br>
-                        One Shields Avenue<br>
-                        Davis, CA 95616</p>
-                    </div>
+            <div class="col-md-6 mb-4">
+                <div class="team-member">
+                    <h4>Mohsen B Mesgaran</h4>
+                    <p class="text-muted">Associate Professor, UC Davis</p>
+                    <p>Artificial intelligence, informatics, and data for agricultural and invasion science.</p>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="team-member">
+                    <h4>George Lindley</h4>
+                    <p class="text-muted">Data Analyst & Web Developer</p>
+                    <p>Data visualization and website design. Transforming complex information into compelling narratives.</p>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="team-member">
+                    <h4>Farnaz Kordbacheh</h4>
+                    <p class="text-muted">Research Associate, UC Davis</p>
+                    <p>Quantitative Research in agricultural and invasion science.</p>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<section class="about-section">
+    <h2>Acknowledgements</h2>
+    <p>This project was made possible through the support and collaboration of various organizations and individuals who contributed data, expertise, and resources:</p>
+    
+    <ul class="data-list">
+        <li>State and provincial agricultural departments across North America</li>
+        <li>The United Nations University Institute for Water, Environment and Health</li>
+        <li>National invasive species councils</li>
+        <li>University extension services</li>
+        <li>Botanical researchers and taxonomists</li>
+        <li>Agricultural policy experts</li>
+    </ul>
+    
+    <p>We are grateful for their contributions to this ongoing effort.</p>
+</section>
+
+<!-- Contact Section -->
+<section class="about-section">
+    <h2>Contact Us</h2>
+    <p>Have questions, suggestions, or corrections? Get in touch with our team.</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <form id="contact-form" method="POST" action="{{ url_for('about.contact') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="subject" class="form-label">Subject</label>
+                    <select class="form-select" id="subject" name="subject">
+                        <option value="general">General Inquiry</option>
+                        <option value="data">Data Correction</option>
+                        <option value="collaboration">Collaboration Request</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="message" class="form-label">Message</label>
+                    <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                </div>
+                <!-- Honeypot field to catch bots -->
+                <div style="display:none;">
+                    <label for="website">Website</label>
+                    <input type="text" name="website" id="website">
+                </div>
+                <div class="mb-3">
+                    {{ recaptcha }}
+                </div>
+                <button type="submit" class="btn btn-primary">Send Message</button>
+            </form>
+        </div>
+        <div class="col-md-4">
+            <div class="contact-details">
+                <h5>Address</h5>
+                <p>
+                    Regulated Plants Database<br>
+                    Department of Plant Sciences<br>
+                    University of California, Davis<br>
+                    One Shields Avenue<br>
+                    Davis, CA 95616
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
