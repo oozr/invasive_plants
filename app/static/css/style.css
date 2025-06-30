@@ -243,7 +243,7 @@ table.dataTable tbody td a:hover {
    content: "•";
    position: absolute;
    left: 0;
-   color: #fcbc04;
+   color: black;
 }
 
 /* About Page Sources */
@@ -437,7 +437,7 @@ table.dataTable tbody td a:hover {
 
 .form-control:focus, .form-select:focus {
    border-color: black;
-   box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25);
+   box-shadow: none !important;\n   outline: none !important;
 }
 
 textarea.form-control {
