@@ -342,6 +342,28 @@ table.dataTable tbody td a:hover {
    margin-top: auto;
 }
 
+/* Mobile footer layout - text at bottom */
+@media (max-width: 767.98px) {
+   .footer .row {
+       display: flex;
+       flex-direction: column;
+   }
+   
+   .footer .col-md-4:nth-child(1) {
+       order: 1; /* UC Davis logo first */
+   }
+   
+   .footer .col-md-4:nth-child(3) {
+       order: 2; /* UNU logo second */
+   }
+   
+   .footer .col-md-4:nth-child(2) {
+       order: 3; /* Copyright text last */
+       margin-top: 1rem;
+       margin-bottom: 0;
+   }
+}
+
 /* Enhanced About Page Styles */
 
 /* Update page-title (overrides existing) */
@@ -603,33 +625,3 @@ textarea.form-control {
    border-color: black !important;
 }
 
-
-/* reCAPTCHA responsive styling - calculate scale to match form width */
-.g-recaptcha {
-   width: 100% \!important;
-   display: flex;
-   justify-content: flex-start;
-   overflow: hidden;
-}
-
-.g-recaptcha > div {
-   transform-origin: 0 0;
-   width: 304px; /* reCAPTCHA's default width */
-}
-
-/* For contact card specifically - scale to match form fields */
-.contact-card .g-recaptcha > div {
-   transform: scale(0.85); /* Scale down to better match form width */
-}
-
-@media (max-width: 576px) {
-   .contact-card .g-recaptcha > div {
-       transform: scale(0.75);
-   }
-}
-
-@media (max-width: 400px) {
-   .contact-card .g-recaptcha > div {
-       transform: scale(0.65);
-   }
-}
