@@ -1,3 +1,25 @@
+/* CSS Variables - Complete Color System */
+:root {
+   /* Primary Colors */
+   --unu-blue: #15234A;
+   --black: #000000;
+   --white: #ffffff;
+   
+   /* UI Colors */
+   --border-light: #dee2e6;
+   --bg-light: #f8f9fa;
+   --text-muted: #6c757d;
+   --text-dark: #212529;
+   --text-medium: #495057;
+   
+   /* Hover States */
+   --hover-grey: #f8f9fa;
+   --hover-dark: #333333;
+   
+   /* System Colors (for reference, could be used later) */
+   --ucd-gold: #fcbc04;
+}
+
 /* Typography */
 .page-title {
    margin: 2rem 0 1.5rem;
@@ -76,7 +98,7 @@ table.dataTable tbody td {
 }
 
 table.dataTable tbody tr:hover {
-   background-color: #f8f9fa !important;
+   background-color: var(--hover-grey) !important;
 }
 
 /* Table controls */
@@ -102,15 +124,15 @@ table.dataTable tbody tr:hover {
 }
 
 .dataTables_paginate .paginate_button:hover {
-   background-color: white !important;
-   border-color: black !important;
-   color: black !important;
+   background-color: var(--white) !important;
+   border-color: var(--black) !important;
+   color: var(--black) !important;
 }
 
 .dataTables_paginate .paginate_button.current {
-   background-color: white !important;
-   border-color: black !important;
-   color: black !important;
+   background-color: var(--white) !important;
+   border-color: var(--black) !important;
+   color: var(--black) !important;
 }
 
 .dataTables_paginate .paginate_button.disabled {
@@ -118,23 +140,18 @@ table.dataTable tbody tr:hover {
    cursor: not-allowed;
 }
 
-/* Links - Only text hyperlinks get gold color */
-a {
-   color: #fcbc04;
-   text-decoration: none;
-}
-
-a:hover {
-   color: #e6a603;
+/* Consolidated link styles */
+a,
+table.dataTable tbody td a,
+.species-results .scientific-details a {
+   color: var(--unu-blue);
    text-decoration: underline;
 }
 
-table.dataTable tbody td a {
-   color: #fcbc04;
-   text-decoration: none;
-}
-
-table.dataTable tbody td a:hover {
+a:hover,
+table.dataTable tbody td a:hover,
+.species-results .scientific-details a:hover {
+   color: var(--unu-blue);
    text-decoration: underline;
 }
 
@@ -177,7 +194,7 @@ table.dataTable tbody td a:hover {
 
 /* Results Options */
 .select2-container--default .select2-results__option--highlighted[aria-selected] {
-   background-color: #f8f9fa;
+   background-color: var(--hover-grey);
 }
 
 .select2-container--default .select2-results__option--highlighted[aria-selected] .common-name,
@@ -243,7 +260,7 @@ table.dataTable tbody td a:hover {
    content: "•";
    position: absolute;
    left: 0;
-   color: black;
+   color: var(--black);
 }
 
 /* About Page Sources */
@@ -265,7 +282,7 @@ table.dataTable tbody td a:hover {
 }
 
 .sources-toggle:hover {
-   background-color: #f8f9fa;
+   background-color: var(--hover-grey);
 }
 
 .sources-content {
@@ -374,7 +391,7 @@ table.dataTable tbody td a:hover {
 
 /* Lead text styling */
 .lead {
-   color: #495057;
+   color: var(--unu-blue);
    font-weight: 300;
    margin-bottom: 2rem;
 }
@@ -412,6 +429,12 @@ table.dataTable tbody td a:hover {
    color: #212529;
 }
 
+/* Team member titles in UNU blue and italics */
+.team-member .text-muted {
+   color: var(--unu-blue) !important;
+   font-style: italic;
+}
+
 /* Mobile Responsiveness for Team */
 @media (max-width: 767.98px) {
    .team-member {
@@ -443,8 +466,9 @@ table.dataTable tbody td a:hover {
 }
 
 .form-control:focus, .form-select:focus {
-   border-color: black;
-   box-shadow: none !important;\n   outline: none !important;
+   border-color: var(--black);
+   box-shadow: none !important;
+   outline: none !important;
 }
 
 textarea.form-control {
@@ -453,17 +477,34 @@ textarea.form-control {
 
 .btn-primary {
    padding: 0.75rem 1.5rem;
-   background-color: black;
-   border-color: black;
-   color: white;
+   background-color: var(--black);
+   border-color: var(--black);
+   color: var(--white);
    transition: all 0.2s ease;
+   box-shadow: none !important;
 }
 
 .btn-primary:hover {
-   background-color: #333;
-   border-color: #333;
-   color: white;
+   background-color: var(--hover-dark);
+   border-color: var(--hover-dark);
+   color: var(--white);
    transform: translateY(-2px);
+   box-shadow: none !important;
+}
+
+.btn-primary:active, .btn-primary:focus {
+   background-color: var(--unu-blue) !important;
+   border-color: var(--unu-blue) !important;
+   color: var(--white) !important;
+   box-shadow: none !important;
+   outline: none !important;
+}
+
+.btn-primary.active {
+   background-color: var(--unu-blue) !important;
+   border-color: var(--unu-blue) !important;
+   color: var(--white) !important;
+   box-shadow: none !important;
 }
 
 /* reCAPTCHA responsive styling - force it to match form field width */
@@ -570,17 +611,9 @@ textarea.form-control {
 
 .species-results .scientific-details em {
    font-style: italic;
-   color: #6c757d;
+   color: var(--unu-blue);
 }
 
-.species-results .scientific-details a {
-   color: #fcbc04;
-   text-decoration: none;
-}
-
-.species-results .scientific-details a:hover {
-   text-decoration: underline;
-}
 
 .species-results h4 {
    color: #212529;
@@ -607,7 +640,7 @@ textarea.form-control {
 }
 
 .text-primary {
-   color: black !important;
+   color: var(--black) !important;
 }
 
 /* Force override of Select2 focus states to black */

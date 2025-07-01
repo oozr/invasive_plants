@@ -84,13 +84,14 @@
  .btn-read-more {
     display: inline-block;
     padding: 0.375rem 0.75rem;
-    color: #fcbc04;
-    text-decoration: none;
+    color: var(--unu-blue);
+    text-decoration: underline;
     white-space: nowrap;
  }
 
  .btn-read-more:hover {
-    color: #e6a603;
+    color: var(--unu-blue);
+    text-decoration: underline;
  }
  
  /* Image Styles */
