@@ -1,0 +1,67 @@
+/* ========================================
+   SPECIES PAGE STYLES
+   ======================================== */
+
+#state-title {
+   margin-top: 2rem;
+   font-size: 1.75rem;
+   margin-bottom: 1.5rem;
+}
+
+.results-container {
+   margin-top: 2rem;
+}
+
+.species-results .scientific-details {
+   margin-bottom: 2.5rem;
+   padding-bottom: 1.5rem;
+   border-bottom: 1px solid #e9ecef;
+}
+
+.species-results .scientific-details p {
+   margin-bottom: 0.75rem;
+   color: var(--text-medium);
+   line-height: 1.5;
+}
+
+.species-results .scientific-details p:last-child {
+   margin-bottom: 0;
+}
+
+.species-results .scientific-details strong {
+   color: var(--text-dark);
+   font-weight: 600;
+}
+
+.species-results .scientific-details em {
+   font-style: italic;
+   color: var(--unu-blue);
+}
+
+.species-results h4 {
+   color: var(--text-dark);
+   font-weight: 600;
+   margin-bottom: 1rem;
+   font-size: 1.125rem;
+}
+
+.species-results .list-group-item {
+   border-color: #e9ecef;
+   background-color: var(--white);
+}
+
+.species-results .list-group-item h5 {
+   color: var(--text-dark);
+   font-weight: 600;
+   margin-bottom: 0.5rem;
+}
+
+.species-results .list-group-item p {
+   color: var(--text-medium);
+   margin-bottom: 0;
+   line-height: 1.4;
+}
+
+.text-primary {
+   color: var(--black) !important;
+}

@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/species.css') }}">
+{% endblock %}
+
 {% block content %}
 <h1 class="page-title">Search Regulated Plants</h1>
 <p class="lead">

@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/method.css') }}">
+{% endblock %}
+
 {% block content %}
 <h1 class="page-title">Methodology</h1>
 <p class="lead">Our systematic approach to compiling regulated plant species information</p>
