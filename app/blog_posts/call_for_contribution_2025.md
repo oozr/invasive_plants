@@ -3,7 +3,7 @@ title: Call for Contributions to Expand the Regulated Plants Database
 date: 2025-07-01
 author: Publishing team
 tags: ["regulated plants", "collaboration", "global","biosecurity"]
-image: regulated_plants_logo_s.jpeg
+image: regulated_plants_logo_s.png
 ---
 The Regulated Plants Database, hosted by the [United Nations University Institute for Water, Environment and Health (UNU-INWEH)](https://unu.edu/inweh), is at a pivotal moment. Having successfully launched with comprehensive coverage of over 1,000 regulated invasive plant species across Australia, Canada, and the United States, we are now expanding our mission globally. We need your expertise, data, and collaboration to build the world's most comprehensive resource for invasive plant regulations.
 
