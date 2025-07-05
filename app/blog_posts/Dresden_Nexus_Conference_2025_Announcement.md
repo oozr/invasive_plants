@@ -2,7 +2,7 @@
 title: Dresden Nexus Conference 2025
 date: 2024-01-01
 author: Publishing team
-tags: ["DNC", "conference", "dresden","UNU"]
+tags: ["DNC", "conference","UNU"]
 image: dnc_2025_conference_resources.jpg
 ---
 The **Dresden Nexus Conference (DNC) 2025** will take place from **3–5 June 2025** in Dresden, Germany! Hosted by the **United Nations University Institute for Integrated Management of Material Fluxes and Resources (UNU-FLORES)**, this landmark event will bring together experts, policymakers, researchers, and practitioners from across the globe to tackle the pressing challenges of sustainable development.
