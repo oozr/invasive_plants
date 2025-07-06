@@ -11,11 +11,12 @@ The Regulated Plants Database, hosted by the [United Nations University Institut
 
 Invasive plants cost global economies billions of dollars annually and represent one of the greatest threats to biodiversity worldwide. The fragmented nature of regulations across jurisdictions creates confusion for researchers, land managers, policymakers, and agricultural professionals who require clear and accessible information to make informed decisions.
 This database serves as a vital bridge, consolidating official regulatory lists into a single, searchable platform that enables users to:
-* Track **regulatory trends** across regions
-* Identify plants of concern for agricultural planning
-* Develop informed **regulation strategies**
-* Make responsible **land management decisions**
-* Support **educational initiatives** on invasive species management
+
+- Track **regulatory trends** across regions
+- Identify plants of concern for agricultural planning
+- Develop informed **regulation strategies**
+- Make responsible **land management decisions**
+- Support **educational initiatives** on invasive species management
 
 We seek partnerships with federal, state, provincial, and national agencies responsible for regulating plants, ensuring biosecurity, and conserving biodiversity. Your official lists, taxonomic databases, and regulatory updates are the foundation of our accuracy and comprehensiveness.
 
