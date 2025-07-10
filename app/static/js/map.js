@@ -86,6 +86,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 tableElement.classList.add('d-none');
             }
             currentSelectedState = null;
+            
+            // Close and unbind all tooltips when both toggles are off
+            if (geojsonLayer) {
+                geojsonLayer.eachLayer(function(layer) {
+                    layer.closeTooltip();
+                    layer.unbindTooltip();
+                });
+            }
         } else {
             errorElement.classList.add('d-none');
         }
@@ -129,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if ($.fn.DataTable.isDataTable(table)) {
             $(table).DataTable().destroy();
             $(table).empty();
-            $(table).html('<thead><tr><th>Scientific Name</th><th>Common Name</th><th>Family</th><th>Federal</th></tr></thead>');
+            $(table).html('<thead><tr><th>Scientific Name</th><th>Common Name</th><th>Family</th><th>Source</th></tr></thead>');
         }
 
         $(table).DataTable({
@@ -167,15 +175,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 },
                 { 
-                    data: 'has_federal_regulation',
-                    title: 'Federal Reg.',
-                    width: '10%',
+                    data: 'level',
+                    title: 'Source',
+                    width: '15%',
                     className: 'text-center',
                     render: function(data, type, row) {
                         if (type === 'display') {
-                            return data ? '<span class="federal-yes">✓</span>' : '<span class="federal-no">✗</span>';
+                            // Determine source based on level and federal regulation status
+                            const isStatePlant = row.level === 'State/Province';
+                            const hasFederal = row.has_federal_regulation;
+                            
+                            if (isStatePlant && hasFederal) {
+                                return '<span class="source-both">Both</span>';
+                            } else if (isStatePlant) {
+                                return '<span class="source-state">State</span>';
+                            } else {
+                                return '<span class="source-federal">Federal</span>';
+                            }
                         }
-                        return data ? 'Yes' : 'No';
+                        return data;
                     }
                 }
             ],
@@ -362,6 +380,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         layer.on('mouseover', function() {
                             // Don't show tooltips when both toggles are off
                             if (!toggleState.federal && !toggleState.state) {
+                                // Close any existing tooltip and unbind it
+                                layer.closeTooltip();
+                                layer.unbindTooltip();
                                 return;
                             }
                             
@@ -371,6 +392,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             const stateData = stateWeedData[stateName] || {};
                             const weedCount = stateData.count || 0;
                             const country = stateData.country || '';
+                            
+                            // Debug: Log the data when both toggles are off
+                            if (!toggleState.federal && !toggleState.state) {
+                                console.log('Debug: Both toggles off but tooltip showing for', stateName, 'with count', weedCount);
+                            }
                             
                             // Create tooltip content based on toggle state
                             let displayName, tooltipText;
@@ -398,6 +424,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
 
                         layer.on('mouseout', function() {
+                            // Don't apply hover effects when both toggles are off
+                            if (!toggleState.federal && !toggleState.state) {
+                                return;
+                            }
+                            
                             geojsonLayer.resetStyle(layer);
                             if (layer === previouslyClickedLayer) {
                                 layer.setStyle({ weight: 2, fillOpacity: 0.9 });
@@ -563,11 +594,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!commonName || commonName.includes('No English common names available')) {
                     commonName = `(${row.canonical_name || 'Unknown'})`;
                 }
+                // Determine source
+                const isStatePlant = row.level === 'State/Province';
+                const hasFederal = row.has_federal_regulation;
+                let source;
+                if (isStatePlant && hasFederal) {
+                    source = 'Both';
+                } else if (isStatePlant) {
+                    source = 'State';
+                } else {
+                    source = 'Federal';
+                }
+                
                 return [
                     row.canonical_name || 'Unknown',
                     commonName,
                     row.family_name || 'Unknown',
-                    row.has_federal_regulation ? 'Yes' : 'No'
+                    source
                 ];
             });
             
@@ -575,7 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
             doc.autoTable({
                 startY: 47,
                 margin: { left: 20, right: 20 }, // Align with logo positions
-                head: [['Scientific Name', 'Common Name', 'Family', 'Federal']],
+                head: [['Scientific Name', 'Common Name', 'Family', 'Source']],
                 body: tableData,
                 styles: {
                     fontSize: 9,
@@ -638,17 +681,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!commonName || commonName.includes('No English common names available')) {
                     commonName = `(${row.canonical_name || 'Unknown'})`;
                 }
+                // Determine source
+                const isStatePlant = row.level === 'State/Province';
+                const hasFederal = row.has_federal_regulation;
+                let source;
+                if (isStatePlant && hasFederal) {
+                    source = 'Both';
+                } else if (isStatePlant) {
+                    source = 'State';
+                } else {
+                    source = 'Federal';
+                }
+                
                 return [
                     row.canonical_name || 'Unknown',
                     commonName,
                     row.family_name || 'Unknown',
-                    row.has_federal_regulation ? 'Yes' : 'No'
+                    source
                 ];
             });
             
             doc.autoTable({
                 startY: 50,
-                head: [['Scientific Name', 'Common Name', 'Family', 'Federal']],
+                head: [['Scientific Name', 'Common Name', 'Family', 'Source']],
                 body: tableData,
                 styles: {
                     fontSize: 9,

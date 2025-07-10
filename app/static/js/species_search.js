@@ -141,18 +141,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         countryHeader.textContent = country;
                         countryElement.appendChild(countryHeader);
                         
-                        // Add states info
-                        if (states.length === 1 && states[0] === "Federal Level") {
-                            // If federally regulated, display a special message
+                        // Add regulations info - handle both federal and state/province
+                        const hasFederal = states.includes("Federal Level");
+                        const stateRegulations = states.filter(state => state !== "Federal Level");
+                        
+                        if (hasFederal) {
+                            // Show federal regulation
                             let federalInfo = document.createElement('p');
-                            federalInfo.className = 'mb-0 text-primary';
+                            federalInfo.className = 'mb-1 text-primary fw-bold';
                             federalInfo.textContent = 'Regulated at the Federal Level';
                             countryElement.appendChild(federalInfo);
-                        } else {
-                            // Create a paragraph to hold all states as a row
+                        }
+                        
+                        if (stateRegulations.length > 0) {
+                            // Show state/province regulations
                             let statesRow = document.createElement('p');
                             statesRow.className = 'mb-0';
-                            statesRow.textContent = states.join(', ');
+                            const stateLabel = stateRegulations.length === 1 ? 'State/Province' : 'States/Provinces';
+                            statesRow.innerHTML = `<strong>${stateLabel}:</strong> ${stateRegulations.join(', ')}`;
                             countryElement.appendChild(statesRow);
                         }
                         

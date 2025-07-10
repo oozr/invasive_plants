@@ -75,24 +75,61 @@
     z-index: 1000;
 }
 
-/* Federal Regulation Icons */
-.federal-yes {
-    color: #28a745;
-    font-size: 1.1em;
+/* Source Column Styling */
+.source-federal {
+    color: #15234A;
+    font-weight: 500;
 }
 
-.federal-no {
+.source-state {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.source-both {
     color: #dc3545;
-    font-size: 1.1em;
+    font-weight: 600;
 }
 
 /* Toggle Controls */
 .toggle-controls {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .toggle-controls .form-check {
     margin-bottom: 0;
+}
+
+/* Mobile-specific spacing */
+@media (max-width: 767.98px) {
+    .toggle-controls {
+        padding: 0;
+    }
+    
+    .toggle-controls .form-check {
+        padding: 0.25rem 0;
+        width: 100%;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
+    
+    .toggle-controls .d-flex {
+        align-items: stretch !important;
+        width: 100%;
+    }
+    
+    .toggle-error {
+        position: static;
+        align-self: flex-start !important;
+        margin-top: 0.5rem;
+        width: 100%;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
+    
+    .toggle-controls .form-check-input {
+        margin-left: 0 !important;
+    }
 }
 
 .toggle-controls .toggle-label {
@@ -114,7 +151,8 @@
 
 .toggle-controls .form-check-input:focus {
     border-color: #15234A;
-    box-shadow: 0 0 0 0.2rem rgba(21, 35, 74, 0.25);
+    box-shadow: none;
+    outline: none;
 }
 
 .toggle-controls .form-check-input:not(:checked) {
@@ -126,8 +164,23 @@
     border-color: #15234A;
 }
 
+.toggle-controls .form-check-input:active {
+    background-color: inherit;
+    border-color: inherit;
+    box-shadow: none;
+    transform: none;
+}
+
+.toggle-controls .form-check-input:active:focus {
+    box-shadow: none;
+}
+
 /* Error message styling */
-#toggleError {
-    margin-top: 0.5rem;
-    font-size: 0.9rem;
+.toggle-error {
+    font-weight: 300;
+    color: #dc3545;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    margin: 0;
+    align-self: center;
 }

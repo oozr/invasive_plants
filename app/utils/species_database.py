@@ -187,7 +187,7 @@ class SpeciesDatabase(DatabaseBase):
             
             results = cursor.fetchall()
             
-            # Group by country
+            # Group by country and collect both federal and state regulations
             regulations_by_country = {}
             
             for row in results:
@@ -198,16 +198,14 @@ class SpeciesDatabase(DatabaseBase):
                 if country not in regulations_by_country:
                     regulations_by_country[country] = []
                 
-                # If there's a federal regulation, we'll handle it specially
+                # Add federal regulation
                 if state == 'federal':
-                    # Clear any existing states for this country and just use "Federal Level"
-                    regulations_by_country[country] = ["Federal Level"]
-                    # Skip adding more states for this country since it's federally regulated
-                    continue
-                
-                # Only add the state if the country isn't already set to federal level
-                if regulations_by_country[country] != ["Federal Level"]:
-                    regulations_by_country[country].append(state)
+                    if "Federal Level" not in regulations_by_country[country]:
+                        regulations_by_country[country].append("Federal Level")
+                else:
+                    # Add state/province regulation
+                    if state not in regulations_by_country[country]:
+                        regulations_by_country[country].append(state)
             
             return regulations_by_country
         finally:
