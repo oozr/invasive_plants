@@ -77,17 +77,17 @@
 
 /* Source Column Styling */
 .source-federal {
-    color: #15234A;
+    color: #000000;
     font-weight: 500;
 }
 
 .source-state {
-    color: #28a745;
+    color: #000000;
     font-weight: 500;
 }
 
 .source-both {
-    color: #dc3545;
+    color: #000000;
     font-weight: 600;
 }
 
