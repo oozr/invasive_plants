@@ -48,3 +48,86 @@
     margin-bottom: 5px;
     font-size: 14px;
  }
+
+/* PDF Download Button */
+.pdf-download-btn {
+    height: fit-content;
+    align-self: center;
+}
+
+.pdf-button-container {
+    display: flex;
+    justify-content: end;
+    margin-top: 0.5rem;
+}
+
+/* Error Messages */
+.map-error-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    text-align: center;
+    z-index: 1000;
+}
+
+/* Federal Regulation Icons */
+.federal-yes {
+    color: #28a745;
+    font-size: 1.1em;
+}
+
+.federal-no {
+    color: #dc3545;
+    font-size: 1.1em;
+}
+
+/* Toggle Controls */
+.toggle-controls {
+    margin-bottom: 2rem;
+}
+
+.toggle-controls .form-check {
+    margin-bottom: 0;
+}
+
+.toggle-controls .toggle-label {
+    font-weight: 300;
+    color: #15234A;
+    margin-left: 0.5rem;
+    font-size: 1.125rem;
+    line-height: 1.5;
+}
+
+.toggle-controls .form-check-input {
+    transform: scale(1.2);
+}
+
+.toggle-controls .form-check-input:checked {
+    background-color: #15234A;
+    border-color: #15234A;
+}
+
+.toggle-controls .form-check-input:focus {
+    border-color: #15234A;
+    box-shadow: 0 0 0 0.2rem rgba(21, 35, 74, 0.25);
+}
+
+.toggle-controls .form-check-input:not(:checked) {
+    background-color: #ffffff;
+    border-color: #dee2e6;
+}
+
+.toggle-controls .form-check-input:not(:checked):hover {
+    border-color: #15234A;
+}
+
+/* Error message styling */
+#toggleError {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}

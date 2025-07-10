@@ -27,10 +27,177 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Store state data globally
     let stateWeedData = {};
+    let geojsonLayer = null;
+    let currentSelectedState = null;
+    
+    // Toggle state management
+    const toggleState = {
+        federal: true,
+        state: true
+    };
     
     /******************************
      * UTILITY FUNCTIONS
      ******************************/
+    // Get country display name
+    function getCountryDisplayName(country) {
+        const countryNames = {
+            'US': 'United States',
+            'Canada': 'Canada',
+            'Australia': 'Australia'
+        };
+        return countryNames[country] || country;
+    }
+    
+    // Get API parameters based on current toggle state
+    function getToggleParams() {
+        return `?includeFederal=${toggleState.federal}&includeState=${toggleState.state}`;
+    }
+    
+    // Refresh map colors based on current toggle state
+    function refreshMapColors() {
+        // If both toggles are off, just update the styling without API call
+        if (!toggleState.federal && !toggleState.state) {
+            if (geojsonLayer) {
+                geojsonLayer.setStyle(styleFeature);
+            }
+            return;
+        }
+        
+        fetch('/api/state-weed-counts' + getToggleParams())
+            .then(response => response.json())
+            .then(data => {
+                stateWeedData = data;
+                if (geojsonLayer) {
+                    geojsonLayer.setStyle(styleFeature);
+                }
+            })
+            .catch(error => console.error('Error refreshing map colors:', error));
+    }
+    
+    // Show/hide error message and handle toggle validation
+    function validateToggles() {
+        const errorElement = document.getElementById('toggleError');
+        if (!toggleState.federal && !toggleState.state) {
+            errorElement.classList.remove('d-none');
+            // Hide any existing table
+            const tableElement = document.getElementById('state-species');
+            if (tableElement) {
+                tableElement.classList.add('d-none');
+            }
+            currentSelectedState = null;
+        } else {
+            errorElement.classList.add('d-none');
+        }
+    }
+    
+    // Refresh table data if a state is currently selected
+    function refreshTableData(stateName) {
+        if (!stateName) return;
+        
+        fetch(`/api/state/${encodeURIComponent(stateName)}` + getToggleParams())
+            .then(response => response.json())
+            .then(weeds => {
+                updateTable(stateName, weeds);
+            })
+            .catch(error => console.error('Error refreshing table data:', error));
+    }
+    
+    // Update table function
+    function updateTable(stateName, weeds) {
+        const stateData = stateWeedData[stateName] || {};
+        const country = stateData.country || '';
+        
+        // Determine title based on toggle state
+        let title;
+        if (!toggleState.state && toggleState.federal) {
+            // Federal only - show country name
+            const countryName = getCountryDisplayName(country);
+            title = `Federal Regulated Plants in ${countryName}`;
+        } else if (toggleState.state && !toggleState.federal) {
+            // State only
+            title = `State/Province Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
+        } else {
+            // Both or neither
+            title = `Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
+        }
+        
+        document.getElementById('state-title').textContent = title;
+        
+        const table = document.getElementById('species-table');
+        
+        if ($.fn.DataTable.isDataTable(table)) {
+            $(table).DataTable().destroy();
+            $(table).empty();
+            $(table).html('<thead><tr><th>Scientific Name</th><th>Common Name</th><th>Family</th><th>Federal</th></tr></thead>');
+        }
+
+        $(table).DataTable({
+            data: weeds,
+            columns: [
+                { 
+                    data: 'canonical_name',
+                    title: 'Scientific Name',
+                    width: '25%',
+                    render: function(data, type, row) {
+                        if (type === 'display' && data) {
+                            return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank"><em>${data || 'Unknown'}</em></a>`;
+                        }
+                        return data || 'Unknown';
+                    }
+                },
+                { 
+                    data: 'common_name',
+                    title: 'Common Name',
+                    width: '45%',
+                    render: function(data, type, row) {
+                        // Handle "No English common names available" message
+                        if (!data || data.includes('No English common names available')) {
+                            return `(${row.canonical_name || 'Unknown'})`;
+                        }
+                        return data;
+                    }
+                },
+                { 
+                    data: 'family_name',
+                    title: 'Family',
+                    width: '20%',
+                    render: function(data) {
+                        return data || 'Unknown';
+                    }
+                },
+                { 
+                    data: 'has_federal_regulation',
+                    title: 'Federal Reg.',
+                    width: '10%',
+                    className: 'text-center',
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            return data ? '<span class="federal-yes">✓</span>' : '<span class="federal-no">✗</span>';
+                        }
+                        return data ? 'Yes' : 'No';
+                    }
+                }
+            ],
+            pageLength: 10,
+            order: [[0, 'asc']],
+            autoWidth: false,
+            width: '100%',
+            initComplete: function() {
+                const element = document.getElementById('state-species');
+                element.classList.remove('d-none');
+                element.classList.add('updated');
+                setTimeout(() => element.classList.remove('updated'), 1000);
+                
+                // Add PDF download button
+                addPDFDownloadButton(stateName, country, weeds);
+                
+                if (L.Browser.mobile) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    }
     // Get color based on data value and country
     function getColor(d, country) {
         const colorConfig = mapConfig.countryColors[country] || mapConfig.countryColors['default'];
@@ -45,14 +212,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return scheme[0];
     }
 
-    // Set map height based on screen size
-    function setMapHeight() {
-        const mapElement = document.getElementById('map');
-        mapElement.style.height = window.innerWidth <= 768 ? '300px' : '500px';
-    }
+    // Map height is now handled by CSS media queries
 
     // Style function for GeoJSON features
     function styleFeature(feature) {
+        // If both toggles are off, make everything white
+        if (!toggleState.federal && !toggleState.state) {
+            return {
+                fillColor: '#ffffff',
+                weight: 1,
+                opacity: 1,
+                color: '#cccccc',
+                fillOpacity: 0.3
+            };
+        }
+        
         // Try different property names for state names
         const possibleNameProps = ['name', 'NAME', 'STATE_NAME', 'state', 'STATE'];
         let stateName = null;
@@ -82,8 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /******************************
      * MAP INITIALIZATION
      ******************************/
-    setMapHeight();
-    window.addEventListener('resize', setMapHeight);
+    // Map height responsive behavior is handled by CSS
 
     // Initialize map with options to prevent wrapping around the world
     const map = L.map('map', {
@@ -102,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /******************************
      * DATA LOADING
      ******************************/
-    fetch('/api/state-weed-counts')
+    fetch('/api/state-weed-counts' + getToggleParams())
         .then(response => response.json())
         .then(data => {
             stateWeedData = data;
@@ -144,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
                  * MAP INTERACTION
                  ******************************/
                 let previouslyClickedLayer = null;
-                let geojsonLayer = L.geoJson(combinedGeoJSON, {
+                geojsonLayer = L.geoJson(combinedGeoJSON, {
                     style: styleFeature,
                     onEachFeature: function(feature, layer) {
                         // Get state name from properties
@@ -162,93 +335,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Click event
                         layer.on('click', function(e) {
+                            // Don't allow clicks when both toggles are off
+                            if (!toggleState.federal && !toggleState.state) {
+                                return;
+                            }
+                            
                             if (previouslyClickedLayer) {
                                 geojsonLayer.resetStyle(previouslyClickedLayer);
                             }
                             previouslyClickedLayer = layer;
+                            currentSelectedState = stateName;
                             
-                            fetch(`/api/state/${encodeURIComponent(stateName)}`)
+                            fetch(`/api/state/${encodeURIComponent(stateName)}` + getToggleParams())
                                 .then(response => response.json())
                                 .then(weeds => {
-                                    const stateData = stateWeedData[stateName] || {};
-                                    const country = stateData.country || '';
-                                    
-                                    document.getElementById('state-title').textContent = 
-                                        `Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
-                                    
-                                    const table = document.getElementById('species-table');
-                                    
-                                    if ($.fn.DataTable.isDataTable(table)) {
-                                        $(table).DataTable().destroy();
-                                        $(table).empty();
-                                        $(table).html('<thead><tr><th>Scientific Name</th><th>Common Name</th><th>Family</th><th>Federal</th></tr></thead>');
-                                    }
-                        
-                                    $(table).DataTable({
-                                        data: weeds,
-                                        columns: [
-                                            { 
-                                                data: 'canonical_name',
-                                                title: 'Scientific Name',
-                                                width: '25%',
-                                                render: function(data, type, row) {
-                                                    if (type === 'display' && data) {
-                                                        return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank"><em>${data || 'Unknown'}</em></a>`;
-                                                    }
-                                                    return data || 'Unknown';
-                                                }
-                                            },
-                                            { 
-                                                data: 'common_name',
-                                                title: 'Common Name',
-                                                width: '45%',
-                                                render: function(data, type, row) {
-                                                    // Handle "No English common names available" message
-                                                    if (!data || data.includes('No English common names available')) {
-                                                        return `(${row.canonical_name || 'Unknown'})`;
-                                                    }
-                                                    return data;
-                                                }
-                                            },
-                                            { 
-                                                data: 'family_name',
-                                                title: 'Family',
-                                                width: '20%',
-                                                render: function(data) {
-                                                    return data || 'Unknown';
-                                                }
-                                            },
-                                            { 
-                                                data: 'has_federal_regulation',
-                                                title: 'Federal Reg.',
-                                                width: '10%',
-                                                className: 'text-center',
-                                                render: function(data, type, row) {
-                                                    if (type === 'display') {
-                                                        return data ? '<span style="color: #28a745; font-size: 1.1em;">✓</span>' : '<span style="color: #dc3545; font-size: 1.1em;">✗</span>';
-                                                    }
-                                                    return data ? 'Yes' : 'No';
-                                                }
-                                            }
-                                        ],
-                                        pageLength: 10,
-                                        order: [[0, 'asc']],
-                                        autoWidth: false,
-                                        width: '100%',
-                                        initComplete: function() {
-                                            const element = document.getElementById('state-species');
-                                            element.classList.remove('d-none');
-                                            element.classList.add('updated');
-                                            setTimeout(() => element.classList.remove('updated'), 1000);
-                                            
-                                            // Add PDF download button
-                                            addPDFDownloadButton(stateName, country, weeds);
-                                            
-                                            if (L.Browser.mobile) {
-                                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                            }
-                                        }
-                                    });
+                                    updateTable(stateName, weeds);
                                 })
                                 .catch(error => {
                                     console.error("Error fetching state data:", error);
@@ -259,6 +360,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         // Hover effects
                         layer.on('mouseover', function() {
+                            // Don't show tooltips when both toggles are off
+                            if (!toggleState.federal && !toggleState.state) {
+                                return;
+                            }
+                            
                             layer.setStyle({ weight: 2, fillOpacity: 0.9 });
                             
                             // Get weed count data for tooltip
@@ -266,10 +372,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             const weedCount = stateData.count || 0;
                             const country = stateData.country || '';
                             
-                            // Create tooltip content
+                            // Create tooltip content based on toggle state
+                            let displayName, tooltipText;
+                            if (!toggleState.state && toggleState.federal) {
+                                // Federal only - show country name
+                                displayName = getCountryDisplayName(country);
+                                tooltipText = 'Federal Regulated Plants';
+                            } else {
+                                // State or both - show state name
+                                displayName = `${stateName}${country ? `, ${country}` : ''}`;
+                                tooltipText = 'Regulated Plants';
+                            }
+                            
                             const tooltipContent = `
-                                <strong>${stateName}${country ? `, ${country}` : ''}</strong><br>
-                                Regulated Plants: ${weedCount}
+                                <strong>${displayName}</strong><br>
+                                ${tooltipText}: ${weedCount}
                             `;
                             
                             // Add or update tooltip
@@ -367,10 +484,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create PDF download button
         const pdfButton = document.createElement('button');
         pdfButton.id = 'pdf-download-btn';
-        pdfButton.className = 'btn btn-primary btn-sm';
+        pdfButton.className = 'btn btn-primary btn-sm pdf-download-btn';
         pdfButton.innerHTML = '<i class="fas fa-download"></i> Download PDF';
-        pdfButton.style.height = 'fit-content';
-        pdfButton.style.alignSelf = 'center';
         
         pdfButton.onclick = function() {
             generatePDF(stateName, country, weedsData);
@@ -381,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tableContainer) {
             // Create a simple container for the download button, aligned with pagination
             const buttonContainer = document.createElement('div');
-            buttonContainer.className = 'd-flex justify-content-end mt-2';
+            buttonContainer.className = 'pdf-button-container';
             buttonContainer.appendChild(pdfButton);
             
             // Insert button container after the table container
@@ -393,8 +508,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Document title
-        const title = `Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
+        // Document title based on toggle state
+        let title, regulationLevel;
+        if (!toggleState.state && toggleState.federal) {
+            // Federal only - show country name
+            const countryName = getCountryDisplayName(country);
+            title = `Federal Regulated Plants in ${countryName}`;
+            regulationLevel = 'Federal Regulation Only';
+        } else if (toggleState.state && !toggleState.federal) {
+            // State only
+            title = `State/Province Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
+            regulationLevel = 'State/Province Regulation Only';
+        } else {
+            // Both
+            title = `Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
+            regulationLevel = 'Combined Federal and State/Province Regulation';
+        }
         
         // Load and add logos
         Promise.all([
@@ -422,6 +551,11 @@ document.addEventListener('DOMContentLoaded', function() {
             doc.setFont(undefined, 'bold');
             doc.text(title, 20, 35);
             
+            // Add regulation level header
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'italic');
+            doc.text(regulationLevel, 20, 42);
+            
             // Prepare table data with common name fallback
             const tableData = weedsData.map(row => {
                 let commonName = row.common_name;
@@ -439,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Add table with clean styling - narrower to align with logos
             doc.autoTable({
-                startY: 40,
+                startY: 47,
                 margin: { left: 20, right: 20 }, // Align with logo positions
                 head: [['Scientific Name', 'Common Name', 'Family', 'Federal']],
                 body: tableData,
@@ -481,8 +615,17 @@ document.addEventListener('DOMContentLoaded', function() {
             doc.setFont(undefined, 'normal');
             doc.text(`Provided by Regulated Plants Database, data is correct as of ${currentDate}`, 20, footerY);
             
-            // Download the PDF
-            const filename = `Regulated_Plants_${stateName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            // Download the PDF - use appropriate name based on toggle state
+            let fileNameBase;
+            if (!toggleState.state && toggleState.federal) {
+                // Federal only - use country name
+                const countryName = getCountryDisplayName(country);
+                fileNameBase = countryName.replace(/[^a-z0-9]/gi, '_');
+            } else {
+                // State or both - use state name
+                fileNameBase = stateName.replace(/[^a-z0-9]/gi, '_');
+            }
+            const filename = `Regulated_Plants_${fileNameBase}_${new Date().toISOString().split('T')[0]}.pdf`;
             doc.save(filename);
             
         }).catch(error => {
@@ -543,7 +686,17 @@ document.addEventListener('DOMContentLoaded', function() {
             doc.setFontSize(10);
             doc.text(`Provided by Regulated Plants Database, data is correct as of ${currentDate}`, 20, footerY);
             
-            const filename = `Regulated_Plants_${stateName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            // Use appropriate filename based on toggle state
+            let fileNameBase;
+            if (!toggleState.state && toggleState.federal) {
+                // Federal only - use country name
+                const countryName = getCountryDisplayName(country);
+                fileNameBase = countryName.replace(/[^a-z0-9]/gi, '_');
+            } else {
+                // State or both - use state name
+                fileNameBase = stateName.replace(/[^a-z0-9]/gi, '_');
+            }
+            const filename = `Regulated_Plants_${fileNameBase}_${new Date().toISOString().split('T')[0]}.pdf`;
             doc.save(filename);
         });
     }
@@ -572,6 +725,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 resolve(null);
             };
             img.src = url;
+        });
+    }
+    
+    /******************************
+     * TOGGLE EVENT LISTENERS
+     ******************************/
+    // Setup toggle event listeners
+    const federalToggle = document.getElementById('federalToggle');
+    const stateToggle = document.getElementById('stateToggle');
+    
+    if (federalToggle && stateToggle) {
+        federalToggle.addEventListener('change', function() {
+            toggleState.federal = this.checked;
+            validateToggles();
+            refreshMapColors();
+            if (currentSelectedState && (toggleState.federal || toggleState.state)) {
+                refreshTableData(currentSelectedState);
+            }
+        });
+        
+        stateToggle.addEventListener('change', function() {
+            toggleState.state = this.checked;
+            validateToggles();
+            refreshMapColors();
+            if (currentSelectedState && (toggleState.federal || toggleState.state)) {
+                refreshTableData(currentSelectedState);
+            }
         });
     }
 });

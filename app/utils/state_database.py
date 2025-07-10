@@ -4,13 +4,15 @@ from app.utils.database_base import DatabaseBase
 class StateDatabase(DatabaseBase):
     """Class for state/province-related database operations"""
     
-    def get_weeds_by_state(self, state: str) -> List[Dict]:
+    def get_weeds_by_state(self, state: str, include_federal: bool = True, include_state: bool = True) -> List[Dict]:
         """
         Get all weeds regulated in a specific state/province.
-        Includes federal regulations for the state's country.
+        Optionally includes federal regulations for the state's country.
         
         Parameters:
         state (str): The state or province name
+        include_federal (bool): Whether to include federal regulations
+        include_state (bool): Whether to include state/province regulations
         
         Returns:
         List[Dict]: List of weed species regulated in the state
@@ -19,13 +21,30 @@ class StateDatabase(DatabaseBase):
         conn = self.get_connection()
         
         try:
-            # Get both state-specific and federal regulations for this country
-            cursor = conn.execute('''
+            # Build query based on toggle preferences
+            where_conditions = []
+            params = []
+            
+            if include_state:
+                where_conditions.append("state = ?")
+                params.append(state)
+            
+            if include_federal:
+                where_conditions.append("(state = 'federal' AND country = ?)")
+                params.append(country)
+            
+            # If neither is selected, return empty list
+            if not where_conditions:
+                return []
+            
+            query = f'''
                 SELECT canonical_name, common_name, family_name, usage_key, state
                 FROM weeds 
-                WHERE (state = ? OR (state = 'federal' AND country = ?))
+                WHERE ({' OR '.join(where_conditions)})
                 ORDER BY state DESC, canonical_name
-            ''', (state, country))
+            '''
+            
+            cursor = conn.execute(query, params)
             
             # Use a dictionary to track unique species based on canonical_name
             seen_species = {}
@@ -75,11 +94,15 @@ class StateDatabase(DatabaseBase):
         finally:
             conn.close()
 
-    def get_state_weed_counts(self) -> Dict[str, Dict]:
+    def get_state_weed_counts(self, include_federal: bool = True, include_state: bool = True) -> Dict[str, Dict]:
         """
         Get counts of regulated weeds for all states/provinces.
-        Includes both state/province-specific and federal regulations.
+        Optionally includes state/province-specific and federal regulations.
         Also includes country information for each state/province.
+        
+        Parameters:
+        include_federal (bool): Whether to include federal regulations
+        include_state (bool): Whether to include state/province regulations
         
         Returns:
         Dict[str, Dict]: Dictionary mapping state/province names to data including weed counts and country
@@ -106,34 +129,33 @@ class StateDatabase(DatabaseBase):
             ''')
             federal_counts = {row['country']: row['count'] for row in cursor.fetchall()}
             
-            # For each state/province, count unique species from both state and federal regulations
+            # For each state/province, count unique species based on toggle preferences
             combined_counts = {}
             
             for state, country in all_regions.items():
-                # First get state-specific weed count
-                cursor = conn.execute('''
-                    SELECT COUNT(DISTINCT canonical_name) as count
-                    FROM weeds
-                    WHERE state = ?
-                ''', (state,))
+                # Build query based on toggle preferences
+                where_conditions = []
+                params = []
                 
-                state_count = cursor.fetchone()['count'] or 0
+                if include_state:
+                    where_conditions.append("state = ?")
+                    params.append(state)
                 
-                # Add federal count for this country
-                federal_count = federal_counts.get(country, 0)
+                if include_federal:
+                    where_conditions.append("(state = 'federal' AND country = ?)")
+                    params.append(country)
                 
-                # For states with no state-specific weeds, use federal count
-                if state_count == 0:
-                    weed_count = federal_count
+                # If neither is selected, count is 0
+                if not where_conditions:
+                    weed_count = 0
                 else:
-                    # For states with state-specific weeds, get combined count of unique species
-                    cursor = conn.execute('''
+                    query = f'''
                         SELECT COUNT(DISTINCT canonical_name) as count
                         FROM weeds
-                        WHERE (state = ? OR (state = 'federal' AND country = ?))
-                    ''', (state, country))
-                    
-                    weed_count = cursor.fetchone()['count']
+                        WHERE ({' OR '.join(where_conditions)})
+                    '''
+                    cursor = conn.execute(query, params)
+                    weed_count = cursor.fetchone()['count'] or 0
                 
                 # Store both the count and the country information
                 combined_counts[state] = {

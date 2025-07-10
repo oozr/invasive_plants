@@ -37,13 +37,21 @@ def robots_txt():
 @home.route('/api/state-weed-counts')
 def state_weed_counts():
     print("DEBUG: Fetching state weed counts")
-    counts = state_db.get_state_weed_counts()
+    # Get toggle parameters
+    include_federal = request.args.get('includeFederal', 'true').lower() == 'true'
+    include_state = request.args.get('includeState', 'true').lower() == 'true'
+    
+    counts = state_db.get_state_weed_counts(include_federal=include_federal, include_state=include_state)
     print(f"DEBUG: Retrieved counts: {counts}")
     return jsonify(counts)
 
 @home.route('/api/state/<state>')
 def state_weeds(state):
-    weeds = state_db.get_weeds_by_state(state)
+    # Get toggle parameters
+    include_federal = request.args.get('includeFederal', 'true').lower() == 'true'
+    include_state = request.args.get('includeState', 'true').lower() == 'true'
+    
+    weeds = state_db.get_weeds_by_state(state, include_federal=include_federal, include_state=include_state)
     return jsonify(weeds)
 
 # Species routes

@@ -1,10 +1,35 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
+{% endblock %}
+
 {% block content %}
 <h1 class="page-title">Regulated Plants Database</h1>
 <p class="lead mb-4">
     Explore the official list of regulated plant species across Australia, Canada, and the United States
 </p>
+
+<div class="toggle-controls mb-4">
+    <div class="d-flex flex-column flex-md-row gap-4 align-items-start">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="federalToggle" checked>
+            <label class="form-check-label toggle-label" for="federalToggle">
+                Federal/National Regulations
+            </label>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="stateToggle" checked>
+            <label class="form-check-label toggle-label" for="stateToggle">
+                State/Province Regulations
+            </label>
+        </div>
+        <div id="toggleError" class="text-danger fw-bold d-none">
+            Please select at least one regulation level
+        </div>
+    </div>
+</div>
 
 <div class="map-wrapper">
     <div id="map" class="rounded shadow"></div>
