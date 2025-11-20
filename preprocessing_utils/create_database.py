@@ -2,6 +2,7 @@ import sqlite3
 import csv
 import os
 import glob
+import shutil
 from datetime import datetime
 
 def clean_value(value):
@@ -29,8 +30,22 @@ def create_database(csv_folder=".data"):
     print(f"Using most recent CSV file: {os.path.basename(csv_file)}")
     
     # Connect to database
+    db_path = 'weeds.db'
+    archive_dir = os.path.join('preprocessing_utils', 'old_databases')
+
+    if os.path.exists(db_path):
+        os.makedirs(archive_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        archive_name = f"weeds_{timestamp}.db"
+        archive_path = os.path.join(archive_dir, archive_name)
+
+        print(f"Existing database found. Moving {db_path} to {archive_path}...")
+        shutil.move(db_path, archive_path)
+    else:
+        print("No existing database to archive.")
+
     print("Connecting to database...")
-    conn = sqlite3.connect('weeds.db')
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     print("Dropping existing table if it exists...")
