@@ -52,72 +52,66 @@ class DatabaseBase:
     
     def _sync_territories_from_geojson(self):
         """
-        Synchronizes all US states and Canadian provinces from GeoJSON files to ensure
-        all mappable territories are in the states_country table, even if they don't
-        have specific weed entries.
+        Synchronize all states/provinces from *all* GeoJSON files in
+        app/static/data/geographic into the states_country table.
+        - Country name is inferred from filename, e.g.
+        'united_states.geojson' -> 'United States'
         """
-        # Updated paths to match your current folder structure
-        us_geojson_path = os.path.join('app', 'static', 'data', 'geographic', 'us.geojson')
-        canada_geojson_path = os.path.join('app', 'static', 'data', 'geographic', 'canada.geojson')
-        australia_geojson_path = os.path.join('app', 'static', 'data', 'geographic', 'australia.geojson')
-        
+        geo_dir = os.path.join('app', 'static', 'data', 'geographic')
+
+        if not os.path.isdir(geo_dir):
+            print(f"Warning: GeoJSON directory not found at {geo_dir}")
+            return
+
         territories = []
-        
-        # Try to load US states
-        try:
-            if os.path.exists(us_geojson_path):
-                with open(us_geojson_path, 'r') as f:
+
+        for filename in os.listdir(geo_dir):
+            if not filename.lower().endswith('.geojson'):
+                continue
+
+            # Derive country name from filename
+            # 'united_states.geojson' -> 'united_states' -> 'United States'
+            country_slug = filename[:-8]  # strip ".geojson"
+            country_name = country_slug.replace('_', ' ').title()
+
+            full_path = os.path.join(geo_dir, filename)
+
+            try:
+                with open(full_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    for feature in data['features']:
-                        name = feature['properties'].get('name') or feature['properties'].get('NAME')
-                        if name:
-                            territories.append((name.strip(), 'US'))
-            else:
-                print(f"Warning: US GeoJSON file not found at {us_geojson_path}")
-        except Exception as e:
-            print(f"Error loading US GeoJSON: {e}")
-        
-        # Try to load Canadian provinces
-        try:
-            if os.path.exists(canada_geojson_path):
-                with open(canada_geojson_path, 'r') as f:
-                    data = json.load(f)
-                    for feature in data['features']:
-                        name = feature['properties'].get('name') or feature['properties'].get('NAME')
-                        if name:
-                            territories.append((name.strip(), 'Canada'))
-            else:
-                print(f"Warning: Canada GeoJSON file not found at {canada_geojson_path}")
-        except Exception as e:
-            print(f"Error loading Canada GeoJSON: {e}")
-        
-        # Try to load Australian states/territories
-        try:
-            if os.path.exists(australia_geojson_path):
-                with open(australia_geojson_path, 'r') as f:
-                    data = json.load(f)
-                    for feature in data['features']:
-                        name = feature['properties'].get('name') or feature['properties'].get('NAME')
-                        if name:
-                            territories.append((name.strip(), 'Australia'))
-            else:
-                print(f"Warning: Australia GeoJSON file not found at {australia_geojson_path}")
-        except Exception as e:
-            print(f"Error loading Australia GeoJSON: {e}")
-        
-        # If we found territories, add them to the database
+
+                for feature in data.get('features', []):
+                    props = feature.get('properties', {})
+                    state_name = (
+                        props.get('name')
+                        or props.get('NAME')
+                        or props.get('STATE_NAME')
+                        or props.get('state')
+                        or props.get('STATE')
+                    )
+
+                    if state_name:
+                        territories.append((state_name.strip(), country_name))
+
+            except Exception as e:
+                print(f"Error loading GeoJSON {full_path}: {e}")
+
         if territories:
             conn = self.get_connection()
             try:
-                for territory, country in territories:
-                    conn.execute('''
+                for state, country in territories:
+                    conn.execute(
+                        '''
                         INSERT OR IGNORE INTO states_country (state, country)
                         VALUES (?, ?)
-                    ''', (territory, country))
+                        ''',
+                        (state, country),
+                    )
                 conn.commit()
                 print(f"Added {len(territories)} territories to states_country table")
             finally:
                 conn.close()
+
     
     def get_country_for_state(self, state: str) -> str:
         """
@@ -126,9 +120,6 @@ class DatabaseBase:
         
         Parameters:
         state (str): The state or province name
-        
-        Returns:
-        str: The country code (e.g., 'US', 'Canada')
         """
         conn = self.get_connection()
         try:
@@ -155,11 +146,8 @@ class DatabaseBase:
             if result:
                 return result['country']
             
-            # Add debug logging to help troubleshoot territory matching issues
             print(f"Warning: Could not determine country for state/province: '{state}'")
-            
-            # Default to US if we can't determine the country
-            # This is a fallback and should be improved with a more complete mapping
-            return 'US'
+            return None
+
         finally:
             conn.close()

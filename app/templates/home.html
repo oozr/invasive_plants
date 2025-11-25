@@ -65,6 +65,8 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script defer src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script defer src="{{ url_for('static', filename='js/map_config.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/map.js') }}"></script>
+
 {% endblock %}

@@ -45,6 +45,34 @@ def state_weed_counts():
     print(f"DEBUG: Retrieved counts: {counts}")
     return jsonify(counts)
 
+@home.route('/api/geojson-files')
+def geojson_files():
+    """
+    Return a list of GeoJSON filenames in static/data/geographic.
+    map.js will call this to know which files to load.
+    """
+    try:
+        # static folder, e.g. app/static
+        static_folder = current_app.static_folder
+
+        # geographic dir: app/static/data/geographic
+        geo_dir = os.path.join(static_folder, 'data', 'geographic')
+
+        # List *.geojson files only
+        files = []
+        if os.path.isdir(geo_dir):
+            for fname in os.listdir(geo_dir):
+                if fname.lower().endswith('.geojson'):
+                    files.append(fname)
+
+        # Sort for consistency (optional)
+        files.sort()
+
+        return jsonify(files)
+    except Exception as e:
+        current_app.logger.error(f"Error listing geojson files: {e}")
+        return jsonify({"error": "Failed to list geojson files"}), 500
+
 @home.route('/api/state/<state>')
 def state_weeds(state):
     # Get toggle parameters
