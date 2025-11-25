@@ -83,14 +83,15 @@ table.dataTable tbody td a:hover,
    color: var(--white);
    transition: all 0.2s ease;
    box-shadow: none !important;
+   text-decoration: none !important;
 }
 
 .btn-primary:hover {
    background-color: var(--hover-dark);
    border-color: var(--hover-dark);
    color: var(--white);
-   transform: translateY(-2px);
    box-shadow: none !important;
+   text-decoration: none !important;
 }
 
 .btn-primary:active, 
@@ -101,6 +102,7 @@ table.dataTable tbody td a:hover,
    color: var(--white) !important;
    box-shadow: none !important;
    outline: none !important;
+   text-decoration: none !important;
 }
 
 /* ========================================
