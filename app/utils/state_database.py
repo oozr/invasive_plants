@@ -4,6 +4,53 @@ from app.utils.database_base import DatabaseBase
 class StateDatabase(DatabaseBase):
     """Class for state/province-related database operations"""
     
+    def get_highlight_metrics(self) -> Dict[str, int]:
+        """Aggregated stats for homepage highlights"""
+        conn = self.get_connection()
+        try:
+            cursor = conn.execute('''
+                SELECT COUNT(DISTINCT canonical_name) as count
+                FROM weeds
+            ''')
+            species_count = cursor.fetchone()['count'] or 0
+
+            cursor = conn.execute('''
+                SELECT COUNT(DISTINCT state) as count FROM (
+                    SELECT state FROM weeds WHERE state != 'federal'
+                    UNION
+                    SELECT state FROM states_country
+                )
+            ''')
+            jurisdiction_count = cursor.fetchone()['count'] or 0
+
+            cursor = conn.execute('''
+                SELECT country
+                FROM weeds
+                WHERE country IS NOT NULL AND TRIM(country) != ''
+                ORDER BY id DESC
+                LIMIT 1
+            ''')
+            latest_country_row = cursor.fetchone()
+            latest_country = latest_country_row['country'] if latest_country_row else None
+
+            latest_country_regions = 0
+            if latest_country:
+                cursor = conn.execute('''
+                    SELECT COUNT(DISTINCT state) as count
+                    FROM weeds
+                    WHERE country = ? AND state != 'federal'
+                ''', (latest_country,))
+                latest_country_regions = cursor.fetchone()['count'] or 0
+
+            return {
+                'species_count': species_count,
+                'jurisdiction_count': jurisdiction_count,
+                'latest_country': latest_country,
+                'latest_country_regions': latest_country_regions
+            }
+        finally:
+            conn.close()
+    
     def get_weeds_by_state(self, state: str, include_federal: bool = True, include_state: bool = True) -> List[Dict]:
         """
         Get all weeds regulated in a specific state/province.

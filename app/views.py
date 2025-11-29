@@ -1,6 +1,7 @@
 # views.py
 import csv
 import os
+from datetime import datetime
 from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect
 from flask_mail import Message
 from app import mail, limiter, recaptcha
@@ -24,6 +25,10 @@ about = Blueprint('about', __name__, url_prefix='/about')
 
 # Initialize blog generator
 blog_generator = BlogGenerator()
+PRESS_RELEASE_HIGHLIGHT = {
+    "title": "Regulated Plants Database: UNU's New Open-Access Tool to Help Prevent the Spread of Harmful Plants",
+    "url": "https://unu.edu/inweh/news/regulated-plants-database-unus-new-open-access-tool-help-prevent-spread-harmful-plants"
+}
 
 # Home routes
 @home.route('/')
@@ -81,6 +86,46 @@ def state_weeds(state):
     
     weeds = state_db.get_weeds_by_state(state, include_federal=include_federal, include_state=include_state)
     return jsonify(weeds)
+
+@home.route('/api/home-highlights')
+def home_highlights():
+    try:
+        metrics = state_db.get_highlight_metrics()
+        latest_country = metrics.get('latest_country')
+        latest_country_regions = metrics.get('latest_country_regions', 0)
+
+        last_updated = None
+        db_path = Config.DATABASE_PATH or 'weeds.db'
+        if db_path:
+            absolute_db_path = db_path if os.path.isabs(db_path) else os.path.abspath(db_path)
+            if os.path.exists(absolute_db_path):
+                last_updated = datetime.fromtimestamp(os.path.getmtime(absolute_db_path)).isoformat()
+
+        latest_blog = blog_generator.blog_posts[0] if blog_generator.blog_posts else None
+        blog_info = None
+        if latest_blog:
+            blog_info = {
+                "title": latest_blog['title'],
+                "date": latest_blog['date'],
+                "url": url_for('blog.post', slug=latest_blog['slug'])
+            }
+
+        return jsonify({
+            "stats": {
+                "species": metrics.get('species_count', 0),
+                "jurisdictions": metrics.get('jurisdiction_count', 0)
+            },
+            "latestCountry": {
+                "name": latest_country,
+                "jurisdictions": latest_country_regions
+            },
+            "lastUpdated": last_updated,
+            "latestBlog": blog_info,
+            "pressRelease": PRESS_RELEASE_HIGHLIGHT
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error building home highlights: {e}")
+        return jsonify({"error": "Failed to load highlights"}), 500
 
 # Species routes
 @species.route('/')

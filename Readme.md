@@ -81,16 +81,35 @@ Useful URLs:
 No build step required; Leaflet/Bootstrap assets load from CDNs. Custom JS/CSS live under `app/static/`.
 
 ## Data Processing Pipeline
-Raw regulatory data and geometry files live in `preprocessing_utils/data/`.
+Raw regulatory data, spreadsheets, and geometry sources live in `preprocessing_utils/data/`. Use the pipeline below whenever you add a new country/region or refresh regulations.
 
-Key scripts:
-- `preprocessing_utils/process_geojson.py` – Cleans GeoJSON boundaries for supported countries.
-- `preprocessing_utils/database_base.py` + helpers – Combine CSV source data into `weeds.db`.
+### 1. Update Data Sources
+- Append the new country’s regions + regulation codes to the master spreadsheet/CSV  (`preprocessing_utils/data/weed_lists_merged_*.csv`).
+- Rebuild the SQLite database:
+```bash
+  cd preprocessing_utils/database
+  python create_database.py
+```
+This script loads the curated spreadsheet and produces `weeds.db` (referenced by the Flask app), saving the old database to preproceesing_utils/data/old_databases.
 
-Typical flow:
-1. Update CSVs/GeoJSON in `preprocessing_utils/data/`.
-2. Run preprocessing scripts to regenerate normalized outputs.
-3. Inspect resulting GeoJSON in `app/static/data/geographic/` and SQLite database (`weeds.db`).
+### 2. Add & Optimize GeoJSON
+- Download a base GeoJSON (e.g., from https://mapscaping.com/geojson-every-country-in-the-world/).
+- Save the raw file as `preprocessing_utils/data/geographic/<country>_original.geojson`.
+- Simplify/clean the geometry:
+```bash
+  python preprocessing_utils/process_geojson.py <country> --level 0.3 --precision 2 --keep-largest-only
+```
+  - `--level` controls simplification percent (higher = more aggressive reduction).
+  - `--precision` sets decimal places kept.
+  - `--keep-largest-only` removes small islands; skip it for archipelago-heavy countries (Japan, New Zealand, Canada, etc.).
+- The processed GeoJSON lands in `app/static/data/geographic/` for the map to load.
+
+### 3. Test Locally
+- Ensure `weeds.db` contains the new rows (`/debug/table-check` or direct SQLite inspection).
+- Run the Flask app and confirm:
+  - New regions display on the map without topology issues.
+  - Hover counts, toggles, and PDF exports include the new country.
+  - Species table/API endpoints return the new data correctly.
 
 ## Testing
 Currently ad-hoc/manual:

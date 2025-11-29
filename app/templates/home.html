@@ -11,6 +11,54 @@
     The official list of regulated plant species around the world
 </p>
 
+<section class="home-highlights mb-4" id="home-highlights">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <p class="text-uppercase small text-muted mb-0">Live project highlights</p>
+        <span class="badge bg-light text-dark fw-semibold" id="highlight-last-updated-badge">Refreshing...</span>
+    </div>
+    <div class="row g-3">
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="highlight-card">
+                <p class="highlight-label">Regulatory Coverage</p>
+                <div class="highlight-metric">
+                    <span id="highlight-jurisdictions">--</span>
+                    <small>jurisdictions</small>
+                </div>
+                <div class="highlight-metric">
+                    <span id="highlight-species">--</span>
+                    <small>species monitored</small>
+                </div>
+                <p class="highlight-meta">Data refreshed <span id="highlight-last-updated">--</span></p>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="highlight-card">
+                <p class="highlight-label">Latest Country Added</p>
+                <p class="highlight-value" id="highlight-latest-country">--</p>
+                <p class="highlight-meta"><span id="highlight-country-jurisdictions">--</span> jurisdictions onboarded</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="highlight-card">
+                <p class="highlight-label">Latest Announcement</p>
+                <a href="#" id="highlight-blog-link" class="highlight-link">
+                    Latest announcement
+                </a>
+                <p class="highlight-meta" id="highlight-blog-date">Loading...</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="highlight-card">
+                <p class="highlight-label">In the Press</p>
+                <a href="#" id="highlight-press-link" class="highlight-link" target="_blank" rel="noopener">
+                    Latest media coverage
+                </a>
+                <p class="highlight-meta">From UNU-INWEH communications</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <div class="toggle-controls mb-4">
     <div class="d-flex flex-column flex-md-row gap-2 gap-md-4 align-items-start align-items-md-start">
         <div class="form-check form-switch">
@@ -66,6 +114,7 @@
 
 {% block extra_js %}
 <script defer src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script defer src="{{ url_for('static', filename='js/home_highlights.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/map_config.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/map.js') }}"></script>
 
