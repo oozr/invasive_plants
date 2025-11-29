@@ -111,16 +111,16 @@ table.dataTable tbody td a:hover,
 .home-highlights {
    background-color: var(--bg-light);
    border-radius: 0.5rem;
-   padding: 1rem 1.25rem;
+   padding: 0.75rem 1rem;
 }
 
 .home-highlights .highlight-card {
    background-color: var(--white);
-   border-radius: 0.75rem;
-   padding: 1.25rem;
+   border-radius: 0.65rem;
+   padding: 1rem;
    height: 100%;
    border: 1px solid var(--border-light);
-   box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+   box-shadow: 0 3px 12px rgba(0,0,0,0.04);
 }
 
 .highlight-label {
@@ -128,14 +128,14 @@ table.dataTable tbody td a:hover,
    font-size: 0.85rem;
    letter-spacing: 0.08em;
    color: var(--text-muted);
-   margin-bottom: 0.5rem;
+   margin-bottom: 0.35rem;
 }
 
 .highlight-metric {
    display: flex;
    align-items: baseline;
    gap: 0.5rem;
-   margin-bottom: 0.35rem;
+   margin-bottom: 0;
 }
 
 .highlight-metric span {

@@ -117,7 +117,7 @@ def home_highlights():
             },
             "latestCountry": {
                 "name": latest_country,
-                "jurisdictions": latest_country_regions
+                "jurisdictions": latest_country_regions if latest_country_regions else 1
             },
             "lastUpdated": last_updated,
             "latestBlog": blog_info,

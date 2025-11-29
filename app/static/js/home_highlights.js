@@ -52,7 +52,7 @@
         const pressLink = document.getElementById('highlight-press-link');
 
         if (jurisdictionsEl && data.stats) {
-            animateCount(jurisdictionsEl, data.stats.jurisdictions);
+            jurisdictionsEl.textContent = formatNumber(data.stats.jurisdictions);
         }
 
         if (speciesEl && data.stats) {
@@ -72,11 +72,11 @@
             latestCountryEl.textContent = latestCountry.name || 'New regions on the way';
         }
         if (countryJurisdictionsEl) {
-            const count = latestCountry.jurisdictions || 0;
-            if (count) {
+            const count = latestCountry.jurisdictions;
+            if (typeof count === 'number') {
                 animateCount(countryJurisdictionsEl, count);
             } else {
-                countryJurisdictionsEl.textContent = '--';
+                countryJurisdictionsEl.textContent = '1';
             }
         }
 
