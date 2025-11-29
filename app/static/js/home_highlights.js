@@ -52,6 +52,7 @@
         const topSpeciesCommonEl = document.getElementById('highlight-top-species-common');
         const topSpeciesCountEl = document.getElementById('highlight-top-species-count');
         const topJurisdictionNameEl = document.getElementById('highlight-top-jurisdiction-name');
+        const topJurisdictionCountryEl = document.getElementById('highlight-top-jurisdiction-country');
         const topJurisdictionCountEl = document.getElementById('highlight-top-jurisdiction-count');
         const topJurisdictionLink = document.getElementById('highlight-top-jurisdiction-link');
 
@@ -105,16 +106,15 @@
                 topSpeciesCountEl.textContent = '--';
             }
         }
-        if (topJurisdictionNameEl && topJurisdictionLink) {
+        if (topJurisdictionNameEl && topJurisdictionLink && topJurisdictionCountryEl) {
             if (data.topJurisdiction && data.topJurisdiction.name) {
-                const country = data.topJurisdiction.country
-                    ? `, ${data.topJurisdiction.country}`
-                    : '';
-                topJurisdictionNameEl.textContent = `${data.topJurisdiction.name}${country}`;
+                topJurisdictionNameEl.textContent = data.topJurisdiction.name;
+                topJurisdictionCountryEl.textContent = data.topJurisdiction.country || '';
                 topJurisdictionLink.dataset.state = data.topJurisdiction.name;
                 topJurisdictionLink.classList.remove('disabled');
             } else {
                 topJurisdictionNameEl.textContent = 'Data pending';
+                topJurisdictionCountryEl.textContent = '';
                 topJurisdictionLink.dataset.state = '';
                 topJurisdictionLink.classList.add('disabled');
             }
