@@ -46,13 +46,17 @@
         const lastUpdatedEl = document.getElementById('highlight-last-updated');
         const lastUpdatedBadge = document.getElementById('highlight-last-updated-badge');
         const latestCountryEl = document.getElementById('highlight-latest-country');
-        const countryJurisdictionsEl = document.getElementById('highlight-country-jurisdictions');
-        const blogLink = document.getElementById('highlight-blog-link');
-        const blogDate = document.getElementById('highlight-blog-date');
-        const pressLink = document.getElementById('highlight-press-link');
+        const latestCountryLink = document.getElementById('highlight-latest-country-link');
+        const topSpeciesLink = document.getElementById('highlight-top-species-link');
+        const topSpeciesNameEl = document.getElementById('highlight-top-species-name');
+        const topSpeciesCommonEl = document.getElementById('highlight-top-species-common');
+        const topSpeciesCountEl = document.getElementById('highlight-top-species-count');
+        const topJurisdictionNameEl = document.getElementById('highlight-top-jurisdiction-name');
+        const topJurisdictionCountEl = document.getElementById('highlight-top-jurisdiction-count');
+        const topJurisdictionLink = document.getElementById('highlight-top-jurisdiction-link');
 
         if (jurisdictionsEl && data.stats) {
-            jurisdictionsEl.textContent = formatNumber(data.stats.jurisdictions);
+            animateCount(jurisdictionsEl, data.stats.jurisdictions);
         }
 
         if (speciesEl && data.stats) {
@@ -71,27 +75,62 @@
         if (latestCountryEl) {
             latestCountryEl.textContent = latestCountry.name || 'New regions on the way';
         }
-        if (countryJurisdictionsEl) {
-            const count = latestCountry.jurisdictions;
-            if (typeof count === 'number') {
-                animateCount(countryJurisdictionsEl, count);
+        if (latestCountryLink) {
+            const targetState = latestCountry.stateName || latestCountry.name;
+            if (targetState) {
+                latestCountryLink.dataset.state = targetState;
+                latestCountryLink.classList.remove('disabled');
             } else {
-                countryJurisdictionsEl.textContent = '1';
+                latestCountryLink.dataset.state = '';
+                latestCountryLink.classList.add('disabled');
+            }
+        }
+        if (topSpeciesLink && topSpeciesNameEl && topSpeciesCountEl && topSpeciesCommonEl) {
+            const topSpecies = data.topSpecies;
+            if (topSpecies && topSpecies.name) {
+                topSpeciesNameEl.textContent = topSpecies.name;
+                topSpeciesCommonEl.textContent = topSpecies.common_name || '';
+                topSpeciesLink.href = `/species?name=${encodeURIComponent(topSpecies.name)}`;
+                topSpeciesLink.classList.remove('disabled');
+                if (topSpecies.jurisdiction_count) {
+                    animateCount(topSpeciesCountEl, topSpecies.jurisdiction_count);
+                } else {
+                    topSpeciesCountEl.textContent = '--';
+                }
+            } else {
+                topSpeciesNameEl.textContent = 'Data pending';
+                topSpeciesCommonEl.textContent = '';
+                topSpeciesLink.href = '#';
+                topSpeciesLink.classList.add('disabled');
+                topSpeciesCountEl.textContent = '--';
+            }
+        }
+        if (topJurisdictionNameEl && topJurisdictionLink) {
+            if (data.topJurisdiction && data.topJurisdiction.name) {
+                const country = data.topJurisdiction.country
+                    ? `, ${data.topJurisdiction.country}`
+                    : '';
+                topJurisdictionNameEl.textContent = `${data.topJurisdiction.name}${country}`;
+                topJurisdictionLink.dataset.state = data.topJurisdiction.name;
+                topJurisdictionLink.classList.remove('disabled');
+            } else {
+                topJurisdictionNameEl.textContent = 'Data pending';
+                topJurisdictionLink.dataset.state = '';
+                topJurisdictionLink.classList.add('disabled');
+            }
+        }
+        if (topJurisdictionCountEl) {
+            const topJurisdictionCount =
+                data.topJurisdiction && data.topJurisdiction.species_count
+                    ? data.topJurisdiction.species_count
+                    : 0;
+            if (topJurisdictionCount) {
+                animateCount(topJurisdictionCountEl, topJurisdictionCount);
+            } else {
+                topJurisdictionCountEl.textContent = '--';
             }
         }
 
-        if (blogLink && data.latestBlog) {
-            blogLink.textContent = data.latestBlog.title;
-            blogLink.href = data.latestBlog.url;
-            if (blogDate) {
-                blogDate.textContent = `Published ${formatDate(data.latestBlog.date)}`;
-            }
-        }
-
-        if (pressLink && data.pressRelease) {
-            pressLink.textContent = data.pressRelease.title;
-            pressLink.href = data.pressRelease.url;
-        }
     }
 
     function initHighlights() {
@@ -117,5 +156,28 @@
             });
     }
 
-    document.addEventListener('DOMContentLoaded', initHighlights);
+    function handleTopJurisdictionClick(event) {
+        const stateName = event.currentTarget.dataset.state;
+        if (!stateName) {
+            return;
+        }
+        event.preventDefault();
+        window.dispatchEvent(
+            new CustomEvent('highlight:showState', {
+                detail: { state: stateName, scroll: true }
+            })
+        );
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const topJurisdictionLink = document.getElementById('highlight-top-jurisdiction-link');
+        const latestCountryLink = document.getElementById('highlight-latest-country-link');
+        if (topJurisdictionLink) {
+            topJurisdictionLink.addEventListener('click', handleTopJurisdictionClick);
+        }
+        if (latestCountryLink) {
+            latestCountryLink.addEventListener('click', handleTopJurisdictionClick);
+        }
+        initHighlights();
+    });
 })();

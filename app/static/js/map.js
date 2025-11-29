@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let stateWeedData = {};
     let geojsonLayer = null;
     let currentSelectedState = null;
+    let pendingScrollToTable = false;
 
     // Toggle state management
     const toggleState = {
@@ -241,11 +242,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 addPDFDownloadButton(stateName, country, weeds);
 
-                if (L.Browser.mobile) {
+                if (pendingScrollToTable || L.Browser.mobile) {
                     element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    pendingScrollToTable = false;
                 }
             }
         });
+    }
+
+    function loadStateDetails(stateName) {
+        if (!stateName) return;
+
+        fetch(`/api/state/${encodeURIComponent(stateName)}` + getToggleParams())
+            .then(response => response.json())
+            .then(weeds => {
+                updateTable(stateName, weeds);
+            })
+            .catch(error => {
+                console.error('Error fetching state data:', error);
+                const titleEl = document.getElementById('state-title');
+                if (titleEl) {
+                    titleEl.textContent = `Error loading data for ${stateName}`;
+                }
+            });
     }
 
 
@@ -409,17 +428,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                         previouslyClickedLayer = layer;
                         currentSelectedState = stateName;
-
-                        fetch(`/api/state/${encodeURIComponent(stateName)}` + getToggleParams())
-                            .then(response => response.json())
-                            .then(weeds => {
-                                updateTable(stateName, weeds);
-                            })
-                            .catch(error => {
-                                console.error('Error fetching state data:', error);
-                                document.getElementById('state-title').textContent =
-                                    `Error loading data for ${stateName}`;
-                            });
+                        loadStateDetails(stateName);
                     });
 
                     // Hover effects
@@ -484,6 +493,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             layer.setStyle({ weight: 2, fillOpacity: 0.9 });
                         }
                     });
+
+                    layer.featureStateName = stateName;
+                    layer.featureStateNameLower = stateName.toLowerCase();
                 }
             }).addTo(map);
 
@@ -558,6 +570,43 @@ document.addEventListener('DOMContentLoaded', function () {
             tableContainer.parentNode.insertBefore(buttonContainer, tableContainer.nextSibling);
         }
     }
+
+    window.addEventListener('highlight:showState', function (event) {
+        const targetState = event.detail && event.detail.state;
+        if (!targetState) {
+            return;
+        }
+
+        const normalizedTarget = targetState.toLowerCase();
+        if (event.detail && event.detail.scroll) {
+            pendingScrollToTable = true;
+        }
+
+        if (!toggleState.federal && !toggleState.state) {
+            validateToggles();
+            return;
+        }
+
+        let matchedLayer = null;
+
+        if (geojsonLayer) {
+            geojsonLayer.eachLayer(function (layer) {
+                if (
+                    layer.featureStateNameLower &&
+                    layer.featureStateNameLower === normalizedTarget
+                ) {
+                    matchedLayer = layer;
+                }
+            });
+        }
+
+        if (matchedLayer) {
+            matchedLayer.fire('click');
+        } else {
+            currentSelectedState = targetState;
+            loadStateDetails(targetState);
+        }
+    });
 
     function generatePDF(stateName, country, weedsData) {
         const { jsPDF } = window.jspdf;

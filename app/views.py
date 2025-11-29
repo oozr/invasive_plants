@@ -25,10 +25,6 @@ about = Blueprint('about', __name__, url_prefix='/about')
 
 # Initialize blog generator
 blog_generator = BlogGenerator()
-PRESS_RELEASE_HIGHLIGHT = {
-    "title": "Regulated Plants Database: UNU's New Open-Access Tool to Help Prevent the Spread of Harmful Plants",
-    "url": "https://unu.edu/inweh/news/regulated-plants-database-unus-new-open-access-tool-help-prevent-spread-harmful-plants"
-}
 
 # Home routes
 @home.route('/')
@@ -101,15 +97,6 @@ def home_highlights():
             if os.path.exists(absolute_db_path):
                 last_updated = datetime.fromtimestamp(os.path.getmtime(absolute_db_path)).isoformat()
 
-        latest_blog = blog_generator.blog_posts[0] if blog_generator.blog_posts else None
-        blog_info = None
-        if latest_blog:
-            blog_info = {
-                "title": latest_blog['title'],
-                "date": latest_blog['date'],
-                "url": url_for('blog.post', slug=latest_blog['slug'])
-            }
-
         return jsonify({
             "stats": {
                 "species": metrics.get('species_count', 0),
@@ -117,11 +104,12 @@ def home_highlights():
             },
             "latestCountry": {
                 "name": latest_country,
-                "jurisdictions": latest_country_regions if latest_country_regions else 1
+                "jurisdictions": latest_country_regions if latest_country_regions else 1,
+                "stateName": metrics.get('latest_country_state')
             },
-            "lastUpdated": last_updated,
-            "latestBlog": blog_info,
-            "pressRelease": PRESS_RELEASE_HIGHLIGHT
+            "topSpecies": metrics.get('top_species'),
+            "topJurisdiction": metrics.get('top_jurisdiction'),
+            "lastUpdated": last_updated
         })
     except Exception as e:
         current_app.logger.error(f"Error building home highlights: {e}")

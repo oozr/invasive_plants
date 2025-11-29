@@ -139,9 +139,13 @@ table.dataTable tbody td a:hover,
 }
 
 .highlight-metric span {
-   font-size: 2rem;
+   font-size: 1.6rem;
    font-weight: 600;
    color: var(--unu-blue);
+   min-width: 3.5rem;
+   text-align: right;
+   display: inline-block;
+   width: 4.5rem;
 }
 
 .highlight-metric small {
@@ -149,12 +153,19 @@ table.dataTable tbody td a:hover,
    font-size: 0.75rem;
    letter-spacing: 0.04em;
    color: var(--text-muted);
+   flex: 1;
 }
 
 .highlight-value {
    font-size: 1.6rem;
    font-weight: 600;
    color: var(--unu-blue);
+}
+
+.highlight-common {
+   display: block;
+   font-size: 1rem;
+   color: var(--text-medium);
 }
 
 .highlight-meta {
@@ -173,6 +184,12 @@ table.dataTable tbody td a:hover,
 .highlight-link:hover {
    color: var(--unu-blue);
    text-decoration: underline;
+}
+
+.highlight-link.disabled {
+   pointer-events: none;
+   opacity: 0.6;
+   text-decoration: none;
 }
 
 /* ========================================
