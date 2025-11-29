@@ -148,8 +148,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (hasFederal) {
                             // Show federal regulation
                             let federalInfo = document.createElement('p');
-                            federalInfo.className = 'mb-1 text-primary fw-bold';
-                            federalInfo.textContent = 'Regulated at the Federal Level';
+                            federalInfo.className = 'mb-1';
+                            federalInfo.innerHTML = '<strong>Federal Level:</strong> Regulated nationwide';
                             countryElement.appendChild(federalInfo);
                         }
                         

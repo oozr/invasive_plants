@@ -428,6 +428,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                         previouslyClickedLayer = layer;
                         currentSelectedState = stateName;
+                        pendingScrollToTable = true;
                         loadStateDetails(stateName);
                     });
 
