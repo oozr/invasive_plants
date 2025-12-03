@@ -1,6 +1,7 @@
 # views.py
 import csv
 import os
+from datetime import datetime
 from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect
 from flask_mail import Message
 from app import mail, limiter, recaptcha
@@ -45,6 +46,34 @@ def state_weed_counts():
     print(f"DEBUG: Retrieved counts: {counts}")
     return jsonify(counts)
 
+@home.route('/api/geojson-files')
+def geojson_files():
+    """
+    Return a list of GeoJSON filenames in static/data/geographic.
+    map.js will call this to know which files to load.
+    """
+    try:
+        # static folder, e.g. app/static
+        static_folder = current_app.static_folder
+
+        # geographic dir: app/static/data/geographic
+        geo_dir = os.path.join(static_folder, 'data', 'geographic')
+
+        # List *.geojson files only
+        files = []
+        if os.path.isdir(geo_dir):
+            for fname in os.listdir(geo_dir):
+                if fname.lower().endswith('.geojson'):
+                    files.append(fname)
+
+        # Sort for consistency (optional)
+        files.sort()
+
+        return jsonify(files)
+    except Exception as e:
+        current_app.logger.error(f"Error listing geojson files: {e}")
+        return jsonify({"error": "Failed to list geojson files"}), 500
+
 @home.route('/api/state/<state>')
 def state_weeds(state):
     # Get toggle parameters
@@ -53,6 +82,38 @@ def state_weeds(state):
     
     weeds = state_db.get_weeds_by_state(state, include_federal=include_federal, include_state=include_state)
     return jsonify(weeds)
+
+@home.route('/api/home-highlights')
+def home_highlights():
+    try:
+        metrics = state_db.get_highlight_metrics()
+        latest_country = metrics.get('latest_country')
+        latest_country_regions = metrics.get('latest_country_regions', 0)
+
+        last_updated = None
+        db_path = Config.DATABASE_PATH or 'weeds.db'
+        if db_path:
+            absolute_db_path = db_path if os.path.isabs(db_path) else os.path.abspath(db_path)
+            if os.path.exists(absolute_db_path):
+                last_updated = datetime.fromtimestamp(os.path.getmtime(absolute_db_path)).isoformat()
+
+        return jsonify({
+            "stats": {
+                "species": metrics.get('species_count', 0),
+                "jurisdictions": metrics.get('jurisdiction_count', 0)
+            },
+            "latestCountry": {
+                "name": latest_country,
+                "jurisdictions": latest_country_regions if latest_country_regions else 1,
+                "stateName": metrics.get('latest_country_state')
+            },
+            "topSpecies": metrics.get('top_species'),
+            "topJurisdiction": metrics.get('top_jurisdiction'),
+            "lastUpdated": last_updated
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error building home highlights: {e}")
+        return jsonify({"error": "Failed to load highlights"}), 500
 
 # Species routes
 @species.route('/')

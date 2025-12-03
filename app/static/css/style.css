@@ -42,7 +42,7 @@ body {
 }
 
 .page-title {
-   margin: 2rem 0 1.5rem;
+   margin: 2rem 0 0.5rem;
    color: var(--text-dark);
    font-weight: 700;
 }
@@ -50,7 +50,7 @@ body {
 .lead {
    color: var(--unu-blue);
    font-weight: 300;
-   margin-bottom: 2rem;
+   margin-bottom: 1.25rem;
 }
 
 h2 { margin-bottom: 1.25rem; }
@@ -83,14 +83,15 @@ table.dataTable tbody td a:hover,
    color: var(--white);
    transition: all 0.2s ease;
    box-shadow: none !important;
+   text-decoration: none !important;
 }
 
 .btn-primary:hover {
    background-color: var(--hover-dark);
    border-color: var(--hover-dark);
    color: var(--white);
-   transform: translateY(-2px);
    box-shadow: none !important;
+   text-decoration: none !important;
 }
 
 .btn-primary:active, 
@@ -101,6 +102,94 @@ table.dataTable tbody td a:hover,
    color: var(--white) !important;
    box-shadow: none !important;
    outline: none !important;
+   text-decoration: none !important;
+}
+
+/* ========================================
+   HOME HIGHLIGHTS
+   ======================================== */
+.home-highlights {
+   background-color: var(--bg-light);
+   border-radius: 0.5rem;
+   padding: 0.75rem 1rem;
+}
+
+.home-highlights .highlight-card {
+   background-color: var(--white);
+   border-radius: 0.65rem;
+   padding: 1rem;
+   height: 100%;
+   border: 1px solid var(--border-light);
+   box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+}
+
+.highlight-label {
+   text-transform: uppercase;
+   font-size: 0.85rem;
+   letter-spacing: 0.08em;
+   color: var(--text-muted);
+   margin-bottom: 0.35rem;
+}
+
+.highlight-metric {
+   display: flex;
+   align-items: baseline;
+   gap: 0.5rem;
+   margin-bottom: 0;
+}
+
+.highlight-metric span {
+   font-size: 1.6rem;
+   font-weight: 600;
+   color: var(--unu-blue);
+   min-width: 3.5rem;
+   text-align: right;
+   display: inline-block;
+   width: 4.5rem;
+}
+
+.highlight-metric small {
+   text-transform: uppercase;
+   font-size: 0.75rem;
+   letter-spacing: 0.04em;
+   color: var(--text-muted);
+   flex: 1;
+}
+
+.highlight-value {
+   font-size: 1.6rem;
+   font-weight: 600;
+   color: var(--unu-blue);
+}
+
+.highlight-common {
+   display: block;
+   font-size: 1rem;
+   color: var(--text-medium);
+}
+
+.highlight-meta {
+   font-size: 0.9rem;
+   color: var(--text-medium);
+   margin-bottom: 0;
+}
+
+.highlight-link {
+   display: inline-block;
+   font-weight: 600;
+   color: var(--unu-blue);
+   text-decoration: none;
+}
+
+.highlight-link:hover {
+   color: var(--unu-blue);
+   text-decoration: underline;
+}
+
+.highlight-link.disabled {
+   pointer-events: none;
+   opacity: 0.6;
+   text-decoration: none;
 }
 
 /* ========================================

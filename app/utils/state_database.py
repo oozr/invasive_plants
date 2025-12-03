@@ -4,6 +4,123 @@ from app.utils.database_base import DatabaseBase
 class StateDatabase(DatabaseBase):
     """Class for state/province-related database operations"""
     
+    def get_highlight_metrics(self) -> Dict[str, int]:
+        """Aggregated stats for homepage highlights"""
+        conn = self.get_connection()
+        try:
+            cursor = conn.execute('''
+                SELECT COUNT(DISTINCT canonical_name) as count
+                FROM weeds
+            ''')
+            species_count = cursor.fetchone()['count'] or 0
+
+            cursor = conn.execute('''
+                SELECT COUNT(DISTINCT state) as count FROM (
+                    SELECT state FROM weeds WHERE state != 'federal'
+                    UNION
+                    SELECT state FROM states_country
+                )
+            ''')
+            jurisdiction_count = cursor.fetchone()['count'] or 0
+
+            cursor = conn.execute('''
+                SELECT country
+                FROM weeds
+                WHERE country IS NOT NULL AND TRIM(country) != ''
+                ORDER BY id DESC
+                LIMIT 1
+            ''')
+            latest_country_row = cursor.fetchone()
+            latest_country = latest_country_row['country'] if latest_country_row else None
+
+            latest_country_regions = 0
+            latest_country_state = None
+            if latest_country:
+                cursor = conn.execute('''
+                    SELECT COUNT(DISTINCT state) as count
+                    FROM weeds
+                    WHERE country = ? AND state != 'federal'
+                ''', (latest_country,))
+                latest_country_regions = cursor.fetchone()['count'] or 0
+
+                cursor = conn.execute('''
+                    SELECT state FROM (
+                        SELECT state FROM weeds 
+                        WHERE country = ? AND state NOT IN ('', 'federal') AND state IS NOT NULL
+                        UNION
+                        SELECT state FROM states_country
+                        WHERE country = ? AND state NOT IN ('', 'federal') AND state IS NOT NULL
+                    )
+                    ORDER BY state
+                    LIMIT 1
+                ''', (latest_country, latest_country))
+                state_row = cursor.fetchone()
+                latest_country_state = state_row['state'] if state_row else None
+
+            cursor = conn.execute('''
+                SELECT canonical_name, COUNT(DISTINCT state) as jurisdiction_count
+                FROM weeds
+                WHERE state IS NOT NULL 
+                  AND state != '' 
+                  AND state != 'federal'
+                GROUP BY canonical_name
+                ORDER BY jurisdiction_count DESC, canonical_name ASC
+                LIMIT 1
+            ''')
+            top_species_row = cursor.fetchone()
+            top_species = None
+            if top_species_row:
+                common_name_row = conn.execute('''
+                    SELECT common_name
+                    FROM weeds
+                    WHERE canonical_name = ?
+                      AND common_name IS NOT NULL
+                      AND TRIM(common_name) != ''
+                    LIMIT 1
+                ''', (top_species_row['canonical_name'],)).fetchone()
+
+                common_name = None
+                if common_name_row and common_name_row['common_name']:
+                    name_parts = [part.strip() for part in common_name_row['common_name'].split(',')]
+                    common_name = name_parts[0]
+
+                top_species = {
+                    'name': top_species_row['canonical_name'],
+                    'common_name': common_name,
+                    'jurisdiction_count': top_species_row['jurisdiction_count']
+                }
+
+            cursor = conn.execute('''
+                SELECT state, country, COUNT(DISTINCT canonical_name) as species_count
+                FROM weeds
+                WHERE state IS NOT NULL 
+                  AND state != '' 
+                  AND state != 'federal'
+                GROUP BY state, country
+                ORDER BY species_count DESC, state ASC
+                LIMIT 1
+            ''')
+            top_jurisdiction_row = cursor.fetchone()
+            top_jurisdiction = None
+            if top_jurisdiction_row:
+                top_jurisdiction = {
+                    'name': top_jurisdiction_row['state'],
+                    'country': top_jurisdiction_row['country'],
+                    'species_count': top_jurisdiction_row['species_count']
+                }
+
+            return {
+                'species_count': species_count,
+                'jurisdiction_count': jurisdiction_count,
+                'latest_country': latest_country,
+                'latest_country_regions': latest_country_regions,
+                'latest_country_state': latest_country_state,
+                'top_species': top_species,
+                'top_jurisdiction': top_jurisdiction
+            }
+        finally:
+            conn.close()
+    
     def get_weeds_by_state(self, state: str, include_federal: bool = True, include_state: bool = True) -> List[Dict]:
         """
         Get all weeds regulated in a specific state/province.

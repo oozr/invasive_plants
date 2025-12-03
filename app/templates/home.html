@@ -8,8 +8,67 @@
 {% block content %}
 <h1 class="page-title">Regulated Plants Database</h1>
 <p class="lead mb-4">
-    Explore the official list of regulated plant species across Australia, Canada, and the United States
+    The official list of regulated plant species around the world
 </p>
+
+<section class="home-highlights mb-4" id="home-highlights">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <p class="text-uppercase small text-muted mb-0">Live project highlights</p>
+        <span class="badge bg-light text-dark fw-semibold" id="highlight-last-updated-badge">Refreshing...</span>
+    </div>
+    <div class="row g-3">
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="highlight-card">
+                <p class="highlight-label">Regulatory Coverage</p>
+                <div class="highlight-metric">
+                    <span id="highlight-jurisdictions">--</span>
+                    <small>jurisdictions</small>
+                </div>
+                <div class="highlight-metric">
+                    <span id="highlight-species">--</span>
+                    <small>species monitored</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="highlight-card">
+                <p class="highlight-label">Latest Country Added</p>
+                <a href="#" id="highlight-latest-country-link" class="highlight-link">
+                    <span class="highlight-value" id="highlight-latest-country">--</span>
+                </a>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="highlight-card">
+                <p class="highlight-label">Most Regulated Taxa</p>
+                <a href="#" id="highlight-top-species-link" class="highlight-link" target="_blank" rel="noopener">
+                    <span class="highlight-value" id="highlight-top-species-name">--</span>
+                    <span class="highlight-common" id="highlight-top-species-common">--</span>
+                </a>
+                <p class="highlight-meta">
+                    <span id="highlight-top-species-count">--</span> jurisdictions
+                </p>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="highlight-card">
+                <p class="highlight-label">Most Regulated Jurisdiction</p>
+                <a href="#" id="highlight-top-jurisdiction-link" class="highlight-link">
+                    <span class="highlight-value" id="highlight-top-jurisdiction-name">--</span>
+                    <span class="highlight-common" id="highlight-top-jurisdiction-country">--</span>
+                </a>
+                <p class="highlight-meta">
+                    <span id="highlight-top-jurisdiction-count">--</span> species regulated
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="map-section-intro mb-3">
+    <h2>Explore the Interactive Map</h2>
+    <p class="mb-2 map-description">Toggle between national and state/provincial regulations to update the heat map and species table.</p>
+</div>
 
 <div class="toggle-controls mb-4">
     <div class="d-flex flex-column flex-md-row gap-2 gap-md-4 align-items-start align-items-md-start">
@@ -54,7 +113,7 @@
 </div>
 
 <div class="mt-5"> 
-    <h2 class="h3">Project Description</h2>
+    <h2>Project Description</h2>
     <p>
         This database provides comprehensive information about regulated plant species 
         across different countries. It serves as a resource for researchers, agricultural
@@ -65,6 +124,9 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script defer src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script defer src="{{ url_for('static', filename='js/home_highlights.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/map_config.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/map.js') }}"></script>
+
 {% endblock %}

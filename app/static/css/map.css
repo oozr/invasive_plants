@@ -24,7 +24,11 @@
     100% { background-color: transparent; }
  }
  
- #state-species.updated {
+#state-species {
+    scroll-margin-top: 60px;
+}
+
+#state-species.updated {
     animation: highlight 1s ease-out;
  }
  
@@ -78,17 +82,17 @@
 /* Source Column Styling */
 .source-federal {
     color: #000000;
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .source-state {
     color: #000000;
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .source-both {
     color: #000000;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 /* Toggle Controls */
@@ -98,6 +102,12 @@
 
 .toggle-controls .form-check {
     margin-bottom: 0;
+}
+
+.map-section-intro p,
+.map-section-intro .map-description {
+    font-size: 1rem;
+    color: #212529;
 }
 
 /* Mobile-specific spacing */

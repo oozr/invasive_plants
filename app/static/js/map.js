@@ -1,60 +1,81 @@
-document.addEventListener('DOMContentLoaded', function() {
+// static/js/map.js
+document.addEventListener('DOMContentLoaded', function () {
     /******************************
-     * CONFIGURATION
+     * BASIC CONFIG
      ******************************/
-    const mapConfig = {
-        center: [30, 0],
-        zoom: 2,
-        countryColors: {
-            'US': {
-                thresholds: [0, 100, 150, 200, 250, 300],
-                scheme: ['#FFEDA0', '#FEB24C', '#FD8D3C', '#FC4E2A', '#E31A1C', '#BD0026', '#800026']
-            },
-            'Canada': {
-                thresholds: [0, 100, 150, 200, 250, 300],
-                scheme: ['#f2f0f7', '#d8daeb', '#bcbddc', '#9e9ac8', '#807dba', '#6a51a3', '#4a1486']
-            },
-            'Australia': {
-                thresholds: [0, 100, 150, 200, 250, 300],
-                scheme: ['#edf8e9', '#c7e9c0', '#a1d99b', '#74c476', '#41ab5d', '#238b45', '#005a32']
-            },
-            'default': {
-                thresholds: [0, 100, 150, 200, 250, 300],
-                scheme: ['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5']
-            }
-        }
-    };
+    const GEOJSON_PATH = '/static/data/geographic/';
+
+    // Use global MAP_CONFIG if present (from map_config.js)
+    const MAP_CONFIG = window.MAP_CONFIG || {};
 
     // Store state data globally
     let stateWeedData = {};
     let geojsonLayer = null;
     let currentSelectedState = null;
-    
+    let pendingScrollToTable = false;
+
     // Toggle state management
     const toggleState = {
         federal: true,
         state: true
     };
-    
+
     /******************************
      * UTILITY FUNCTIONS
      ******************************/
-    // Get country display name
-    function getCountryDisplayName(country) {
-        const countryNames = {
-            'US': 'United States',
-            'Canada': 'Canada',
-            'Australia': 'Australia'
-        };
-        return countryNames[country] || country;
+
+    // Simple string hash so we can pick a colour ramp based on country name
+    function hashString(str) {
+        let hash = 0;
+        if (!str) return 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = (hash << 5) - hash + str.charCodeAt(i);
+            hash |= 0; // convert to 32-bit int
+        }
+        return Math.abs(hash);
     }
-    
+
+    // Get a colour config (thresholds + scheme) for a given country name
+    function getCountryConfig(countryName) {
+        const code = countryName || 'default';
+
+        // tiny cache so we don't recompute
+        MAP_CONFIG._countryCache = MAP_CONFIG._countryCache || {};
+        if (MAP_CONFIG._countryCache[code]) {
+            return MAP_CONFIG._countryCache[code];
+        }
+
+        const ramps = MAP_CONFIG.defaultColorRamps || [];
+        const thresholds = MAP_CONFIG.defaultThresholds || [0, 1, 2, 3, 4, 5];
+
+        let scheme;
+        if (!ramps.length) {
+            // ultra-safe fallback if someone nukes defaultColorRamps
+            scheme = [
+                '#f0f0f0',
+                '#f0f0f0',
+                '#f0f0f0',
+                '#f0f0f0',
+                '#f0f0f0',
+                '#f0f0f0',
+                '#f0f0f0'
+            ];
+        } else {
+            const idx = hashString(code) % ramps.length;
+            scheme = ramps[idx];
+        }
+
+        const config = { thresholds, scheme };
+        MAP_CONFIG._countryCache[code] = config;
+        return config;
+    }
+
     // Get API parameters based on current toggle state
     function getToggleParams() {
         return `?includeFederal=${toggleState.federal}&includeState=${toggleState.state}`;
     }
-    
-    // Refresh map colors based on current toggle state
+
+    // Refresh map colours based on current toggle state
     function refreshMapColors() {
         // If both toggles are off, just update the styling without API call
         if (!toggleState.federal && !toggleState.state) {
@@ -63,18 +84,25 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             return;
         }
-        
+
         fetch('/api/state-weed-counts' + getToggleParams())
             .then(response => response.json())
             .then(data => {
                 stateWeedData = data;
+
+                // 🔍 Debug logging:
+                console.log('stateWeedData keys:', Object.keys(stateWeedData));
+                console.log('Idaho entry:', stateWeedData['Idaho']);
+
                 if (geojsonLayer) {
                     geojsonLayer.setStyle(styleFeature);
                 }
             })
-            .catch(error => console.error('Error refreshing map colors:', error));
+            .catch(error =>
+                console.error('Error refreshing map colors:', error)
+            );
     }
-    
+
     // Show/hide error message and handle toggle validation
     function validateToggles() {
         const errorElement = document.getElementById('toggleError');
@@ -86,10 +114,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 tableElement.classList.add('d-none');
             }
             currentSelectedState = null;
-            
+
             // Close and unbind all tooltips when both toggles are off
             if (geojsonLayer) {
-                geojsonLayer.eachLayer(function(layer) {
+                geojsonLayer.eachLayer(function (layer) {
                     layer.closeTooltip();
                     layer.unbindTooltip();
                 });
@@ -98,11 +126,11 @@ document.addEventListener('DOMContentLoaded', function() {
             errorElement.classList.add('d-none');
         }
     }
-    
+
     // Refresh table data if a state is currently selected
     function refreshTableData(stateName) {
         if (!stateName) return;
-        
+
         fetch(`/api/state/${encodeURIComponent(stateName)}` + getToggleParams())
             .then(response => response.json())
             .then(weeds => {
@@ -110,30 +138,37 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => console.error('Error refreshing table data:', error));
     }
-    
+
     // Update table function
     function updateTable(stateName, weeds) {
         const stateData = stateWeedData[stateName] || {};
         const country = stateData.country || '';
-        
+
+        // Avoid "New Zealand, New Zealand"
+        const displayState = (stateName === country ? country : stateName);
+
         // Determine title based on toggle state
         let title;
         if (!toggleState.state && toggleState.federal) {
             // Federal only - show country name
-            const countryName = getCountryDisplayName(country);
+            const countryName = country || '';
             title = `Federal Regulated Plants in ${countryName}`;
         } else if (toggleState.state && !toggleState.federal) {
             // State only
-            title = `State/Province Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
+            title = `State/Province Regulated Plants in ${displayState}${
+                country && displayState !== country ? `, ${country}` : ''
+            }`;
         } else {
-            // Both or neither
-            title = `Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
+            // Both
+            title = `Regulated Plants in ${displayState}${
+                country && displayState !== country ? `, ${country}` : ''
+            }`;
         }
-        
+
         document.getElementById('state-title').textContent = title;
-        
+
         const table = document.getElementById('species-table');
-        
+
         if ($.fn.DataTable.isDataTable(table)) {
             $(table).DataTable().destroy();
             $(table).empty();
@@ -159,7 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     title: 'Common Name',
                     width: '45%',
                     render: function(data, type, row) {
-                        // Handle "No English common names available" message
                         if (!data || data.includes('No English common names available')) {
                             return `(${row.canonical_name || 'Unknown'})`;
                         }
@@ -181,7 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     className: 'text-center',
                     render: function(data, type, row) {
                         if (type === 'display') {
-                            // Determine source based on level and federal regulation status
                             const isStatePlant = row.level === 'State/Province';
                             const hasFederal = row.has_federal_regulation;
                             
@@ -206,31 +239,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 element.classList.remove('d-none');
                 element.classList.add('updated');
                 setTimeout(() => element.classList.remove('updated'), 1000);
-                
-                // Add PDF download button
+
                 addPDFDownloadButton(stateName, country, weeds);
-                
-                if (L.Browser.mobile) {
+
+                if (pendingScrollToTable || L.Browser.mobile) {
                     element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    pendingScrollToTable = false;
                 }
             }
         });
     }
-    // Get color based on data value and country
-    function getColor(d, country) {
-        const colorConfig = mapConfig.countryColors[country] || mapConfig.countryColors['default'];
-        const { thresholds, scheme } = colorConfig;
-        
-        if (d > thresholds[5]) return scheme[6];
-        if (d > thresholds[4]) return scheme[5];
-        if (d > thresholds[3]) return scheme[4];
-        if (d > thresholds[2]) return scheme[3];
-        if (d > thresholds[1]) return scheme[2];
-        if (d > thresholds[0]) return scheme[1];
-        return scheme[0];
+
+    function loadStateDetails(stateName) {
+        if (!stateName) return;
+
+        fetch(`/api/state/${encodeURIComponent(stateName)}` + getToggleParams())
+            .then(response => response.json())
+            .then(weeds => {
+                updateTable(stateName, weeds);
+            })
+            .catch(error => {
+                console.error('Error fetching state data:', error);
+                const titleEl = document.getElementById('state-title');
+                if (titleEl) {
+                    titleEl.textContent = `Error loading data for ${stateName}`;
+                }
+            });
     }
 
-    // Map height is now handled by CSS media queries
+
+    // Get colour based on data value and country
+    function getColor(value, countryName) {
+        const countryConfig = getCountryConfig(countryName);
+        const thresholds = countryConfig.thresholds;
+        const scheme = countryConfig.scheme;
+
+        if (value > thresholds[5]) return scheme[6];
+        if (value > thresholds[4]) return scheme[5];
+        if (value > thresholds[3]) return scheme[4];
+        if (value > thresholds[2]) return scheme[3];
+        if (value > thresholds[1]) return scheme[2];
+        if (value > thresholds[0]) return scheme[1];
+
+        return scheme[0];
+    }
 
     // Style function for GeoJSON features
     function styleFeature(feature) {
@@ -244,20 +296,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 fillOpacity: 0.3
             };
         }
-        
+
         // Try different property names for state names
         const possibleNameProps = ['name', 'NAME', 'STATE_NAME', 'state', 'STATE'];
         let stateName = null;
-        
+
         for (const prop of possibleNameProps) {
             if (feature.properties[prop]) {
                 stateName = feature.properties[prop].trim();
                 break;
             }
         }
-        
-        if (!stateName) return { fillColor: '#cccccc', weight: 1, opacity: 1, color: 'white', fillOpacity: 0.5 };
-        
+
+        if (!stateName) {
+            return {
+                fillColor: '#cccccc',
+                weight: 1,
+                opacity: 1,
+                color: 'white',
+                fillOpacity: 0.5
+            };
+        }
+
         const stateData = stateWeedData[stateName] || { count: 0, country: 'default' };
         const weedCount = stateData.count || 0;
         const country = stateData.country || 'default';
@@ -274,14 +334,12 @@ document.addEventListener('DOMContentLoaded', function() {
     /******************************
      * MAP INITIALIZATION
      ******************************/
-    // Map height responsive behavior is handled by CSS
 
-    // Initialize map with options to prevent wrapping around the world
     const map = L.map('map', {
         dragging: !L.Browser.mobile,
         tap: !L.Browser.mobile,
         worldCopyJump: false,
-        maxBoundsViscosity: 1.0, // Makes the bounds "hard" - can't drag outside them
+        maxBoundsViscosity: 1.0,
         attributionControl: true,
         zoomControl: true
     });
@@ -297,208 +355,193 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             stateWeedData = data;
-            
-            // Get list of geojson files
-            const geojsonPath = '/static/data/geographic/';
-            const knownFiles = [
-                'us.geojson', 
-                'canada.geojson', 
-                'australia.geojson'
-                // Add new files here as needed
-            ];
-            
-            const geoJsonPromises = knownFiles.map(filename => 
+
+            // Ask backend for the list of GeoJSON files to load
+            return fetch('/api/geojson-files');
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to load GeoJSON file list');
+            }
+            return response.json(); // Expecting an array of filenames
+        })
+        .then(geojsonFiles => {
+            const geojsonPath = MAP_CONFIG.geojsonPath || GEOJSON_PATH;
+
+            // Load all GeoJSON files automatically
+            const geoJsonPromises = geojsonFiles.map(filename =>
                 fetch(geojsonPath + filename)
-                    .then(response => response.ok ? response.json() : Promise.reject(`Failed to load ${filename}`))
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Failed to load ${filename}`);
+                        return response.json();
+                    })
                     .catch(error => {
                         console.error(`Error loading ${filename}:`, error);
                         return { type: 'FeatureCollection', features: [] };
                     })
             );
-            
-            Promise.all(geoJsonPromises)
-            .then((results) => {
-                // Combine features from all geojson files
-                const combinedFeatures = [];
-                results.forEach(result => {
-                    if (result.features && Array.isArray(result.features)) {
-                        combinedFeatures.push(...result.features);
-                    }
-                });
-                
-                const combinedGeoJSON = {
-                    type: 'FeatureCollection',
-                    features: combinedFeatures
-                };
-                
-                /******************************
-                 * MAP INTERACTION
-                 ******************************/
-                let previouslyClickedLayer = null;
-                geojsonLayer = L.geoJson(combinedGeoJSON, {
-                    style: styleFeature,
-                    onEachFeature: function(feature, layer) {
-                        // Get state name from properties
-                        const possibleNameProps = ['name', 'NAME', 'STATE_NAME', 'state', 'STATE'];
-                        let stateName = null;
-                        
-                        for (const prop of possibleNameProps) {
-                            if (feature.properties[prop]) {
-                                stateName = feature.properties[prop].trim();
-                                break;
-                            }
-                        }
-                        
-                        if (!stateName) return;
-                        
-                        // Click event
-                        layer.on('click', function(e) {
-                            // Don't allow clicks when both toggles are off
-                            if (!toggleState.federal && !toggleState.state) {
-                                return;
-                            }
-                            
-                            if (previouslyClickedLayer) {
-                                geojsonLayer.resetStyle(previouslyClickedLayer);
-                            }
-                            previouslyClickedLayer = layer;
-                            currentSelectedState = stateName;
-                            
-                            fetch(`/api/state/${encodeURIComponent(stateName)}` + getToggleParams())
-                                .then(response => response.json())
-                                .then(weeds => {
-                                    updateTable(stateName, weeds);
-                                })
-                                .catch(error => {
-                                    console.error("Error fetching state data:", error);
-                                    document.getElementById('state-title').textContent = 
-                                        `Error loading data for ${stateName}`;
-                                });
-                        });
 
-                        // Hover effects
-                        layer.on('mouseover', function() {
-                            // Don't show tooltips when both toggles are off
-                            if (!toggleState.federal && !toggleState.state) {
-                                // Close any existing tooltip and unbind it
-                                layer.closeTooltip();
-                                layer.unbindTooltip();
-                                return;
-                            }
-                            
-                            layer.setStyle({ weight: 2, fillOpacity: 0.9 });
-                            
-                            // Get weed count data for tooltip
-                            const stateData = stateWeedData[stateName] || {};
-                            const weedCount = stateData.count || 0;
-                            const country = stateData.country || '';
-                            
-                            // Debug: Log the data when both toggles are off
-                            if (!toggleState.federal && !toggleState.state) {
-                                console.log('Debug: Both toggles off but tooltip showing for', stateName, 'with count', weedCount);
-                            }
-                            
-                            // Create tooltip content based on toggle state
-                            let displayName, tooltipText;
-                            if (!toggleState.state && toggleState.federal) {
-                                // Federal only - show country name
-                                displayName = getCountryDisplayName(country);
-                                tooltipText = 'Federal Regulated Plants';
-                            } else {
-                                // State or both - show state name
-                                displayName = `${stateName}${country ? `, ${country}` : ''}`;
-                                tooltipText = 'Regulated Plants';
-                            }
-                            
-                            const tooltipContent = `
-                                <strong>${displayName}</strong><br>
-                                ${tooltipText}: ${weedCount}
-                            `;
-                            
-                            // Add or update tooltip
-                            layer.bindTooltip(tooltipContent, {
+            return Promise.all(geoJsonPromises);
+        })
+        .then(results => {
+            // Combine features from all geojson files
+            const combinedFeatures = [];
+            results.forEach(result => {
+                if (result.features && Array.isArray(result.features)) {
+                    combinedFeatures.push(...result.features);
+                }
+            });
+
+            const combinedGeoJSON = {
+                type: 'FeatureCollection',
+                features: combinedFeatures
+            };
+
+            /******************************
+             * MAP INTERACTION
+             ******************************/
+            let previouslyClickedLayer = null;
+            geojsonLayer = L.geoJson(combinedGeoJSON, {
+                style: styleFeature,
+                onEachFeature: function (feature, layer) {
+                    const possibleNameProps = ['name', 'NAME', 'STATE_NAME', 'state', 'STATE'];
+                    let stateName = null;
+
+                    for (const prop of possibleNameProps) {
+                        if (feature.properties[prop]) {
+                            stateName = feature.properties[prop].trim();
+                            break;
+                        }
+                    }
+
+                    if (!stateName) return;
+
+                    // Click event
+                    layer.on('click', function () {
+                        // Don't allow clicks when both toggles are off
+                        if (!toggleState.federal && !toggleState.state) {
+                            return;
+                        }
+
+                        if (previouslyClickedLayer) {
+                            geojsonLayer.resetStyle(previouslyClickedLayer);
+                        }
+                        previouslyClickedLayer = layer;
+                        currentSelectedState = stateName;
+                        pendingScrollToTable = true;
+                        loadStateDetails(stateName);
+                    });
+
+                    // Hover effects
+                    layer.on('mouseover', function () {
+                        // Don't show tooltips when both toggles are off
+                        if (!toggleState.federal && !toggleState.state) {
+                            layer.closeTooltip();
+                            layer.unbindTooltip();
+                            return;
+                        }
+
+                        layer.setStyle({ weight: 2, fillOpacity: 0.9 });
+
+                        // Get weed count data for tooltip
+                        const stateData = stateWeedData[stateName] || {};
+                        const weedCount = stateData.count || 0;
+                        const country = stateData.country || '';
+
+                        // Create tooltip content based on toggle state
+                        let displayName, tooltipText;
+                        if (!toggleState.state && toggleState.federal) {
+                            // Federal only - show country name
+                            displayName = country || '';
+                            tooltipText = 'Federal Regulated Plants';
+                        } else {
+                            // State or both - show state name
+                            // Avoid "New Zealand, New Zealand"
+                        const displayState = (stateName === country ? country : stateName);
+
+                        if (!toggleState.state && toggleState.federal) {
+                            // Federal only
+                            displayName = getCountryDisplayName(country);
+                        } else {
+                            displayName = `${displayState}${country && displayState !== country ? `, ${country}` : ''}`;
+                        }
+
+                            tooltipText = 'Regulated Plants';
+                        }
+
+                        const tooltipContent = `
+                            <strong>${displayName}</strong><br>
+                            ${tooltipText}: ${weedCount}
+                        `;
+
+                        layer
+                            .bindTooltip(tooltipContent, {
                                 sticky: true,
                                 direction: 'top',
                                 opacity: 0.9
-                            }).openTooltip();
-                        });
+                            })
+                            .openTooltip();
+                    });
 
-                        layer.on('mouseout', function() {
-                            // Don't apply hover effects when both toggles are off
-                            if (!toggleState.federal && !toggleState.state) {
-                                return;
-                            }
-                            
-                            geojsonLayer.resetStyle(layer);
-                            if (layer === previouslyClickedLayer) {
-                                layer.setStyle({ weight: 2, fillOpacity: 0.9 });
-                            }
-                        });
-                    }
-                }).addTo(map);
-                
-                // Use a specific bounds that focuses just on the three countries we care about
-                const northAmericaAndAustraliaBounds = [
-                    [-45, -170],  // Southwest corner - includes Australia and North America
-                    [70, 155]     // Northeast corner - includes Australia and North America
-                ];
-                
-                // Set the view to our specific bounds
-                map.fitBounds(northAmericaAndAustraliaBounds, {
-                    padding: [20, 20],
-                    maxZoom: 3
-                });
-                
-                // Restrict the map to show our target areas only once (no wrapping)
-                map.setMaxBounds([
-                    [-90, -190],  // Southwest corner - slightly beyond our data
-                    [90, 190]     // Northeast corner - slightly beyond our data
-                ]);
-                
-                // Turn off world wrapping to prevent duplicate continents
-                map.options.worldCopyJump = false;
-                
-                // Center the view slightly to better frame the continents
-                setTimeout(() => {
-                    console.log("Adjusting map view...");
-                    
-                    // Check device width to provide better mobile experience
-                    const isMobile = window.innerWidth < 768;
-                    const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
-                    
-                    if (isMobile) {
-                        // For mobile, focus on the Americas while keeping a reasonable zoom level
-                        console.log("Mobile device detected - using Americas-centered view");
-                        
-                        // Center on the Americas
-                        map.setView([30, -100], 1);
-                        
-                    } else if (isTablet) {
-                        // Tablet-specific view
-                        console.log("Tablet device detected - using tablet-specific view");
-                        map.setView([20, 0], 2);
-                    } else {
-                        // Desktop - adjust view to show both continents
-                        console.log("Desktop detected - adjusting desktop view");
-                        map.setView([20, -60], 2.2); // Specific zoom level that works well for this data
-                    }
-                }, 200);
-            })
-            .catch(error => {
-                console.error("Error processing GeoJSON:", error);
-                const mapElement = document.getElementById('map');
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'map-error-message';
-                errorDiv.innerHTML = '<strong>Error:</strong> Failed to load map data.';
-                mapElement.appendChild(errorDiv);
+                    layer.on('mouseout', function () {
+                        // Don't apply hover effects when both toggles are off
+                        if (!toggleState.federal && !toggleState.state) {
+                            return;
+                        }
+
+                        geojsonLayer.resetStyle(layer);
+                        if (layer === previouslyClickedLayer) {
+                            layer.setStyle({ weight: 2, fillOpacity: 0.9 });
+                        }
+                    });
+
+                    layer.featureStateName = stateName;
+                    layer.featureStateNameLower = stateName.toLowerCase();
+                }
+            }).addTo(map);
+
+            // Use a specific bounds that focuses on your regions of interest
+            const northAmericaAndAustraliaBounds = [
+                [-45, -170], // Southwest corner
+                [70, 155]    // Northeast corner
+            ];
+
+            map.fitBounds(northAmericaAndAustraliaBounds, {
+                padding: [20, 20],
+                maxZoom: 3
             });
+
+            map.setMaxBounds([
+                [-90, -190],
+                [90, 190]
+            ]);
+
+            map.options.worldCopyJump = false;
+
+            setTimeout(() => {
+                console.log('Adjusting map view...');
+
+                const isMobile = window.innerWidth < 768;
+                const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+
+                if (isMobile) {
+                    console.log('Mobile device detected - using Americas-centered view');
+                    map.setView([30, -100], 1);
+                } else if (isTablet) {
+                    console.log('Tablet device detected - using tablet-specific view');
+                    map.setView([20, 0], 2);
+                } else {
+                    console.log('Desktop detected - adjusting desktop view');
+                    map.setView([20, -60], 2.2);
+                }
+            }, 200);
         })
         .catch(error => {
-            console.error("Error fetching state data:", error);
+            console.error('Error loading map data:', error);
             const mapElement = document.getElementById('map');
             const errorDiv = document.createElement('div');
             errorDiv.className = 'map-error-message';
-            errorDiv.innerHTML = '<strong>Error:</strong> Failed to load weed count data.';
+            errorDiv.innerHTML = '<strong>Error:</strong> Failed to load map data.';
             mapElement.appendChild(errorDiv);
         });
 
@@ -506,267 +549,289 @@ document.addEventListener('DOMContentLoaded', function() {
      * PDF DOWNLOAD FUNCTIONALITY
      ******************************/
     function addPDFDownloadButton(stateName, country, weedsData) {
-        // Remove existing PDF button if present
         const existingButton = document.getElementById('pdf-download-btn');
         if (existingButton) {
             existingButton.remove();
         }
 
-        // Create PDF download button
         const pdfButton = document.createElement('button');
         pdfButton.id = 'pdf-download-btn';
         pdfButton.className = 'btn btn-primary btn-sm pdf-download-btn';
         pdfButton.innerHTML = '<i class="fas fa-download"></i> Download PDF';
-        
-        pdfButton.onclick = function() {
+
+        pdfButton.onclick = function () {
             generatePDF(stateName, country, weedsData);
         };
 
-        // Place button under the table pagination, right-aligned (no card)
         const tableContainer = document.querySelector('.table-responsive');
         if (tableContainer) {
-            // Create a simple container for the download button, aligned with pagination
             const buttonContainer = document.createElement('div');
             buttonContainer.className = 'pdf-button-container';
             buttonContainer.appendChild(pdfButton);
-            
-            // Insert button container after the table container
             tableContainer.parentNode.insertBefore(buttonContainer, tableContainer.nextSibling);
         }
     }
 
+    window.addEventListener('highlight:showState', function (event) {
+        const targetState = event.detail && event.detail.state;
+        if (!targetState) {
+            return;
+        }
+
+        const normalizedTarget = targetState.toLowerCase();
+        if (event.detail && event.detail.scroll) {
+            pendingScrollToTable = true;
+        }
+
+        if (!toggleState.federal && !toggleState.state) {
+            validateToggles();
+            return;
+        }
+
+        let matchedLayer = null;
+
+        if (geojsonLayer) {
+            geojsonLayer.eachLayer(function (layer) {
+                if (
+                    layer.featureStateNameLower &&
+                    layer.featureStateNameLower === normalizedTarget
+                ) {
+                    matchedLayer = layer;
+                }
+            });
+        }
+
+        if (matchedLayer) {
+            matchedLayer.fire('click');
+        } else {
+            currentSelectedState = targetState;
+            loadStateDetails(targetState);
+        }
+    });
+
     function generatePDF(stateName, country, weedsData) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
+
         // Document title based on toggle state
         let title, regulationLevel;
         if (!toggleState.state && toggleState.federal) {
-            // Federal only - show country name
-            const countryName = getCountryDisplayName(country);
+            const countryName = country || '';
             title = `Federal Regulated Plants in ${countryName}`;
             regulationLevel = 'Federal Regulation Only';
         } else if (toggleState.state && !toggleState.federal) {
-            // State only
             title = `State/Province Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
             regulationLevel = 'State/Province Regulation Only';
         } else {
-            // Both
             title = `Regulated Plants in ${stateName}${country ? `, ${country}` : ''}`;
             regulationLevel = 'Combined Federal and State/Province Regulation';
         }
-        
-        // Load and add logos
+
         Promise.all([
             loadImageAsBase64('/static/img/UCD-plant-science-logo.png'),
             loadImageAsBase64('/static/img/UNU-INWEH_LOGO_NV.svg')
-        ]).then(([ucdLogo, unuLogo]) => {
-            // Add UC Davis logo (left side, above title) - wider but shorter
-            if (ucdLogo) {
-                // UC Davis logo: 80 width but much shorter height
-                const ucdWidth = 80;
-                const ucdHeight = 12;
-                doc.addImage(ucdLogo, 'PNG', 20, 15, ucdWidth, ucdHeight);
-            }
-            
-            // Add UNU logo (right side, above title) - make shorter and less wide 
-            if (unuLogo) {
-                // UNU logo: make narrower and shorter
-                const unuHeight = 12;
-                const unuWidth = 35;
-                doc.addImage(unuLogo, 'SVG', 155, 15, unuWidth, unuHeight);
-            }
-            
-            // Add title below logos - aligned with table left margin
-            doc.setFontSize(16);
-            doc.setFont(undefined, 'bold');
-            doc.text(title, 20, 35);
-            
-            // Add regulation level header
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'italic');
-            doc.text(regulationLevel, 20, 42);
-            
-            // Prepare table data with common name fallback
-            const tableData = weedsData.map(row => {
-                let commonName = row.common_name;
-                // Handle "No English common names available" message
-                if (!commonName || commonName.includes('No English common names available')) {
-                    commonName = `(${row.canonical_name || 'Unknown'})`;
+        ])
+            .then(([ucdLogo, unuLogo]) => {
+                if (ucdLogo) {
+                    const ucdWidth = 80;
+                    const ucdHeight = 12;
+                    doc.addImage(ucdLogo, 'PNG', 20, 15, ucdWidth, ucdHeight);
                 }
-                // Determine source
-                const isStatePlant = row.level === 'State/Province';
-                const hasFederal = row.has_federal_regulation;
-                let source;
-                if (isStatePlant && hasFederal) {
-                    source = 'Both';
-                } else if (isStatePlant) {
-                    source = 'State';
+
+                if (unuLogo) {
+                    const unuHeight = 12;
+                    const unuWidth = 35;
+                    doc.addImage(unuLogo, 'SVG', 155, 15, unuWidth, unuHeight);
+                }
+
+                doc.setFontSize(16);
+                doc.setFont(undefined, 'bold');
+                doc.text(title, 20, 35);
+
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'italic');
+                doc.text(regulationLevel, 20, 42);
+
+                const tableData = weedsData.map(row => {
+                    let commonName = row.common_name;
+                    if (!commonName || commonName.includes('No English common names available')) {
+                        commonName = `(${row.canonical_name || 'Unknown'})`;
+                    }
+
+                    const isStatePlant = row.level === 'State/Province';
+                    const hasFederal = row.has_federal_regulation;
+                    let source;
+                    if (isStatePlant && hasFederal) {
+                        source = 'Both';
+                    } else if (isStatePlant) {
+                        source = 'State';
+                    } else {
+                        source = 'Federal';
+                    }
+
+                    return [
+                        row.canonical_name || 'Unknown',
+                        commonName,
+                        row.family_name || 'Unknown',
+                        source
+                    ];
+                });
+
+                doc.autoTable({
+                    startY: 47,
+                    margin: { left: 20, right: 20 },
+                    head: [['Scientific Name', 'Common Name', 'Family', 'Source']],
+                    body: tableData,
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 3,
+                        lineColor: [200, 200, 200],
+                        lineWidth: 0.1
+                    },
+                    headStyles: {
+                        fillColor: [255, 255, 255],
+                        textColor: [0, 0, 0],
+                        fontStyle: 'bold',
+                        lineColor: [200, 200, 200],
+                        lineWidth: 0.5
+                    },
+                    bodyStyles: {
+                        fillColor: [255, 255, 255],
+                        textColor: [0, 0, 0]
+                    },
+                    columnStyles: {
+                        0: { fontStyle: 'italic' },
+                        3: { halign: 'center' }
+                    },
+                    alternateRowStyles: {
+                        fillColor: [255, 255, 255]
+                    }
+                });
+
+                const currentDate = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                const footerY = doc.internal.pageSize.height - 20;
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(
+                    `Provided by Regulated Plants Database, data is correct as of ${currentDate}`,
+                    20,
+                    footerY
+                );
+
+                let fileNameBase;
+                if (!toggleState.state && toggleState.federal) {
+                    const countryName = country || '';
+                    fileNameBase = countryName.replace(/[^a-z0-9]/gi, '_');
                 } else {
-                    source = 'Federal';
+                    fileNameBase = stateName.replace(/[^a-z0-9]/gi, '_');
                 }
-                
-                return [
-                    row.canonical_name || 'Unknown',
-                    commonName,
-                    row.family_name || 'Unknown',
-                    source
-                ];
-            });
-            
-            // Add table with clean styling - narrower to align with logos
-            doc.autoTable({
-                startY: 47,
-                margin: { left: 20, right: 20 }, // Align with logo positions
-                head: [['Scientific Name', 'Common Name', 'Family', 'Source']],
-                body: tableData,
-                styles: {
-                    fontSize: 9,
-                    cellPadding: 3,
-                    lineColor: [200, 200, 200],
-                    lineWidth: 0.1
-                },
-                headStyles: {
-                    fillColor: [255, 255, 255],
-                    textColor: [0, 0, 0],
-                    fontStyle: 'bold',
-                    lineColor: [200, 200, 200],
-                    lineWidth: 0.5
-                },
-                bodyStyles: {
-                    fillColor: [255, 255, 255],
-                    textColor: [0, 0, 0]
-                },
-                columnStyles: {
-                    0: { fontStyle: 'italic' }, // Scientific names in italics
-                    3: { halign: 'center' }     // Center federal column
-                },
-                alternateRowStyles: {
-                    fillColor: [255, 255, 255] // Remove alternating row colors
-                }
-            });
-            
-            // Add footer with date and attribution
-            const currentDate = new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            
-            const footerY = doc.internal.pageSize.height - 20;
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Provided by Regulated Plants Database, data is correct as of ${currentDate}`, 20, footerY);
-            
-            // Download the PDF - use appropriate name based on toggle state
-            let fileNameBase;
-            if (!toggleState.state && toggleState.federal) {
-                // Federal only - use country name
-                const countryName = getCountryDisplayName(country);
-                fileNameBase = countryName.replace(/[^a-z0-9]/gi, '_');
-            } else {
-                // State or both - use state name
-                fileNameBase = stateName.replace(/[^a-z0-9]/gi, '_');
-            }
-            const filename = `Regulated_Plants_${fileNameBase}_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(filename);
-            
-        }).catch(error => {
-            console.error('Error loading logos:', error);
-            
-            // Generate PDF without logos if loading fails
-            const tableData = weedsData.map(row => {
-                let commonName = row.common_name;
-                // Handle "No English common names available" message
-                if (!commonName || commonName.includes('No English common names available')) {
-                    commonName = `(${row.canonical_name || 'Unknown'})`;
-                }
-                // Determine source
-                const isStatePlant = row.level === 'State/Province';
-                const hasFederal = row.has_federal_regulation;
-                let source;
-                if (isStatePlant && hasFederal) {
-                    source = 'Both';
-                } else if (isStatePlant) {
-                    source = 'State';
+                const filename = `Regulated_Plants_${fileNameBase}_${
+                    new Date().toISOString().split('T')[0]
+                }.pdf`;
+                doc.save(filename);
+            })
+            .catch(error => {
+                console.error('Error loading logos:', error);
+
+                const tableData = weedsData.map(row => {
+                    let commonName = row.common_name;
+                    if (!commonName || commonName.includes('No English common names available')) {
+                        commonName = `(${row.canonical_name || 'Unknown'})`;
+                    }
+
+                    const isStatePlant = row.level === 'State/Province';
+                    const hasFederal = row.has_federal_regulation;
+                    let source;
+                    if (isStatePlant && hasFederal) {
+                        source = 'Both';
+                    } else if (isStatePlant) {
+                        source = 'State';
+                    } else {
+                        source = 'Federal';
+                    }
+
+                    return [
+                        row.canonical_name || 'Unknown',
+                        commonName,
+                        row.family_name || 'Unknown',
+                        source
+                    ];
+                });
+
+                doc.autoTable({
+                    startY: 50,
+                    head: [['Scientific Name', 'Common Name', 'Family', 'Source']],
+                    body: tableData,
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 3,
+                        lineColor: [200, 200, 200],
+                        lineWidth: 0.1
+                    },
+                    headStyles: {
+                        fillColor: [255, 255, 255],
+                        textColor: [0, 0, 0],
+                        fontStyle: 'bold',
+                        lineColor: [200, 200, 200],
+                        lineWidth: 0.5
+                    },
+                    bodyStyles: {
+                        fillColor: [255, 255, 255],
+                        textColor: [0, 0, 0]
+                    },
+                    columnStyles: {
+                        0: { fontStyle: 'italic' },
+                        3: { halign: 'center' }
+                    },
+                    alternateRowStyles: {
+                        fillColor: [255, 255, 255]
+                    }
+                });
+
+                const currentDate = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                const footerY = doc.internal.pageSize.height - 20;
+                doc.setFontSize(10);
+                doc.text(
+                    `Provided by Regulated Plants Database, data is correct as of ${currentDate}`,
+                    20,
+                    footerY
+                );
+
+                let fileNameBase;
+                if (!toggleState.state && toggleState.federal) {
+                    const countryName = country || '';
+                    fileNameBase = countryName.replace(/[^a-z0-9]/gi, '_');
                 } else {
-                    source = 'Federal';
+                    fileNameBase = stateName.replace(/[^a-z0-9]/gi, '_');
                 }
-                
-                return [
-                    row.canonical_name || 'Unknown',
-                    commonName,
-                    row.family_name || 'Unknown',
-                    source
-                ];
+                const filename = `Regulated_Plants_${fileNameBase}_${
+                    new Date().toISOString().split('T')[0]
+                }.pdf`;
+                doc.save(filename);
             });
-            
-            doc.autoTable({
-                startY: 50,
-                head: [['Scientific Name', 'Common Name', 'Family', 'Source']],
-                body: tableData,
-                styles: {
-                    fontSize: 9,
-                    cellPadding: 3,
-                    lineColor: [200, 200, 200],
-                    lineWidth: 0.1
-                },
-                headStyles: {
-                    fillColor: [255, 255, 255],
-                    textColor: [0, 0, 0],
-                    fontStyle: 'bold',
-                    lineColor: [200, 200, 200],
-                    lineWidth: 0.5
-                },
-                bodyStyles: {
-                    fillColor: [255, 255, 255],
-                    textColor: [0, 0, 0]
-                },
-                columnStyles: {
-                    0: { fontStyle: 'italic' },
-                    3: { halign: 'center' }
-                },
-                alternateRowStyles: {
-                    fillColor: [255, 255, 255] // Remove alternating row colors
-                }
-            });
-            
-            const currentDate = new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            
-            const footerY = doc.internal.pageSize.height - 20;
-            doc.setFontSize(10);
-            doc.text(`Provided by Regulated Plants Database, data is correct as of ${currentDate}`, 20, footerY);
-            
-            // Use appropriate filename based on toggle state
-            let fileNameBase;
-            if (!toggleState.state && toggleState.federal) {
-                // Federal only - use country name
-                const countryName = getCountryDisplayName(country);
-                fileNameBase = countryName.replace(/[^a-z0-9]/gi, '_');
-            } else {
-                // State or both - use state name
-                fileNameBase = stateName.replace(/[^a-z0-9]/gi, '_');
-            }
-            const filename = `Regulated_Plants_${fileNameBase}_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(filename);
-        });
     }
 
     function loadImageAsBase64(url) {
-        return new Promise((resolve, reject) => {
+        return new Promise(resolve => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
-            img.onload = function() {
+            img.onload = function () {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = img.width;
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
-                
+
                 try {
                     const dataURL = canvas.toDataURL('image/png');
                     resolve(dataURL);
@@ -775,23 +840,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     resolve(null);
                 }
             };
-            img.onerror = function() {
+            img.onerror = function () {
                 console.error('Error loading image:', url);
                 resolve(null);
             };
             img.src = url;
         });
     }
-    
+
     /******************************
      * TOGGLE EVENT LISTENERS
      ******************************/
-    // Setup toggle event listeners
     const federalToggle = document.getElementById('federalToggle');
     const stateToggle = document.getElementById('stateToggle');
-    
+
     if (federalToggle && stateToggle) {
-        federalToggle.addEventListener('change', function() {
+        federalToggle.addEventListener('change', function () {
             toggleState.federal = this.checked;
             validateToggles();
             refreshMapColors();
@@ -799,8 +863,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 refreshTableData(currentSelectedState);
             }
         });
-        
-        stateToggle.addEventListener('change', function() {
+
+        stateToggle.addEventListener('change', function () {
             toggleState.state = this.checked;
             validateToggles();
             refreshMapColors();
