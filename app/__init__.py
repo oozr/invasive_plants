@@ -6,9 +6,10 @@ from flask_limiter.util import get_remote_address
 
 from app.config import Config
 from app.utils.custom_recaptcha import CustomReCaptcha
-from app.utils.db_bootstrap import ensure_db
 
-# Extensions (global, initialized later)
+# ✅ RELATIVE IMPORT (robust inside the app package)
+from .utils.db_bootstrap import ensure_db
+
 mail = Mail()
 csrf = CSRFProtect()
 limiter = Limiter(
@@ -17,30 +18,20 @@ limiter = Limiter(
 )
 recaptcha = CustomReCaptcha()
 
-__all__ = [
-    "mail",
-    "csrf",
-    "limiter",
-    "recaptcha",
-    "create_app",
-]
+__all__ = ["mail", "csrf", "limiter", "recaptcha", "create_app"]
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # --------------------------------------------------
-    # DATABASE BOOTSTRAP (MUST RUN FIRST)
-    # --------------------------------------------------
+    # ✅ DB bootstrapping must happen before importing views / DB classes
     ensure_db(
         db_path=Config.DATABASE_PATH,
         csv_folder="preprocessing_utils/data",
     )
 
-    # --------------------------------------------------
-    # MAIL CONFIG
-    # --------------------------------------------------
+    # Mail configuration
     app.config["MAIL_SERVER"] = "smtp.gmail.com"
     app.config["MAIL_PORT"] = 587
     app.config["MAIL_USE_TLS"] = True
@@ -48,25 +39,18 @@ def create_app():
     app.config["MAIL_PASSWORD"] = app.config.get("EMAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = app.config.get("EMAIL_USERNAME")
 
-    # --------------------------------------------------
-    # reCAPTCHA CONFIG
-    # --------------------------------------------------
+    # reCAPTCHA configuration
     app.config["RECAPTCHA_SITE_KEY"] = app.config.get("RECAPTCHA_SITE_KEY")
     app.config["RECAPTCHA_SECRET_KEY"] = app.config.get("RECAPTCHA_SECRET_KEY")
 
-    # --------------------------------------------------
-    # INIT EXTENSIONS
-    # --------------------------------------------------
+    # Initialize extensions
     mail.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
     recaptcha.init_app(app)
 
-    # --------------------------------------------------
-    # REGISTER BLUEPRINTS
-    # --------------------------------------------------
+    # Import and register blueprints
     from app.views import home, species, blog, method, about
-
     app.register_blueprint(home)
     app.register_blueprint(species)
     app.register_blueprint(blog)
