@@ -39,9 +39,6 @@ instance/
 *.swo
 .DS_Store
 
-# database
-weeds.db
-*.db
 
 # raw data files (keep private by default)
 preprocessing_utils/data/*.csv
