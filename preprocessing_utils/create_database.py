@@ -1,157 +1,203 @@
-from typing import List, Dict
+import csv
+import os
+import shutil
+import sqlite3
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import List, Optional, Sequence, Tuple
+
+# Ensure project root is on the path so `app` imports work when run directly
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from app.utils.database_base import DatabaseBase
 
+# Paths
+DATA_DIR = ROOT_DIR / "preprocessing_utils" / "data"
+DB_PATH = ROOT_DIR / "weeds.db"
+BACKUP_DIR = ROOT_DIR / "preprocessing_utils" / "old_databases"
 
-class SpeciesDatabase(DatabaseBase):
-    """Species-related database operations (region/national/international schema)."""
+CSV_PATTERN = "weed_lists_merged_*.csv"
+REQUIRED_COLUMNS = {
+    "GBIFusageKey",
+    "country",
+    "region",
+    "jurisdiction",
+    "jurisdiction_group",
+    "prefName",
+    "classification",
+    "taxonLevel",
+    "family",
+    "englishName",
+    "synonyms",
+}
 
-    def get_all_weeds(self) -> List[Dict]:
-        conn = self.get_connection()
-        try:
-            cursor = conn.execute(
-                """
-                SELECT *
-                FROM weeds
-                ORDER BY
-                    COALESCE(country, jurisdiction_group, ''),
-                    jurisdiction,
-                    COALESCE(region, ''),
-                    canonical_name
-                """
-            )
-            return [dict(row) for row in cursor.fetchall()]
-        finally:
-            conn.close()
 
-    def search_weeds(self, query: str) -> List[Dict]:
-        """
-        Search by common or canonical name.
-        Returns distinct canonical_name (top 20), ordered by match quality.
-        """
-        conn = self.get_connection()
-        try:
-            exact_match = query.lower()
-            starts_with = f"{query.lower()}%"
-            contains = f"%{query.lower()}%"
+def find_latest_csv() -> Path:
+    candidates = list(DATA_DIR.glob(CSV_PATTERN))
+    geo_dir = DATA_DIR / "geographic"
+    if geo_dir.exists():
+        candidates += list(geo_dir.glob(CSV_PATTERN))
 
-            cursor = conn.execute(
-                """
-                SELECT DISTINCT
-                    COALESCE(common_name, canonical_name) as common_name,
+    candidates = sorted(candidates, key=lambda p: p.stat().st_mtime)
+    if not candidates:
+        raise FileNotFoundError(f"No CSV found matching {CSV_PATTERN} in {DATA_DIR}")
+    latest = candidates[-1]
+    print(f"Using source CSV: {latest}")
+    return latest
+
+
+def normalize_text(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def coerce_usage_key(value: Optional[str]) -> Optional[int]:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return int(float(text))
+    except ValueError:
+        return None
+
+
+def load_rows(csv_path: Path) -> List[Tuple]:
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        missing = REQUIRED_COLUMNS - set(reader.fieldnames or [])
+        if missing:
+            raise ValueError(f"CSV is missing required columns: {', '.join(sorted(missing))}")
+
+        rows: List[Tuple] = []
+        for row in reader:
+            canonical_name = normalize_text(row.get("prefName"))
+            country = normalize_text(row.get("country"))
+            region = normalize_text(row.get("region"))
+            j_group = normalize_text(row.get("jurisdiction_group"))
+            jurisdiction = normalize_text(row.get("jurisdiction"))
+            if jurisdiction:
+                jurisdiction = jurisdiction.lower()
+
+            if not canonical_name or not jurisdiction:
+                continue  # skip malformed rows
+            if not country and jurisdiction != "international":
+                continue
+
+            # Ensure region rows have a region name; ensure international rows have a group
+            if jurisdiction == "region" and not region:
+                continue
+            if jurisdiction == "international" and not j_group:
+                continue
+            if jurisdiction == "international" and not country:
+                country = j_group or "International"
+
+            rows.append(
+                (
+                    coerce_usage_key(row.get("GBIFusageKey")),
                     canonical_name,
-                    family_name,
-                    synonyms,
-                    usage_key,
-                    CASE
-                        WHEN LOWER(common_name) = ? OR LOWER(canonical_name) = ? THEN 3
-                        WHEN LOWER(common_name) LIKE ? OR LOWER(canonical_name) LIKE ? THEN 2
-                        ELSE 1
-                    END as search_priority
-                FROM weeds
-                WHERE LOWER(common_name) LIKE ?
-                   OR LOWER(canonical_name) LIKE ?
-                GROUP BY canonical_name, family_name, usage_key
-                ORDER BY search_priority DESC, common_name
-                LIMIT 20
-                """,
-                (exact_match, exact_match, starts_with, starts_with, contains, contains),
-            )
-
-            return [dict(row) for row in cursor.fetchall()]
-        finally:
-            conn.close()
-
-    def get_weeds_by_usage_key(self, usage_key: int) -> List[Dict]:
-        conn = self.get_connection()
-        try:
-            cursor = conn.execute(
-                """
-                SELECT *
-                FROM weeds
-                WHERE usage_key = ?
-                ORDER BY
-                    COALESCE(country, jurisdiction_group, ''),
-                    jurisdiction,
-                    COALESCE(region, '')
-                """,
-                (usage_key,),
-            )
-            return [dict(row) for row in cursor.fetchall()]
-        finally:
-            conn.close()
-
-    def get_states_by_usage_key(self, usage_key: int) -> Dict[str, List[str]]:
-        """
-        Returns jurisdictions grouped for the species page.
-
-        Output matches species_search.js expectations:
-          {
-            "United States": ["National Level", "California", "Hawaii"],
-            "New Zealand": ["National Level"],
-            "European Union": ["International Level"]
-          }
-
-        Notes:
-        - region rows group by `country`
-        - national rows group by `country`
-        - international rows group by `jurisdiction_group`
-        """
-        conn = self.get_connection()
-        try:
-            cursor = conn.execute(
-                """
-                SELECT DISTINCT
+                    normalize_text(row.get("englishName")),
+                    normalize_text(row.get("family")),
                     country,
                     region,
                     jurisdiction,
-                    jurisdiction_group
-                FROM weeds
-                WHERE usage_key = ?
-                ORDER BY
-                    COALESCE(country, jurisdiction_group, ''),
-                    jurisdiction,
-                    COALESCE(region, '')
-                """,
-                (usage_key,),
+                    j_group,
+                    normalize_text(row.get("classification")),
+                    normalize_text(row.get("taxonLevel")),
+                    normalize_text(row.get("synonyms")),
+                )
             )
-            rows = cursor.fetchall()
+    print(f"Loaded {len(rows)} rows from CSV")
+    return rows
 
-            grouped: Dict[str, List[str]] = {}
 
-            for row in rows:
-                jurisdiction = row["jurisdiction"]
-                country = row["country"]
-                region = row["region"]
-                j_group = row["jurisdiction_group"]
+def backup_existing_db(db_path: Path) -> None:
+    if not db_path.exists():
+        return
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = BACKUP_DIR / f"weeds_{ts}.db"
+    shutil.copy2(db_path, backup_path)
+    print(f"Backed up existing database to {backup_path}")
+    db_path.unlink()
 
-                # Decide the display grouping key
-                if jurisdiction == "international":
-                    key = j_group  # required by schema
-                    if not key:
-                        # should never happen because you enforce it on insert
-                        continue
-                else:
-                    key = country
-                    if not key:
-                        # should never happen for region/national due to insert validation
-                        continue
 
-                if key not in grouped:
-                    grouped[key] = []
+def create_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS weeds (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usage_key INTEGER,
+            canonical_name TEXT NOT NULL,
+            common_name TEXT,
+            family_name TEXT,
+            country TEXT NOT NULL,
+            region TEXT,
+            jurisdiction TEXT NOT NULL,
+            jurisdiction_group TEXT,
+            classification TEXT,
+            taxon_level TEXT,
+            synonyms TEXT
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_weeds_usage_key ON weeds(usage_key)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_weeds_canonical_name ON weeds(canonical_name)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_weeds_country ON weeds(country)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_weeds_jurisdiction ON weeds(jurisdiction)")
+    conn.commit()
 
-                if jurisdiction == "national":
-                    if "National Level" not in grouped[key]:
-                        grouped[key].append("National Level")
 
-                elif jurisdiction == "international":
-                    if "International Level" not in grouped[key]:
-                        grouped[key].append("International Level")
+def bulk_insert(conn: sqlite3.Connection, rows: Sequence[Tuple]) -> None:
+    conn.executemany(
+        """
+        INSERT INTO weeds (
+            usage_key,
+            canonical_name,
+            common_name,
+            family_name,
+            country,
+            region,
+            jurisdiction,
+            jurisdiction_group,
+            classification,
+            taxon_level,
+            synonyms
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        rows,
+    )
+    conn.commit()
 
-                else:
-                    # jurisdiction == "region"
-                    if region and region not in grouped[key]:
-                        grouped[key].append(region)
 
-            return grouped
-        finally:
-            conn.close()
+def main() -> None:
+    csv_path = find_latest_csv()
+    rows = load_rows(csv_path)
+    if not rows:
+        print("No rows to insert; aborting.")
+        return
+
+    backup_existing_db(DB_PATH)
+
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        create_schema(conn)
+        bulk_insert(conn, rows)
+    finally:
+        conn.close()
+
+    # Ensure regions_country table exists and is populated from GeoJSON
+    DatabaseBase(str(DB_PATH))
+
+    print(f"Wrote {len(rows)} rows to {DB_PATH}")
+
+
+if __name__ == "__main__":
+    main()
