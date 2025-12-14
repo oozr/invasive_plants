@@ -67,23 +67,34 @@
 
 <div class="map-section-intro mb-3">
     <h2>Explore the Interactive Map</h2>
-    <p class="mb-2 map-description">Toggle between national and state/provincial regulations to update the heat map and species table.</p>
+    <p class="mb-2 map-description">
+        Toggle between regional, national, and international regulations to update the heat map and species table.
+    </p>
 </div>
 
 <div class="toggle-controls mb-4">
     <div class="d-flex flex-column flex-md-row gap-2 gap-md-4 align-items-start align-items-md-start">
         <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="federalToggle" checked>
-            <label class="form-check-label toggle-label" for="federalToggle">
-                Federal/National Regulations
+            <input class="form-check-input" type="checkbox" id="regionToggle" checked>
+            <label class="form-check-label toggle-label" for="regionToggle">
+                Regional Regulations
             </label>
         </div>
+
         <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="stateToggle" checked>
-            <label class="form-check-label toggle-label" for="stateToggle">
-                State/Province Regulations
+            <input class="form-check-input" type="checkbox" id="nationalToggle" checked>
+            <label class="form-check-label toggle-label" for="nationalToggle">
+                National Regulations
             </label>
         </div>
+
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="internationalToggle" checked>
+            <label class="form-check-label toggle-label" for="internationalToggle">
+                International Regulations
+            </label>
+        </div>
+
         <div id="toggleError" class="toggle-error d-none">
             Please select at least one regulation level
         </div>
@@ -104,7 +115,7 @@
                         <th>Scientific Name</th>
                         <th>Common Name</th>
                         <th>Family</th>
-                        <th>Federal</th>
+                        <th>Source</th>
                     </tr>
                 </thead>
             </table>
@@ -112,12 +123,12 @@
     </div>
 </div>
 
-<div class="mt-5"> 
+<div class="mt-5">
     <h2>Project Description</h2>
     <p>
-        This database provides comprehensive information about regulated plant species 
+        This database provides comprehensive information about regulated plant species
         across different countries. It serves as a resource for researchers, agricultural
-        professionals, and the public to understand the distribution and regulation status 
+        professionals, and the public to understand the distribution and regulation status
         of various plant species that can be considered noxious.
     </p>
 </div>
@@ -128,5 +139,4 @@
 <script defer src="{{ url_for('static', filename='js/home_highlights.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/map_config.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/map.js') }}"></script>
-
 {% endblock %}
