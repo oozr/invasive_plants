@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const isEUCountry = EU_MEMBERS.has(country);
         let emptyMessage = 'No data available. Please change the level of regulation using the toggles.';
         if (!hasDataAnyLevel && !isEUCountry) {
-            emptyMessage = 'No published regulations exist for this country according to criteria.';
+            emptyMessage = 'No published species specific regulations have been found for this country.';
         }
 
         if ($.fn.DataTable.isDataTable(table)) {
