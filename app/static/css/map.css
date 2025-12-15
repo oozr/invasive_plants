@@ -59,6 +59,13 @@
     align-self: center;
 }
 
+.dataTables_empty {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #333;
+    padding: 1.25rem 0;
+}
+
 .pdf-button-container {
     display: flex;
     justify-content: end;

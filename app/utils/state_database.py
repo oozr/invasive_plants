@@ -239,6 +239,44 @@ class StateDatabase(DatabaseBase):
         finally:
             conn.close()
 
+    def country_has_data(self, country: str) -> bool:
+        """
+        Returns True if any regulations exist for the given country (any level).
+        EU countries treat EU-level international rows as data.
+        """
+        if not country:
+            return False
+
+        is_eu = country in EU_MEMBERS
+
+        conn = self.get_connection()
+        try:
+            if is_eu:
+                row = conn.execute(
+                    """
+                    SELECT 1
+                    FROM weeds
+                    WHERE country=?
+                       OR (jurisdiction='international' AND jurisdiction_group='EU')
+                    LIMIT 1
+                    """,
+                    (country,),
+                ).fetchone()
+                return bool(row)
+
+            row = conn.execute(
+                """
+                SELECT 1
+                FROM weeds
+                WHERE country=?
+                LIMIT 1
+                """,
+                (country,),
+            ).fetchone()
+            return bool(row)
+        finally:
+            conn.close()
+
     def get_region_weed_counts(
         self,
         include_region: bool = True,
@@ -298,4 +336,3 @@ class StateDatabase(DatabaseBase):
             ]
         finally:
             conn.close()
-

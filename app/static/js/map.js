@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return parts.length ? parts.join(' + ') : 'No layers selected';
     }
 
-    function updateTable(country, region, weeds) {
+    function updateTable(country, region, weeds, hasAnyData) {
         const scopeText = buildScopeText();
 
         // Title
@@ -246,6 +246,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const table = document.getElementById('species-table');
         if (!table) return;
+
+        const hasDataAnyLevel = !!hasAnyData;
+        const isEUCountry = EU_MEMBERS.has(country);
+        let emptyMessage = 'No data available. Please change the level of regulation using the toggles.';
+        if (!hasDataAnyLevel && !isEUCountry) {
+            emptyMessage = 'No published regulations exist for this country according to criteria.';
+        }
 
         if ($.fn.DataTable.isDataTable(table)) {
             $(table).DataTable().destroy();
@@ -316,6 +323,9 @@ document.addEventListener('DOMContentLoaded', function () {
             order: [[0, 'asc']],
             autoWidth: false,
             width: '100%',
+            language: {
+                emptyTable: emptyMessage
+            },
             initComplete: function () {
                 const element = document.getElementById('state-species');
                 if (element) {
@@ -342,8 +352,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         fetch(url)
             .then(r => r.json())
-            .then(weeds => {
-                updateTable(country, region, weeds);
+            .then(result => {
+                const weeds = Array.isArray(result) ? result : (result.weeds || []);
+                const hasAnyData = Array.isArray(result) ? weeds.length > 0 : !!result.has_any_data;
+                updateTable(country, region, weeds, hasAnyData);
             })
             .catch(err => {
                 console.error('Error fetching region data:', err);

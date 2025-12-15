@@ -78,6 +78,13 @@ document.addEventListener('DOMContentLoaded', function () {
     /******************************
      * DETAILS RENDER
      ******************************/
+    function displayCountryName(country) {
+        if (!country) return country;
+        const normalized = String(country).trim();
+        if (normalized.toUpperCase() === 'EU') return 'European Union';
+        return normalized;
+    }
+
     function displayWeedDetails(selectedWeed) {
         // Common name display (truncate)
         const commonName = selectedWeed.common_name || '';
@@ -139,7 +146,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 // { "United States": ["National Level", "California", ...],
                 //   "European Union": ["International Level", ...],
                 //   "New Zealand": ["National Level"] }
-                for (const [country, jurisdictions] of Object.entries(regulationsByCountry)) {
+                for (const [countryKey, jurisdictions] of Object.entries(regulationsByCountry)) {
+                    const country = displayCountryName(countryKey);
                     const list = Array.isArray(jurisdictions) ? jurisdictions : [];
 
                     const hasNational = list.includes('National Level');

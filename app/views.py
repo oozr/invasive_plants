@@ -99,7 +99,8 @@ def region_weeds():
         include_national=include_national,
         include_international=include_international,
     )
-    return jsonify(weeds)
+    has_any_data = state_db.country_has_data(country)
+    return jsonify({"weeds": weeds, "has_any_data": has_any_data})
 
 
 @home.route("/api/geojson-files")
