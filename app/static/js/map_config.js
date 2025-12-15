@@ -28,4 +28,5 @@ MAP_CONFIG.defaultColorRamps = [
 // Dark grey for regions with NO regulation at all (count === 0)
 MAP_CONFIG.noDataColor = "#555555";
 
-
+// Single-hue ramp for EU (light → saturated blue)
+MAP_CONFIG.euColorRamp = ["#e9f2ff", "#d3e5ff", "#b7d4ff", "#97c1ff", "#74a9ff", "#4f90f0", "#2c74d4"];

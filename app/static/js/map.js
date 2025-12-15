@@ -5,6 +5,14 @@ document.addEventListener('DOMContentLoaded', function () {
      ******************************/
     const GEOJSON_PATH = '/static/data/geographic/';
     const MAP_CONFIG = window.MAP_CONFIG || {};
+    const EU_MEMBERS = new Set([
+        "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia",
+        "Denmark", "Estonia", "Finland", "France", "Germany", "Greece",
+        "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg",
+        "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia",
+        "Slovenia", "Spain", "Sweden"
+    ]);
+    const EU_LABEL = "European Union";
 
     // Region counts lookup:
     // key = `${country}::${region}` -> { country, region, count }
@@ -40,10 +48,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Get a colour config (thresholds + scheme) for a given country name
     function getCountryConfig(countryName) {
-        const code = countryName || 'default';
+        const isEU = EU_MEMBERS.has(countryName);
+        const cacheKey = isEU ? 'EU' : (countryName || 'default');
 
         MAP_CONFIG._countryCache = MAP_CONFIG._countryCache || {};
-        if (MAP_CONFIG._countryCache[code]) return MAP_CONFIG._countryCache[code];
+        if (MAP_CONFIG._countryCache[cacheKey]) return MAP_CONFIG._countryCache[cacheKey];
+
+        if (isEU) {
+            const thresholds = MAP_CONFIG.euThresholds || MAP_CONFIG.defaultThresholds || [0, 1, 2, 3, 4, 5];
+            const scheme = MAP_CONFIG.euColorRamp || ["#e9f2ff", "#d3e5ff", "#b7d4ff", "#97c1ff", "#74a9ff", "#4f90f0", "#2c74d4"];
+            const config = { thresholds, scheme };
+            MAP_CONFIG._countryCache[cacheKey] = config;
+            return config;
+        }
 
         const ramps = MAP_CONFIG.defaultColorRamps || [];
         const thresholds = MAP_CONFIG.defaultThresholds || [0, 1, 2, 3, 4, 5];
@@ -52,12 +69,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!ramps.length) {
             scheme = ['#f0f0f0', '#f0f0f0', '#f0f0f0', '#f0f0f0', '#f0f0f0', '#f0f0f0', '#f0f0f0'];
         } else {
-            const idx = hashString(code) % ramps.length;
+            const idx = hashString(cacheKey) % ramps.length;
             scheme = ramps[idx];
         }
 
         const config = { thresholds, scheme };
-        MAP_CONFIG._countryCache[code] = config;
+        MAP_CONFIG._countryCache[cacheKey] = config;
         return config;
     }
 
@@ -122,6 +139,24 @@ document.addEventListener('DOMContentLoaded', function () {
             };
         }
         return lookup;
+    }
+
+    function displayCountryLabel(country) {
+        if (!country) return "";
+        return EU_MEMBERS.has(country) ? EU_LABEL : country;
+    }
+
+    function formatLocation(region, country) {
+        const displayCountry = displayCountryLabel(country);
+        if (!region) return displayCountry || "Unknown";
+
+        // Avoid duplication when region == country (e.g., New Zealand)
+        if (region === displayCountry) return displayCountry || region;
+
+        // EU: use group label as country part
+        if (EU_MEMBERS.has(country)) return `${region}, ${EU_LABEL}`;
+
+        return displayCountry ? `${region}, ${displayCountry}` : region;
     }
 
     // ✅ Correct querystring builder (prevents your `...?region=X?includeY=...` bug forever)
@@ -201,9 +236,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const scopeText = buildScopeText();
 
         // Title
-        const title = `${scopeText} Regulated Plants in ${region}${country ? `, ${country}` : ''}`;
+        const titleLocation = formatLocation(region, country);
+        const title = `Regulated weeds in ${titleLocation}`;
         const titleEl = document.getElementById('state-title');
         if (titleEl) titleEl.textContent = title;
+
+        const subtitleEl = document.getElementById('state-subtitle');
+        if (subtitleEl) subtitleEl.textContent = scopeText ? `Filters: ${scopeText}` : '';
 
         const table = document.getElementById('species-table');
         if (!table) return;
@@ -309,7 +348,9 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(err => {
                 console.error('Error fetching region data:', err);
                 const titleEl = document.getElementById('state-title');
-                if (titleEl) titleEl.textContent = `Error loading data for ${region}${country ? `, ${country}` : ''}`;
+                if (titleEl) titleEl.textContent = `Error loading data for ${formatLocation(region, country)}`;
+                const subtitleEl = document.getElementById('state-subtitle');
+                if (subtitleEl) subtitleEl.textContent = '';
             });
     }
 
@@ -343,6 +384,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const key = regionKey(country, region);
         const data = regionWeedData[key] || { count: 0, country, region };
         const weedCount = data.count || 0;
+        const locationLabel = formatLocation(region, country);
 
         return {
             fillColor: getColor(weedCount, country),
@@ -461,9 +503,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         const data = regionWeedData[key] || { count: 0, country, region };
                         const weedCount = data.count || 0;
+                        const locationLabel = formatLocation(region, country);
 
                         const tooltipContent = `
-                            <strong>${region}, ${country}</strong><br>
+                            <strong>${locationLabel}</strong><br>
                             Regulated Plants: ${weedCount}
                         `;
 
@@ -566,7 +609,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const doc = new jsPDF();
 
         const scopeText = buildScopeText();
-        const title = `${scopeText} Regulated Plants in ${region}${country ? `, ${country}` : ''}`;
+        const locationLabel = formatLocation(region, country);
+        const title = `Regulated weeds in ${locationLabel}`;
+        const subtitle = scopeText ? `Filters: ${scopeText}` : '';
 
         Promise.all([
             loadImageAsBase64('/static/img/UCD-plant-science-logo.png'),
@@ -580,9 +625,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 doc.setFont(undefined, 'bold');
                 doc.text(title, 20, 35);
 
-                doc.setFontSize(12);
-                doc.setFont(undefined, 'italic');
-                doc.text(scopeText, 20, 42);
+                if (subtitle) {
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'italic');
+                    doc.text(subtitle, 20, 42);
+                }
 
                 const tableData = (weedsData || []).map(row => {
                     let commonName = row.common_name;
@@ -638,6 +685,27 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 });
 
+                // Citation block
+                const citationHeading = 'Citing the Regulated Plants Database';
+                const citationSubheading = 'Please cite the Regulated Plants Database as follows:';
+                const citation = 'Robeck, P., Mesgaran, M. B., Lindley, G., Kordbacheh, F., & Matin, M. (2025). Regulated plants database. United Nations University Institute for Water, Environment and Health. https://regulatedplants.unu.edu/';
+                const tableEndY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY : 47;
+
+                let y = tableEndY + 10;
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text(citationHeading, 20, y);
+
+                y += 6;
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'italic');
+                doc.text(citationSubheading, 20, y, { maxWidth: doc.internal.pageSize.width - 40 });
+
+                y += 6;
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(citation, 20, y, { maxWidth: doc.internal.pageSize.width - 40 });
+
                 const currentDate = new Date().toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
@@ -657,6 +725,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error loading logos:', error);
                 doc.setFontSize(16);
                 doc.text(title, 20, 35);
+                if (subtitle) {
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'italic');
+                    doc.text(subtitle, 20, 42);
+                }
                 doc.save(`Regulated_Plants_${new Date().toISOString().split('T')[0]}.pdf`);
             });
     }
