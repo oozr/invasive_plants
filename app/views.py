@@ -140,6 +140,10 @@ def home_highlights():
         if os.path.exists(absolute_db_path):
             last_updated = datetime.fromtimestamp(os.path.getmtime(absolute_db_path)).isoformat()
 
+        latest_country_name = (Config.LATEST_COUNTRY_NAMES[0] if Config.LATEST_COUNTRY_NAMES else None) or metrics.get("latest_country")
+        latest_country_region = Config.LATEST_COUNTRY_REGION or metrics.get("latest_country_region")
+        latest_country_regions = metrics.get("latest_country_regions", 0) or 1
+
         return jsonify(
             {
                 "stats": {
@@ -147,10 +151,10 @@ def home_highlights():
                     "jurisdictions": metrics.get("jurisdiction_count", 0),
                 },
                 "latestCountry": {
-                    "name": metrics.get("latest_country"),
-                    "jurisdictions": metrics.get("latest_country_regions", 0) or 1,
+                    "name": latest_country_name,
+                    "jurisdictions": latest_country_regions,
                     # home_highlights.js expects "stateName" (we'll supply region)
-                    "stateName": metrics.get("latest_country_region"),
+                    "stateName": latest_country_region,
                 },
                 "topSpecies": metrics.get("top_species"),
                 "topJurisdiction": metrics.get("top_jurisdiction"),
