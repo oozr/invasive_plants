@@ -140,9 +140,15 @@ def home_highlights():
         if os.path.exists(absolute_db_path):
             last_updated = datetime.fromtimestamp(os.path.getmtime(absolute_db_path)).isoformat()
 
-        latest_country_name = (Config.LATEST_COUNTRY_NAMES[0] if Config.LATEST_COUNTRY_NAMES else None) or metrics.get("latest_country")
-        latest_country_region = Config.LATEST_COUNTRY_REGION or metrics.get("latest_country_region")
-        latest_country_regions = metrics.get("latest_country_regions", 0) or 1
+        override_country = Config.LATEST_COUNTRY_NAME
+        if override_country:
+            latest_country_name = override_country
+            latest_country_region = override_country  # use country as link target
+            latest_country_regions = metrics.get("latest_country_regions", 0) or 1
+        else:
+            latest_country_name = metrics.get("latest_country")
+            latest_country_region = metrics.get("latest_country_region") or latest_country_name
+            latest_country_regions = metrics.get("latest_country_regions", 0) or 1
 
         return jsonify(
             {

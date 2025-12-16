@@ -24,15 +24,8 @@ class Config:
    SITE_AUTHOR = "Regulated Plants Database Team"
    BASE_URL = os.getenv('BASE_URL', 'https://regulatedplants.unu.edu')
 
-   # Highlights overrides (optional)
-   _LATEST_COUNTRY_NAMES_RAW = os.getenv('LATEST_COUNTRY_NAMES')
-   if _LATEST_COUNTRY_NAMES_RAW:
-       LATEST_COUNTRY_NAMES = [c.strip() for c in _LATEST_COUNTRY_NAMES_RAW.split(",") if c.strip()]
-   else:
-       # Backward compatibility: single value fallback
-       single = os.getenv('LATEST_COUNTRY_NAME', 'Israel, Qatar, Saudi Arabia')
-       LATEST_COUNTRY_NAMES = [single] if single else []
-   LATEST_COUNTRY_REGION = os.getenv('LATEST_COUNTRY_REGION')
+   # Highlights override (single country name; optional)
+   LATEST_COUNTRY_NAME = os.getenv('LATEST_COUNTRY_NAME', 'Saudi Arabia')
 
    # Development vs Production
    DEBUG = os.getenv('FLASK_DEBUG', False)
