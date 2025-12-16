@@ -565,20 +565,7 @@ document.addEventListener('DOMContentLoaded', function () {
             ]);
 
             map.options.worldCopyJump = false;
-
-            setTimeout(() => {
-                const isMobile = window.innerWidth < 768;
-                const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
-
-                if (isMobile) {
-                    map.setView([30, -100], 1);
-                } else if (isTablet) {
-                    map.setView([20, 0], 2);
-                } else {
-                    map.setView([20, -60], 2.2);
-                }
-                map.setMinZoom(map.getZoom());
-            }, 200);
+            map.setMinZoom(map.getZoom());
         })
         .catch(error => {
             console.error('Error loading map data:', error);
