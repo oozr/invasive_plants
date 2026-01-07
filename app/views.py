@@ -2,18 +2,13 @@
 import csv
 import os
 from datetime import datetime
-from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect
+from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory
 from flask_mail import Message
 
 from app import mail, limiter, recaptcha
 from app.utils.state_database import StateDatabase
 from app.utils.species_database import SpeciesDatabase
 from app.utils.generate_blog import BlogGenerator
-from app.config import Config
-
-# Databases
-state_db = StateDatabase(db_path=Config.DATABASE_PATH)
-species_db = SpeciesDatabase(db_path=Config.DATABASE_PATH)
 
 # Blueprints
 home = Blueprint("home", __name__)
@@ -29,6 +24,28 @@ blog_generator = BlogGenerator()
 # ----------------------------
 # Helpers
 # ----------------------------
+def _get_state_db() -> StateDatabase:
+    db = current_app.extensions.get("state_db")
+    if db is None:
+        db = StateDatabase(
+            db_path=current_app.config.get("DATABASE_PATH", "weeds.db"),
+            geojson_dir=current_app.config.get("GEOJSON_DIR"),
+        )
+        current_app.extensions["state_db"] = db
+    return db
+
+
+def _get_species_db() -> SpeciesDatabase:
+    db = current_app.extensions.get("species_db")
+    if db is None:
+        db = SpeciesDatabase(
+            db_path=current_app.config.get("DATABASE_PATH", "weeds.db"),
+            geojson_dir=current_app.config.get("GEOJSON_DIR"),
+        )
+        current_app.extensions["species_db"] = db
+    return db
+
+
 def _bool_arg(name: str, default: bool = True) -> bool:
     v = request.args.get(name, str(default)).strip().lower()
     return v in {"1", "true", "yes", "y", "on"}
@@ -52,7 +69,10 @@ def _toggle_params():
 # ----------------------------
 @home.route("/")
 def index():
-    return render_template("home.html")
+    return render_template(
+        "home.html",
+        geojson_path=current_app.config.get("GEOJSON_URL_PATH", "/data/geojson/"),
+    )
 
 
 @home.route("/robots.txt")
@@ -67,7 +87,7 @@ def region_weed_counts():
     Used to colour the map.
     """
     include_region, include_national, include_international = _toggle_params()
-    counts = state_db.get_region_weed_counts(
+    counts = _get_state_db().get_region_weed_counts(
         include_region=include_region,
         include_national=include_national,
         include_international=include_international,
@@ -92,14 +112,14 @@ def region_weeds():
         return jsonify({"error": "country and region are required"}), 400
 
     include_region, include_national, include_international = _toggle_params()
-    weeds = state_db.get_weeds_for_region(
+    weeds = _get_state_db().get_weeds_for_region(
         country=country,
         region=region,
         include_region=include_region,
         include_national=include_national,
         include_international=include_international,
     )
-    has_any_data = state_db.country_has_data(country)
+    has_any_data = _get_state_db().country_has_data(country)
     return jsonify({"weeds": weeds, "has_any_data": has_any_data})
 
 
@@ -110,11 +130,10 @@ def geojson_files():
     map.js will call this to know which files to load.
     """
     try:
-        static_folder = current_app.static_folder
-        geo_dir = os.path.join(static_folder, "data", "geographic")
+        geo_dir = current_app.config.get("GEOJSON_DIR")
 
         files = []
-        if os.path.isdir(geo_dir):
+        if geo_dir and os.path.isdir(geo_dir):
             for fname in os.listdir(geo_dir):
                 if fname.lower().endswith(".geojson"):
                     files.append(fname)
@@ -126,21 +145,29 @@ def geojson_files():
         return jsonify({"error": "Failed to list geojson files"}), 500
 
 
+@home.route("/data/geojson/<path:filename>")
+def geojson_file(filename: str):
+    geo_dir = current_app.config.get("GEOJSON_DIR")
+    if not geo_dir:
+        return jsonify({"error": "GeoJSON directory not configured"}), 500
+    return send_from_directory(geo_dir, filename)
+
+
 @home.route("/api/home-highlights")
 def home_highlights():
     """
     Homepage highlight cards.
     """
     try:
-        metrics = state_db.get_highlight_metrics()
+        metrics = _get_state_db().get_highlight_metrics()
 
         last_updated = None
-        db_path = Config.DATABASE_PATH or "weeds.db"
+        db_path = current_app.config.get("DATABASE_PATH") or "weeds.db"
         absolute_db_path = db_path if os.path.isabs(db_path) else os.path.abspath(db_path)
         if os.path.exists(absolute_db_path):
             last_updated = datetime.fromtimestamp(os.path.getmtime(absolute_db_path)).isoformat()
 
-        override_country = Config.LATEST_COUNTRY_NAME
+        override_country = current_app.config.get("LATEST_COUNTRY_NAME")
         if override_country:
             latest_country_name = override_country
             latest_country_region = override_country  # use country as link target
@@ -183,7 +210,7 @@ def index():
 @species.route("/api/search")
 def search_species():
     query = request.args.get("q", "")
-    results = species_db.search_weeds(query)
+    results = _get_species_db().search_weeds(query)
     return jsonify(results)
 
 
@@ -195,7 +222,7 @@ def weed_states_by_key(usage_key: int):
       - jurisdiction_group (e.g. EU) for international
     """
     try:
-        regulations_by_group = species_db.get_states_by_usage_key(usage_key)
+        regulations_by_group = _get_species_db().get_states_by_usage_key(usage_key)
         return jsonify(regulations_by_group)
     except Exception as e:
         current_app.logger.error(f"Error fetching states for usage key {usage_key}: {str(e)}")
@@ -234,9 +261,11 @@ def post(slug):
 @method.route("/")
 def index():
     sources = []
-    csv_path = os.path.join(current_app.root_path, "static", "data", "regulatory_sources.csv")
+    csv_path = current_app.config.get("REGULATORY_SOURCES_PATH")
 
     try:
+        if not csv_path:
+            raise FileNotFoundError("REGULATORY_SOURCES_PATH not configured")
         with open(csv_path, "r", encoding="utf-8-sig") as file:
             csv_reader = csv.DictReader(file)
             for row in csv_reader:
@@ -325,7 +354,7 @@ Message:
 # ----------------------------
 @home.route("/debug/table-check")
 def check_tables():
-    conn = state_db.get_connection()
+    conn = _get_state_db().get_connection()
     try:
         cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='weeds'")
         tables = cursor.fetchall()

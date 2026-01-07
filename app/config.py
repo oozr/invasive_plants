@@ -35,6 +35,23 @@ class Config:
    CACHE_CONTROL = 'no-store, no-cache, must-revalidate'
    PRAGMA = 'no-cache'
    EXPIRES = '-1'
+
+   # Data service configuration
+   DATA_MODE = os.getenv('DATA_MODE', 'local_sample')
+   DATA_REMOTE_BASE_URL = os.getenv('DATA_REMOTE_BASE_URL')
+   DATA_REMOTE_TOKEN = os.getenv('DATA_REMOTE_TOKEN')
+   DATA_MANIFEST_PATH = os.getenv('DATA_MANIFEST_PATH', '/manifest.json')
+   DATA_MANIFEST_TTL_SECONDS = int(os.getenv('DATA_MANIFEST_TTL_SECONDS', '3600'))
+   DATA_CACHE_DIR = os.getenv('DATA_CACHE_DIR', 'data_cache')
+   LOCAL_SAMPLE_DB_PATH = os.getenv('LOCAL_SAMPLE_DB_PATH', 'weeds.db')
+   LOCAL_SAMPLE_CSV_PATH = os.getenv(
+      'LOCAL_SAMPLE_CSV_PATH',
+      os.path.join('app', 'static', 'data', 'regulatory_sources.csv')
+   )
+   LOCAL_SAMPLE_GEOJSON_DIR = os.getenv(
+      'LOCAL_SAMPLE_GEOJSON_DIR',
+      os.path.join('app', 'static', 'data', 'geographic')
+   )
    
    # Directory paths
    BLOG_DIR = "app/blog_posts"

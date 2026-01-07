@@ -11,6 +11,8 @@ EU_MEMBERS = {
 
 class StateDatabase(DatabaseBase):
     """Region-level map + table queries (new schema only)."""
+    def __init__(self, db_path: str = "weeds.db", geojson_dir: str = None):
+        super().__init__(db_path=db_path, geojson_dir=geojson_dir)
 
     def get_highlight_metrics(self) -> Dict:
         conn = self.get_connection()

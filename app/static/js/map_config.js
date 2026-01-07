@@ -1,7 +1,7 @@
 // static/js/map_config.js
 window.MAP_CONFIG = window.MAP_CONFIG || {};
 
-MAP_CONFIG.geojsonPath = "/static/data/geographic/";
+MAP_CONFIG.geojsonPath = MAP_CONFIG.geojsonPath || "/static/data/geographic/";
 
 // Global thresholds (used for every country)
 MAP_CONFIG.defaultThresholds = [0, 100, 150, 200, 250, 300];

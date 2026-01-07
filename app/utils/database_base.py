@@ -13,8 +13,9 @@ class DatabaseBase:
       - regions_country table (country, region) synced from GeoJSON
     """
 
-    def __init__(self, db_path: str = "weeds.db"):
+    def __init__(self, db_path: str = "weeds.db", geojson_dir: Optional[str] = None):
         self.db_path = db_path
+        self.geojson_dir = geojson_dir or os.path.join("app", "static", "data", "geographic")
         self._ensure_regions_country_table()
         self._sync_regions_from_geojson()
 
@@ -60,8 +61,8 @@ class DatabaseBase:
         return None
 
     def _sync_regions_from_geojson(self):
-        geo_dir = os.path.join("app", "static", "data", "geographic")
-        if not os.path.isdir(geo_dir):
+        geo_dir = self.geojson_dir
+        if not geo_dir or not os.path.isdir(geo_dir):
             print(f"Warning: GeoJSON directory not found at {geo_dir}")
             return
 

@@ -3,6 +3,7 @@ from flask import Flask
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from app.config import Config
+from app.utils.data_manager import DataManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.utils.custom_recaptcha import CustomReCaptcha
@@ -39,6 +40,15 @@ def create_app():
     csrf.init_app(app)
     limiter.init_app(app)
     recaptcha.init_app(app)
+
+    # Data manager (local sample vs remote production)
+    data_manager = DataManager.from_app(app)
+    data_manager.ensure_ready()
+    app.extensions["data_manager"] = data_manager
+
+    @app.before_request
+    def refresh_data_cache():
+        data_manager.maybe_refresh()
 
     # Import and register blueprints
     from app.views import home, species, blog, method, about

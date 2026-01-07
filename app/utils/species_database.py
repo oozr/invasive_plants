@@ -4,6 +4,8 @@ from app.utils.database_base import DatabaseBase
 
 class SpeciesDatabase(DatabaseBase):
     """Class for species-related database operations (new jurisdiction model)"""
+    def __init__(self, db_path: str = "weeds.db", geojson_dir: str = None):
+        super().__init__(db_path=db_path, geojson_dir=geojson_dir)
 
     def get_all_weeds(self) -> List[Dict]:
         """

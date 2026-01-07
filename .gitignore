@@ -43,3 +43,6 @@ instance/
 # raw data files (keep private by default)
 preprocessing_utils/data/*.csv
 preprocessing_utils/data/**/*.csv
+
+# cached remote artifacts
+data_cache/
