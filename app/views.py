@@ -366,3 +366,29 @@ def check_tables():
         return jsonify({"tables_found": [dict(t) for t in tables], "row_count": row_count})
     finally:
         conn.close()
+
+
+@home.route("/api/data-status")
+def data_status():
+    db_path = current_app.config.get("DATABASE_PATH")
+    csv_path = current_app.config.get("REGULATORY_SOURCES_PATH")
+    geojson_dir = current_app.config.get("GEOJSON_DIR")
+    manifest_path = current_app.config.get("DATA_MANIFEST_PATH")
+
+    return jsonify(
+        {
+            "mode": current_app.config.get("DATA_MODE"),
+            "version": current_app.config.get("DATA_VERSION"),
+            "manifestPath": manifest_path,
+            "database": {"path": db_path, "exists": bool(db_path and os.path.exists(db_path))},
+            "regulatorySources": {
+                "path": csv_path,
+                "exists": bool(csv_path and os.path.exists(csv_path)),
+            },
+            "geojson": {
+                "dir": geojson_dir,
+                "exists": bool(geojson_dir and os.path.isdir(geojson_dir)),
+            },
+        }
+    )
+
