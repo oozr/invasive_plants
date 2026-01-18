@@ -20,7 +20,7 @@ This project transforms raw regulatory lists into decision-ready intelligence by
 ---
 
 ## Table of Contents
-1. [Features](#analytical-features)
+1. [Analytical Features](#analytical-features)
 2. [Tech Stack](#tech-stack)
 3. [Getting Started](#getting-started)
 4. [Environment Configuration](#environment-configuration)
