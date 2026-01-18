@@ -1,13 +1,26 @@
 # Regulated Plants Database (Web App)
 
-> Public web app for exploring regulated invasive plant species. Data is fetched from a private data service and cached locally; a small sample dataset is included for local development.
+**An environmental compliance analytics platform**
 
-![Leaflet Map screenshot placeholder](./app/static/img/homepage_screenshot.png)
+> Business & policy analytics system for exploring regulated invasive plant species across jurisdictions. This repository contains the analytics delivery layer (web application + REST endpoints). The full global dataset and ingestion pipeline are maintained separately to ensure proper data governance; a California-only sample dataset is included here to enable reproducible local analysis and development.
+
+![Website screenshot](./app/static/img/homepage_screenshot.png)
+
+## Analytics context
+
+Environmental compliance depends on knowing which plant species are regulated, where, and to what extent.
+In practice, this information is fragmented across government sources, published in inconsistent formats, and difficult to compare across regions.
+
+This project transforms raw regulatory lists into decision-ready intelligence by:
+- Normalising jurisdictional and taxonomic data
+- Designing interpretable regulatory intensity metrics
+- Delivering geospatial and species-centric analytical views
+- Supporting downstream use cases such as compliance screening and policy benchmarking
 
 ---
 
 ## Table of Contents
-1. [Features](#features)
+1. [Features](#analytical-features)
 2. [Tech Stack](#tech-stack)
 3. [Getting Started](#getting-started)
 4. [Environment Configuration](#environment-configuration)
@@ -19,11 +32,12 @@
 
 ---
 
-## Features
-- **Interactive Leaflet map** with dynamic colour ramps, tooltips, and toggleable regulation layers.
-- **Search + tables** for regulated species, including export and summary views.
-- **REST endpoints** for map data, counts, blog posts, and contact form submission.
-- **Blog + methodology pages** with sources and project background.
+## Analytical Features
+- **Geospatial regulatory analysis:** Interactive Leaflet map with fixed analytical colour thresholds representing regulatory intensity by jurisdiction.
+- **Species-based analytical lookup:** Search regulated species to identify all jurisdictions where regulation applies, enabling cross-border risk assessment.
+- **Layered regulatory scope**: Toggle regional, national, and international regulation layers to isolate policy drivers.
+- **Tabular analytics & exports:** Structured tables support filtering, comparison, and downstream analysis.
+- **Supporting methodology & sources:** Blog and methodology pages document analytical assumptions, data sources, and limitations.
 
 ## Tech Stack
 - **Backend:** Flask, SQLite (via custom utility classes in `app/utils`)
@@ -31,6 +45,7 @@
 - **Email & Security:** Flask-Mail, Flask-Limiter, reCAPTCHA
 
 ## Getting Started
+This repository can be run locally using a self-contained analytical sample (California only).
 ```bash
 # Clone the repo
 git clone https://github.com/<your-org>/regulated_plants_app.git
@@ -69,8 +84,13 @@ This repo includes a minimal California-only sample dataset for local use:
 
 `DATA_MODE=local_sample` uses these by default.
 
-## Remote Data Service
-In production, the web app pulls artifacts from a private data service and caches them locally.
+## Remote Data Service and Governance
+In production, the application consumes versioned analytical artifacts from a private data service.
+
+This separation reflects real-world analytics practice:
+- Controlled data stewardship
+- Licensing and source attribution
+- Safe public consumption of derived insights
 
 Expected endpoints on the data service:
 - `GET /manifest.json`
@@ -84,6 +104,7 @@ The data service lives in a separate private repo (e.g., `regulated_plants_data`
 1. Set environment variables for production.
 2. Use `gunicorn main:app` or `Procfile` for your platform.
 3. Ensure the data service URL + token are configured.
+The live deployment is hosted under an institutional domain and used by public and academic stakeholders.
 
 ## Project Structure
 ```
@@ -99,6 +120,11 @@ regulated_plants_app/
 ```
 
 ## Contributing
-1. Fork + branch from `main`.
-2. Keep PRs focused; update tests or docs when relevant.
-3. Run linters/tests before submitting.
+Contributions are welcome, particularly in areas related to:
+- Analytical extensions
+- Data validation or quality checks
+- New jurisdiction support (with documented sources)
+
+1. Fork + branch from main
+2. Keep PRs focused and documented
+3. Update docs or methodology notes where relevant
