@@ -1,6 +1,6 @@
-# Regulated Plants Database
+# Regulated Plants Database (Web App)
 
-> Interactive map + searchable database tracking regulated invasive plant species across Australia, Canada, and the United States.
+> Public web app for exploring regulated invasive plant species. Data is fetched from a private data service and cached locally; a small sample dataset is included for local development.
 
 ![Leaflet Map screenshot placeholder](./app/static/img/plant-icon.svg)
 
@@ -11,33 +11,30 @@
 2. [Tech Stack](#tech-stack)
 3. [Getting Started](#getting-started)
 4. [Environment Configuration](#environment-configuration)
-5. [Local Development](#local-development)
-6. [Data Processing Pipeline](#data-processing-pipeline)
-7. [Testing](#testing)
-8. [Deployment](#deployment)
-9. [Project Structure](#project-structure)
-10. [Contributing](#contributing)
+5. [Local Sample Data](#local-sample-data)
+6. [Remote Data Service](#remote-data-service)
+7. [Deployment](#deployment)
+8. [Project Structure](#project-structure)
+9. [Contributing](#contributing)
 
 ---
 
 ## Features
-- **Interactive Leaflet map** with dynamic colour ramps, tooltips, and toggleable federal/state regulation layers.
-- **Data tables + search** powered by DataTables for fast filtering, exporting, and regulation summaries per state/province.
-- **REST API** endpoints for map data, weed counts, blog posts, and contact form submission (with rate limiting + reCAPTCHA).
-- **Automatic PDF export** for state/federal listings, complete with branding and data source footers.
-- **Blog + methodology pages** to communicate data provenance, acknowledgements, and project background.
+- **Interactive Leaflet map** with dynamic colour ramps, tooltips, and toggleable regulation layers.
+- **Search + tables** for regulated species, including export and summary views.
+- **REST endpoints** for map data, counts, blog posts, and contact form submission.
+- **Blog + methodology pages** with sources and project background.
 
 ## Tech Stack
 - **Backend:** Flask, SQLite (via custom utility classes in `app/utils`)
 - **Frontend:** Bootstrap 5, Leaflet, DataTables, Select2, vanilla JS
-- **Data Processing:** Custom scripts under `preprocessing_utils/` for assembling GeoJSON and regulatory CSV inputs
 - **Email & Security:** Flask-Mail, Flask-Limiter, reCAPTCHA
 
 ## Getting Started
 ```bash
 # Clone the repo
-git clone https://github.com/<your-org>/invasive_plants.git
-cd invasive_plants
+git clone https://github.com/<your-org>/regulated_plants_app.git
+cd regulated_plants_app
 
 # Create & activate virtual environment
 python3 -m venv weeds_env
@@ -53,90 +50,49 @@ Copy `.env.example` to `.env` (or export variables another way) and set:
 
 | Variable | Description |
 | --- | --- |
-| `FLASK_APP` | Entry point, usually `main.py` |
-| `FLASK_ENV` | `development` or `production` |
 | `SECRET_KEY` | Flask session key |
-| `DATABASE_PATH` | Path to `weeds.db` (default shipped in repo) |
 | `EMAIL_USERNAME` / `EMAIL_PASSWORD` | SMTP credentials for contact form |
 | `RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` | Google reCAPTCHA keys |
+| `DATA_MODE` | `local_sample` (default) or `remote_production` |
+| `DATA_REMOTE_BASE_URL` | Base URL of the private data service (remote mode) |
+| `DATA_REMOTE_TOKEN` | Bearer token for the data service (remote mode) |
+| `DATA_MANIFEST_TTL_SECONDS` | Poll interval for data updates (default `3600`) |
 
 The app reads these via `Config` in `app/config.py`.
 
-## Local Development
-```bash
-# Activate environment first, then:
-flask run --host 0.0.0.0 --port 3000
-# or
-python main.py
-```
+## Local Sample Data
+This repo includes a minimal California-only sample dataset for local use:
 
-Useful URLs:
-- `http://localhost:3000/` – Map + search homepage
-- `http://localhost:3000/species` – Species search
-- `http://localhost:3000/blog` – Blog module
-- `http://localhost:3000/method` – Methodology / sources
-- `http://localhost:3000/about` – About + contact form
+- `app/static/data/sample/weeds_sample.db`
+- `app/static/data/sample/regulatory_sources.csv`
+- `app/static/data/sample/geojson/united_states.geojson`
 
-## Frontend Assets
-No build step required; Leaflet/Bootstrap assets load from CDNs. Custom JS/CSS live under `app/static/`.
+`DATA_MODE=local_sample` uses these by default.
 
-## Data Processing Pipeline
-Raw regulatory data, spreadsheets, and geometry sources live in `preprocessing_utils/data/`. Use the pipeline below whenever you add a new country/region or refresh regulations.
+## Remote Data Service
+In production, the web app pulls artifacts from a private data service and caches them locally.
 
-### 1. Update Data Sources
-- Append the new country’s regions + regulation codes to the master spreadsheet/CSV  (`preprocessing_utils/data/weed_lists_merged_*.csv`).
-- Rebuild the SQLite database:
-```bash
-  cd preprocessing_utils/database
-  python create_database.py
-```
-This script loads the curated spreadsheet and produces `weeds.db` (referenced by the Flask app), saving the old database to preproceesing_utils/data/old_databases.
+Expected endpoints on the data service:
+- `GET /manifest.json`
+- `GET /artifacts/weeds.db`
+- `GET /artifacts/regulatory_sources.csv`
+- `GET /artifacts/geojson/<file>.geojson`
 
-### 2. Add & Optimize GeoJSON
-- Download a base GeoJSON (e.g., from https://mapscaping.com/geojson-every-country-in-the-world/).
-- Save the raw file as `preprocessing_utils/data/geographic/<country>_original.geojson`.
-- Simplify/clean the geometry:
-```bash
-  python preprocessing_utils/process_geojson.py <country> --level 0.3 --precision 2 --keep-largest-only
-```
-  - `--level` controls simplification percent (higher = more aggressive reduction).
-  - `--precision` sets decimal places kept.
-  - `--keep-largest-only` removes small islands; skip it for archipelago-heavy countries (Japan, New Zealand, Canada, etc.).
-- The processed GeoJSON lands in `app/static/data/geographic/` for the map to load.
-
-### 3. Test Locally
-- Ensure `weeds.db` contains the new rows (`/debug/table-check` or direct SQLite inspection).
-- Run the Flask app and confirm:
-  - New regions display on the map without topology issues.
-  - Hover counts, toggles, and PDF exports include the new country.
-  - Species table/API endpoints return the new data correctly.
-
-## Testing
-Currently ad-hoc/manual:
-- Use `/debug/table-check` to confirm database tables exist.
-- Verify API endpoints with `curl`/Postman (`/api/state-weed-counts`, `/api/state/<state>` etc.).
-- Manual browser testing for map interactions, PDF export, and contact form.
-
-Add your own unit tests (e.g., with `pytest`) around `app/utils` modules as the project grows.
+The data service lives in a separate private repo (e.g., `regulated_plants_data`).
 
 ## Deployment
-1. Set environment variables for production (mail credentials, reCAPTCHA keys, DB path).
-2. Use `gunicorn main:app` or similar WSGI server (see `Procfile` example).
-3. Ensure static files are served (e.g., via `whitenoise` or platform-specific config).
-4. Schedule regular updates to `weeds.db` via preprocessing scripts or CI workflow.
+1. Set environment variables for production.
+2. Use `gunicorn main:app` or `Procfile` for your platform.
+3. Ensure the data service URL + token are configured.
 
 ## Project Structure
 ```
-invasive_plants/
+regulated_plants_app/
 ├── app/
-│   ├── static/         # JS, CSS, images, GeoJSON
+│   ├── static/         # JS, CSS, images, sample data
 │   ├── templates/      # Jinja templates
 │   ├── utils/          # Database + helper classes
 │   └── views.py        # Flask blueprints & routes
-├── preprocessing_utils/
-│   ├── data/           # Raw CSV/GeoJSON inputs
-│   └── process_geojson.py
-├── weeds.db            # SQLite database (generated)
 ├── requirements.txt
 ├── Procfile
 └── main.py             # Flask entrypoint
@@ -146,5 +102,3 @@ invasive_plants/
 1. Fork + branch from `main`.
 2. Keep PRs focused; update tests or docs when relevant.
 3. Run linters/tests before submitting.
-
-Have questions or data corrections? Use the contact form on `/about` or open an issue.
