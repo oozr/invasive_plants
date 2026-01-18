@@ -2,7 +2,7 @@
 
 > Public web app for exploring regulated invasive plant species. Data is fetched from a private data service and cached locally; a small sample dataset is included for local development.
 
-![Leaflet Map screenshot placeholder](./app/static/img/plant-icon.svg)
+![Leaflet Map screenshot placeholder](./app/static/img/homepage_screenshot.png)
 
 ---
 
