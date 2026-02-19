@@ -41,8 +41,12 @@ class CustomReCaptcha:
     def verify(self):
         """Verifies the reCAPTCHA response"""
         if not self.secret_key:
-            # No secret key configured, return True for development
-            return True
+            # Allow local bypass only when DEBUG is explicitly True; fail closed otherwise.
+            if current_app.config.get("DEBUG") is True:
+                current_app.logger.warning("RECAPTCHA_SECRET_KEY missing; bypassing verification in debug mode.")
+                return True
+            current_app.logger.error("RECAPTCHA_SECRET_KEY missing; denying reCAPTCHA verification.")
+            return False
             
         data = {
             'secret': self.secret_key,

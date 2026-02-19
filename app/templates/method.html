@@ -72,10 +72,10 @@
                     <span class="state-name">{{ source.name }}</span>
                     <div class="details">
                         <span class="authority">
-                            {% if source.authority == "No regulation" %}
+                            {% if source.authority == "No regulation" or not source.source_url %}
                                 {{ source.authority }}
                             {% else %}
-                                <a href="{{ source.source_url }}" target="_blank">{{ source.authority }}</a>
+                                <a href="{{ source.source_url }}" target="_blank" rel="noopener noreferrer">{{ source.authority }}</a>
                             {% endif %}
                         </span>
                         <span class="year">last updated {{ source.updated }}</span>

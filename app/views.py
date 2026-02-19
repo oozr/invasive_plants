@@ -2,7 +2,8 @@
 import csv
 import os
 from datetime import datetime
-from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory
+from urllib.parse import urlparse
+from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory, abort
 from flask_mail import Message
 
 from app import mail, limiter, recaptcha
@@ -62,6 +63,16 @@ def _toggle_params():
     include_national = _bool_arg("includeNational", True)
     include_international = _bool_arg("includeInternational", True)
     return include_region, include_national, include_international
+
+
+def _safe_external_url(raw_url: str):
+    if not raw_url:
+        return None
+    url = str(raw_url).strip()
+    parsed = urlparse(url)
+    if parsed.scheme in {"http", "https"} and parsed.netloc:
+        return url
+    return None
 
 
 # ----------------------------
@@ -269,12 +280,13 @@ def index():
         with open(csv_path, "r", encoding="utf-8-sig") as file:
             csv_reader = csv.DictReader(file)
             for row in csv_reader:
+                safe_source_url = _safe_external_url(row.get("source_url", ""))
                 sources.append(
                     {
                         "country": row.get("country", "Unknown"),
                         "name": row.get("state_province", "Unknown"),
                         "authority": row.get("authority_name", "Unknown"),
-                        "source_url": row.get("source_url", "#"),
+                        "source_url": safe_source_url,
                         "updated": row.get("last_updated_year", row.get("last_updated", "Unknown")),
                     }
                 )
@@ -354,6 +366,9 @@ Message:
 # ----------------------------
 @home.route("/debug/table-check")
 def check_tables():
+    if current_app.config.get("DEBUG") is not True:
+        abort(404)
+
     conn = _get_state_db().get_connection()
     try:
         cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='weeds'")
@@ -370,6 +385,9 @@ def check_tables():
 
 @home.route("/api/data-status")
 def data_status():
+    if current_app.config.get("DEBUG") is not True:
+        abort(404)
+
     db_path = current_app.config.get("DATABASE_PATH")
     csv_path = current_app.config.get("REGULATORY_SOURCES_PATH")
     geojson_dir = current_app.config.get("GEOJSON_DIR")
@@ -391,4 +409,3 @@ def data_status():
             },
         }
     )
-
