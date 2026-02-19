@@ -1,8 +1,20 @@
 import os
 import markdown
 import frontmatter
+import bleach
 from datetime import datetime
 from app.config import Config
+
+
+ALLOWED_BLOG_TAGS = set(bleach.sanitizer.ALLOWED_TAGS).union(
+    {"p", "br", "hr", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "img"}
+)
+ALLOWED_BLOG_ATTRIBUTES = {
+    **bleach.sanitizer.ALLOWED_ATTRIBUTES,
+    "a": ["href", "title", "rel"],
+    "img": ["src", "alt", "title", "loading"],
+}
+ALLOWED_BLOG_PROTOCOLS = set(bleach.sanitizer.ALLOWED_PROTOCOLS).union({"mailto"})
 
 class BlogGenerator:
     def __init__(self):
@@ -32,6 +44,16 @@ class BlogGenerator:
         """Generate the correct path for blog post images"""
         path = f'/static/blog_images/{image_filename}'
         return path
+
+    def sanitize_post_html(self, html_content):
+        """Sanitize rendered markdown to prevent script/content injection."""
+        return bleach.clean(
+            html_content,
+            tags=ALLOWED_BLOG_TAGS,
+            attributes=ALLOWED_BLOG_ATTRIBUTES,
+            protocols=ALLOWED_BLOG_PROTOCOLS,
+            strip=True,
+        )
 
     def generate_blog_posts(self):
         """Generate list of blog posts from markdown files"""
@@ -97,6 +119,7 @@ class BlogGenerator:
                 content,
                 extensions=['extra', 'toc', 'meta']
             )
+            html_content = self.sanitize_post_html(html_content)
 
             blog_posts.append({
                 "title": metadata.get('title', 'Untitled'),

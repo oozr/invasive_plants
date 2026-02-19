@@ -126,6 +126,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return `${country}::${region}`;
     }
 
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     function buildRegionLookup(list) {
         const lookup = {};
         if (!Array.isArray(list)) return lookup;
@@ -268,10 +277,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     title: 'Scientific Name',
                     width: '25%',
                     render: function (data, type, row) {
+                        if (type !== 'display') return data || '';
                         if (type === 'display' && data) {
-                            return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank"><em>${data}</em></a>`;
+                            return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank"><em>${escapeHtml(data)}</em></a>`;
                         }
-                        return data || 'Unknown';
+                        return 'Unknown';
                     }
                 },
                 {
@@ -279,10 +289,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     title: 'Common Name',
                     width: '45%',
                     render: function (data, type, row) {
+                        if (type !== 'display') return data || '';
                         if (!data || String(data).includes('No English common names available')) {
-                            return `(${row.canonical_name || 'Unknown'})`;
+                            return `(${escapeHtml(row.canonical_name || 'Unknown')})`;
                         }
-                        return data;
+                        return escapeHtml(data);
                     }
                 },
                 {
@@ -290,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     title: 'Family',
                     width: '20%',
                     render: function (data) {
-                        return data || 'Unknown';
+                        return escapeHtml(data || 'Unknown');
                     }
                 },
                 {
@@ -315,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (level === 'Regional') return '<span class="source-state">Regional</span>';
                         if (level === 'National') return '<span class="source-federal">National</span>';
                         if (level === 'International') return '<span class="source-international">International</span>';
-                        return `<span>${level}</span>`;
+                        return `<span>${escapeHtml(level)}</span>`;
                     }
                 }
             ],
@@ -515,9 +526,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         const data = regionWeedData[key] || { count: 0, country, region };
                         const weedCount = data.count || 0;
                         const locationLabel = formatLocation(region, country);
+                        const safeLocationLabel = escapeHtml(locationLabel);
 
                         const tooltipContent = `
-                            <strong>${locationLabel}</strong><br>
+                            <strong>${safeLocationLabel}</strong><br>
                             Regulated Plants: ${weedCount}
                         `;
 

@@ -54,15 +54,21 @@ document.addEventListener('DOMContentLoaded', function () {
             if (commonName.includes('No English common names available')) commonName = '';
 
             const canonicalName = weed.canonical_name || '';
+            const container = $('<div>');
 
-            return $(`
-                <div>
-                    ${commonName ? `<div class="common-name">${commonName}</div>` : ''}
-                    <div class="canonical-name ${commonName ? 'text-muted small' : ''}">
-                        ${commonName ? canonicalName : `(${canonicalName})`}
-                    </div>
-                </div>
-            `);
+            if (commonName) {
+                $('<div>')
+                    .addClass('common-name')
+                    .text(commonName)
+                    .appendTo(container);
+            }
+
+            $('<div>')
+                .addClass(`canonical-name ${commonName ? 'text-muted small' : ''}`.trim())
+                .text(commonName ? canonicalName : `(${canonicalName})`)
+                .appendTo(container);
+
+            return container;
         }
     });
 
@@ -186,7 +192,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         regionsRow.className = 'mb-0';
 
                         const label = regional.length === 1 ? 'Region' : 'Regions';
-                        regionsRow.innerHTML = `<strong>${label}:</strong> ${regional.join(', ')}`;
+                        const labelElement = document.createElement('strong');
+                        labelElement.textContent = `${label}:`;
+                        regionsRow.appendChild(labelElement);
+                        regionsRow.appendChild(document.createTextNode(` ${regional.join(', ')}`));
 
                         countryElement.appendChild(regionsRow);
                     }

@@ -13,6 +13,7 @@ python-dotenv==1.0.0
 # Blog Processing
 markdown==3.4.3
 python-frontmatter==1.0.0
+bleach==6.1.0
 
 # Contact Form
 Flask-Mail==0.9.1
