@@ -192,12 +192,6 @@ table.dataTable tbody td a:hover,
    text-decoration: none;
 }
 
-.highlight-updated-badge {
-   background-color: transparent;
-   color: var(--text-medium);
-   border: 1px solid var(--border-light);
-}
-
 /* ========================================
    FORMS
    ======================================== */
