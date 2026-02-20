@@ -72,8 +72,7 @@
         const formattedDate = formatDate(data.lastUpdated);
         if (lastUpdatedEl) lastUpdatedEl.textContent = formattedDate;
         if (lastUpdatedBadge) {
-            lastUpdatedBadge.textContent =
-                formattedDate === '--' ? 'Awaiting sync' : `Updated ${formattedDate}`;
+            lastUpdatedBadge.textContent = `Database updated on: ${formattedDate}`;
         }
 
         // Latest country card
@@ -149,7 +148,7 @@
             .catch(error => {
                 console.error(error);
                 const badge = document.getElementById('highlight-last-updated-badge');
-                if (badge) badge.textContent = 'Highlights unavailable';
+                if (badge) badge.textContent = 'Database updated on: unavailable';
             });
     }
 

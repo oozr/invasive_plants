@@ -109,18 +109,18 @@ table.dataTable tbody td a:hover,
    HOME HIGHLIGHTS
    ======================================== */
 .home-highlights {
-   background-color: var(--bg-light);
-   border-radius: 0.5rem;
-   padding: 0.75rem 1rem;
+   background-color: transparent;
+   border-radius: 0;
+   padding: 0;
 }
 
 .home-highlights .highlight-card {
-   background-color: var(--white);
-   border-radius: 0.65rem;
+   background-color: transparent;
+   border-radius: 0.5rem;
    padding: 1rem;
    height: 100%;
    border: 1px solid var(--border-light);
-   box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+   box-shadow: none;
 }
 
 .highlight-label {
@@ -190,6 +190,12 @@ table.dataTable tbody td a:hover,
    pointer-events: none;
    opacity: 0.6;
    text-decoration: none;
+}
+
+.highlight-updated-badge {
+   background-color: transparent;
+   color: var(--text-medium);
+   border: 1px solid var(--border-light);
 }
 
 /* ========================================
