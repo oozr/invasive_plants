@@ -117,7 +117,7 @@ table.dataTable tbody td a:hover,
 .home-highlights .highlight-card {
    background-color: transparent;
    border-radius: 0.5rem;
-   padding: 1rem;
+   padding: 0.45rem 0.55rem;
    height: 100%;
    border: 1px solid var(--border-light);
    box-shadow: none;
