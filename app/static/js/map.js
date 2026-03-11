@@ -186,14 +186,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return configured || 'regulatedplants';
     }
 
-    function buildActivationPayload() {
-        return {
-            project: oozrProjectSlug(),
-            anonymous_id: ensureAnonymousId(),
-            timestamp: new Date().toISOString()
-        };
-    }
-
     async function sendAhaActivationIfNeeded(weedsCount) {
         if (!metricsEnabled()) return;
         if (!Number.isFinite(weedsCount) || weedsCount <= 0) return;
@@ -203,24 +195,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const baseUrl = oozrBaseUrl();
         if (!baseUrl) return;
 
-        const payload = buildActivationPayload();
-        const endpoint = `${baseUrl}/api/activate`;
         activationInFlight = true;
         try {
-            if (navigator.sendBeacon) {
-                const formBody = new URLSearchParams(payload);
-                const sent = navigator.sendBeacon(endpoint, formBody);
-                if (sent) {
-                    setCookie(AHA_ACTIVATED_COOKIE, '1', COOKIE_MAX_AGE_DAYS);
-                    return;
-                }
-            }
-
-            const response = await fetch(endpoint, {
+            const response = await fetch(`${baseUrl}/api/activate`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-                body: new URLSearchParams(payload),
-                keepalive: true
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    project: oozrProjectSlug(),
+                    anonymous_id: ensureAnonymousId(),
+                    timestamp: new Date().toISOString()
+                })
             });
 
             if (response.ok) {
