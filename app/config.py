@@ -23,6 +23,9 @@ class Config:
    SITE_NAME = "Regulated Plants Database"
    SITE_AUTHOR = "Regulated Plants Database Team"
    BASE_URL = os.getenv('BASE_URL', 'https://regulatedplants.unu.edu')
+   OOZR_BASE_URL = os.getenv('OOZR_BASE_URL', '').rstrip('/')
+   OOZR_PROJECT_SLUG = os.getenv('OOZR_PROJECT_SLUG', 'regulatedplants')
+   OOZR_METRICS_ENABLED = os.getenv('OOZR_METRICS_ENABLED', '0')
 
    # Highlights override (single country name; optional)
    LATEST_COUNTRY_NAME = os.getenv('LATEST_COUNTRY_NAME', 'Saudi Arabia')

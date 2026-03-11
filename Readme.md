@@ -72,8 +72,21 @@ Copy `.env.example` to `.env` (or export variables another way) and set:
 | `DATA_REMOTE_BASE_URL` | Base URL of the private data service (remote mode) |
 | `DATA_REMOTE_TOKEN` | Bearer token for the data service (remote mode) |
 | `DATA_MANIFEST_TTL_SECONDS` | Poll interval for data updates (default `3600`) |
+| `OOZR_BASE_URL` | OOZR dashboard base URL (example: `https://oozr.up.railway.app`) |
+| `OOZR_PROJECT_SLUG` | Project slug for activations (default `regulatedplants`) |
+| `OOZR_METRICS_ENABLED` | Enable activation tracking (`1`/`0`, default `0`) |
 
 The app reads these via `Config` in `app/config.py`.
+
+## OOZR Activation Tracking
+This research project tracks one signal only: activation.
+
+- **Aha moment**: first time a unique user clicks the map and receives regulated species results.
+- Anonymous user identity is stored in browser cookie `anonymous_user_id`.
+- After successful activation send, cookie `aha_activated=1` is set to prevent repeat emits.
+- Activation is sent to OOZR canonical endpoint:
+  - `POST {OOZR_BASE_URL}/api/activate`
+  - payload: `{ "project": "regulatedplants", "anonymous_id": "...", "timestamp": "ISO-8601" }`
 
 ## Local Sample Data
 This repo includes a minimal California-only sample dataset for local use:

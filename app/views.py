@@ -80,9 +80,18 @@ def _safe_external_url(raw_url: str):
 # ----------------------------
 @home.route("/")
 def index():
+    metrics_enabled = str(current_app.config.get("OOZR_METRICS_ENABLED", "0")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
     return render_template(
         "home.html",
         geojson_path=current_app.config.get("GEOJSON_URL_PATH", "/data/geojson/"),
+        oozr_base_url=current_app.config.get("OOZR_BASE_URL", ""),
+        oozr_project_slug=current_app.config.get("OOZR_PROJECT_SLUG", "regulatedplants"),
+        oozr_metrics_enabled=metrics_enabled,
     )
 
 

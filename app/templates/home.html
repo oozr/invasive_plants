@@ -141,6 +141,9 @@
 <script>
     window.MAP_CONFIG = window.MAP_CONFIG || {};
     window.MAP_CONFIG.geojsonPath = "{{ geojson_path }}";
+    window.MAP_CONFIG.oozrBaseUrl = "{{ oozr_base_url }}";
+    window.MAP_CONFIG.oozrProjectSlug = "{{ oozr_project_slug }}";
+    window.MAP_CONFIG.oozrMetricsEnabled = {{ 'true' if oozr_metrics_enabled else 'false' }};
 </script>
 <script defer src="{{ url_for('static', filename='js/map_config.js') }}"></script>
 <script defer src="{{ url_for('static', filename='js/map.js') }}"></script>

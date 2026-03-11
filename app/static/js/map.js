@@ -30,6 +30,10 @@ document.addEventListener('DOMContentLoaded', function () {
         national: true,
         international: true
     };
+    const ANONYMOUS_USER_COOKIE = 'anonymous_user_id';
+    const AHA_ACTIVATED_COOKIE = 'aha_activated';
+    const COOKIE_MAX_AGE_DAYS = 730;
+    let activationInFlight = false;
 
     /******************************
      * UTILITY FUNCTIONS
@@ -133,6 +137,100 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    function getCookie(name) {
+        const encodedName = encodeURIComponent(name);
+        const cookieParts = document.cookie ? document.cookie.split('; ') : [];
+        for (const part of cookieParts) {
+            const [rawKey, rawValue = ''] = part.split('=');
+            if (rawKey === encodedName) {
+                return decodeURIComponent(rawValue);
+            }
+        }
+        return null;
+    }
+
+    function setCookie(name, value, maxAgeDays) {
+        const expires = new Date(Date.now() + maxAgeDays * 24 * 60 * 60 * 1000).toUTCString();
+        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Expires=${expires}; Path=/; SameSite=Lax${secure}`;
+    }
+
+    function generateAnonymousId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID();
+        }
+        return `anon-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function ensureAnonymousId() {
+        let anonymousId = getCookie(ANONYMOUS_USER_COOKIE);
+        if (!anonymousId) {
+            anonymousId = generateAnonymousId();
+            setCookie(ANONYMOUS_USER_COOKIE, anonymousId, COOKIE_MAX_AGE_DAYS);
+        }
+        return anonymousId;
+    }
+
+    function metricsEnabled() {
+        return MAP_CONFIG.oozrMetricsEnabled === true;
+    }
+
+    function oozrBaseUrl() {
+        return String(MAP_CONFIG.oozrBaseUrl || '').trim().replace(/\/$/, '');
+    }
+
+    function oozrProjectSlug() {
+        const configured = String(MAP_CONFIG.oozrProjectSlug || '').trim();
+        return configured || 'regulatedplants';
+    }
+
+    function buildActivationPayload() {
+        return {
+            project: oozrProjectSlug(),
+            anonymous_id: ensureAnonymousId(),
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    async function sendAhaActivationIfNeeded(weedsCount) {
+        if (!metricsEnabled()) return;
+        if (!Number.isFinite(weedsCount) || weedsCount <= 0) return;
+        if (getCookie(AHA_ACTIVATED_COOKIE) === '1') return;
+        if (activationInFlight) return;
+
+        const baseUrl = oozrBaseUrl();
+        if (!baseUrl) return;
+
+        const payload = buildActivationPayload();
+        const endpoint = `${baseUrl}/api/activate`;
+        activationInFlight = true;
+        try {
+            if (navigator.sendBeacon) {
+                const formBody = new URLSearchParams(payload);
+                const sent = navigator.sendBeacon(endpoint, formBody);
+                if (sent) {
+                    setCookie(AHA_ACTIVATED_COOKIE, '1', COOKIE_MAX_AGE_DAYS);
+                    return;
+                }
+            }
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                body: new URLSearchParams(payload),
+                keepalive: true
+            });
+
+            if (response.ok) {
+                setCookie(AHA_ACTIVATED_COOKIE, '1', COOKIE_MAX_AGE_DAYS);
+            }
+        } catch (error) {
+            console.error('Error sending activation event:', error);
+        } finally {
+            activationInFlight = false;
+        }
     }
 
     function buildRegionLookup(list) {
@@ -366,6 +464,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const weeds = Array.isArray(result) ? result : (result.weeds || []);
                 const hasAnyData = Array.isArray(result) ? weeds.length > 0 : !!result.has_any_data;
                 updateTable(country, region, weeds, hasAnyData);
+                sendAhaActivationIfNeeded(weeds.length);
             })
             .catch(err => {
                 console.error('Error fetching region data:', err);
