@@ -94,12 +94,6 @@ class DataManager:
 
     def _local_paths(self) -> dict:
         db_path = self._resolve_path(self.app.config.get("LOCAL_SAMPLE_DB_PATH", "weeds.db"))
-        csv_path = self._resolve_path(
-            self.app.config.get(
-                "LOCAL_SAMPLE_CSV_PATH",
-                os.path.join("app", "static", "data", "regulatory_sources.csv"),
-            )
-        )
         geojson_dir = self._resolve_path(
             self.app.config.get(
                 "LOCAL_SAMPLE_GEOJSON_DIR",
@@ -108,7 +102,6 @@ class DataManager:
         )
         return {
             "database_path": db_path,
-            "regulatory_sources_path": csv_path,
             "geojson_dir": geojson_dir,
             "geojson_url_path": "/data/geojson/",
         }
@@ -116,24 +109,21 @@ class DataManager:
     def _current_paths(self) -> dict:
         return {
             "database_path": self.app.config.get("DATABASE_PATH"),
-            "regulatory_sources_path": self.app.config.get("REGULATORY_SOURCES_PATH"),
             "geojson_dir": self.app.config.get("GEOJSON_DIR"),
             "geojson_url_path": self.app.config.get("GEOJSON_URL_PATH", "/data/geojson/"),
         }
 
     def _cache_is_ready(self) -> bool:
         db_path = self.app.config.get("DATABASE_PATH")
-        csv_path = self.app.config.get("REGULATORY_SOURCES_PATH")
         geojson_dir = self.app.config.get("GEOJSON_DIR")
-        if not db_path or not csv_path or not geojson_dir:
+        if not db_path or not geojson_dir:
             return False
-        return os.path.exists(db_path) and os.path.exists(csv_path) and os.path.isdir(geojson_dir)
+        return os.path.exists(db_path) and os.path.isdir(geojson_dir)
 
     def _cache_paths_ready(self, cache_dir: str) -> bool:
         db_path = os.path.join(cache_dir, "weeds.db")
-        csv_path = os.path.join(cache_dir, "regulatory_sources.csv")
         geojson_dir = os.path.join(cache_dir, "geojson")
-        if not (os.path.exists(db_path) and os.path.exists(csv_path) and os.path.isdir(geojson_dir)):
+        if not (os.path.exists(db_path) and os.path.isdir(geojson_dir)):
             return False
         return any(name.lower().endswith(".geojson") for name in os.listdir(geojson_dir))
 
@@ -141,7 +131,7 @@ class DataManager:
         if not data_paths:
             return
         self.app.config["DATABASE_PATH"] = data_paths["database_path"]
-        self.app.config["REGULATORY_SOURCES_PATH"] = data_paths["regulatory_sources_path"]
+        self.app.config["REGULATORY_SOURCES_PATH"] = data_paths.get("regulatory_sources_path")
         self.app.config["GEOJSON_DIR"] = data_paths["geojson_dir"]
         self.app.config["GEOJSON_URL_PATH"] = data_paths.get("geojson_url_path", "/data/geojson/")
         if version:
@@ -179,7 +169,7 @@ class DataManager:
 
         data_paths = {
             "database_path": os.path.join(cache_dir, "weeds.db"),
-            "regulatory_sources_path": os.path.join(cache_dir, "regulatory_sources.csv"),
+            "regulatory_sources_path": None,
             "geojson_dir": os.path.join(cache_dir, "geojson"),
             "geojson_url_path": "/data/geojson/",
         }
@@ -188,7 +178,6 @@ class DataManager:
     def _download_artifacts(self, manifest: dict, cache_dir: str):
         artifacts = manifest.get("artifacts", {})
         db_entry = artifacts.get("weeds_db") or manifest.get("weeds_db")
-        csv_entry = artifacts.get("regulatory_sources_csv") or manifest.get("regulatory_sources_csv")
         geojson_files = manifest.get("geojson_files") or manifest.get("geojson", {}).get("files") or []
         geojson_base = (
             artifacts.get("geojson_base_path")
@@ -198,14 +187,10 @@ class DataManager:
 
         if not db_entry:
             raise ValueError("Manifest missing weeds_db artifact")
-        if not csv_entry:
-            raise ValueError("Manifest missing regulatory_sources_csv artifact")
 
         db_entry = self._normalize_entry(db_entry)
-        csv_entry = self._normalize_entry(csv_entry)
 
         self._download_entry(db_entry, os.path.join(cache_dir, "weeds.db"))
-        self._download_entry(csv_entry, os.path.join(cache_dir, "regulatory_sources.csv"))
 
         geojson_dir = os.path.join(cache_dir, "geojson")
         os.makedirs(geojson_dir, exist_ok=True)

@@ -1,5 +1,4 @@
 # app/views.py
-import csv
 import os
 from datetime import datetime
 from urllib.parse import urlparse
@@ -281,26 +280,21 @@ def post(slug):
 @method.route("/")
 def index():
     sources = []
-    csv_path = current_app.config.get("REGULATORY_SOURCES_PATH")
-
     try:
-        if not csv_path:
-            raise FileNotFoundError("REGULATORY_SOURCES_PATH not configured")
-        with open(csv_path, "r", encoding="utf-8-sig") as file:
-            csv_reader = csv.DictReader(file)
-            for row in csv_reader:
-                safe_source_url = _safe_external_url(row.get("source_url", ""))
-                sources.append(
-                    {
-                        "country": row.get("country", "Unknown"),
-                        "name": row.get("state_province", "Unknown"),
-                        "authority": row.get("authority_name", "Unknown"),
-                        "source_url": safe_source_url,
-                        "updated": row.get("last_updated_year", row.get("last_updated", "Unknown")),
-                    }
-                )
+        rows = _get_state_db().get_method_sources()
+        for row in rows:
+            safe_source_url = _safe_external_url(row.get("source_url", ""))
+            sources.append(
+                {
+                    "country": row.get("country", "Unknown"),
+                    "name": row.get("name", "Unknown"),
+                    "authority": row.get("authority", "Unknown"),
+                    "source_url": safe_source_url,
+                    "updated": row.get("updated", "Unknown"),
+                }
+            )
     except Exception as e:
-        current_app.logger.error(f"Error reading regulatory_sources.csv: {e}")
+        current_app.logger.error(f"Error loading methodology sources from database: {e}")
         return render_template("method.html", sources=[])
 
     return render_template("method.html", sources=sources)
@@ -380,14 +374,27 @@ def check_tables():
 
     conn = _get_state_db().get_connection()
     try:
-        cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='weeds'")
-        tables = cursor.fetchall()
+        expected = ["plants", "jurisdictions", "regulations"]
+        tables = conn.execute(
+            """
+            SELECT name
+            FROM sqlite_master
+            WHERE type='table'
+              AND name IN ('plants', 'jurisdictions', 'regulations')
+            ORDER BY name
+            """
+        ).fetchall()
 
-        row_count = 0
-        if tables:
-            row_count = conn.execute("SELECT COUNT(*) as count FROM weeds").fetchone()["count"]
+        available = {row["name"] for row in tables}
+        counts = {}
+        for table_name in expected:
+            if table_name not in available:
+                counts[table_name] = 0
+                continue
+            row = conn.execute(f"SELECT COUNT(*) AS count FROM {table_name}").fetchone()
+            counts[table_name] = row["count"] if row else 0
 
-        return jsonify({"tables_found": [dict(t) for t in tables], "row_count": row_count})
+        return jsonify({"tables_found": [dict(t) for t in tables], "row_counts": counts})
     finally:
         conn.close()
 
@@ -398,7 +405,6 @@ def data_status():
         abort(404)
 
     db_path = current_app.config.get("DATABASE_PATH")
-    csv_path = current_app.config.get("REGULATORY_SOURCES_PATH")
     geojson_dir = current_app.config.get("GEOJSON_DIR")
     manifest_path = current_app.config.get("DATA_MANIFEST_PATH")
 
@@ -408,10 +414,6 @@ def data_status():
             "version": current_app.config.get("DATA_VERSION"),
             "manifestPath": manifest_path,
             "database": {"path": db_path, "exists": bool(db_path and os.path.exists(db_path))},
-            "regulatorySources": {
-                "path": csv_path,
-                "exists": bool(csv_path and os.path.exists(csv_path)),
-            },
             "geojson": {
                 "dir": geojson_dir,
                 "exists": bool(geojson_dir and os.path.isdir(geojson_dir)),

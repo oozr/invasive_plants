@@ -92,7 +92,6 @@ This research project tracks one signal only: activation.
 This repo includes a minimal California-only sample dataset for local use:
 
 - `app/static/data/sample/weeds_sample.db`
-- `app/static/data/sample/regulatory_sources.csv`
 - `app/static/data/sample/geojson/united_states.geojson`
 
 `DATA_MODE=local_sample` uses these by default.
@@ -108,7 +107,6 @@ This separation reflects real-world analytics practice:
 Expected endpoints on the data service:
 - `GET /manifest.json`
 - `GET /artifacts/weeds.db`
-- `GET /artifacts/regulatory_sources.csv`
 - `GET /artifacts/geojson/<file>.geojson`
 
 The data service lives in a separate private repo (e.g., `regulated_plants_data`).

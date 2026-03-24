@@ -40,7 +40,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             canonical_name: weed.canonical_name,
                             family_name: weed.family_name,
                             synonyms: weed.synonyms,
-                            usage_key: weed.usage_key
+                            usage_key: weed.usage_key,
+                            lifeform_final: weed.lifeform_final,
+                            lifespan_final: weed.lifespan_final,
+                            habitat_final: weed.habitat_final,
+                            woodiness_final: weed.woodiness_final
                         };
                     })
                 };
@@ -107,6 +111,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('weedTitle').textContent = displayName;
         document.getElementById('weedCanonicalName').textContent = selectedWeed.canonical_name;
         document.getElementById('weedFamily').textContent = selectedWeed.family_name || 'Not available';
+        document.getElementById('weedLifeform').textContent = selectedWeed.lifeform_final || 'Not available';
+        document.getElementById('weedLifespan').textContent = selectedWeed.lifespan_final || 'Not available';
+        document.getElementById('weedHabitat').textContent = selectedWeed.habitat_final || 'Not available';
+        document.getElementById('weedWoodiness').textContent = selectedWeed.woodiness_final || 'Not available';
 
         // Synonyms (first 3)
         const synonymsSection = document.getElementById('synonymsSection');
@@ -250,7 +258,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     canonical_name: weedData.canonical_name,
                     family_name: weedData.family_name,
                     synonyms: weedData.synonyms,
-                    usage_key: weedData.usage_key
+                    usage_key: weedData.usage_key,
+                    lifeform_final: weedData.lifeform_final,
+                    lifespan_final: weedData.lifespan_final,
+                    habitat_final: weedData.habitat_final,
+                    woodiness_final: weedData.woodiness_final
                 };
 
                 const newOption = new Option(formattedData.text, formattedData.id, true, true);

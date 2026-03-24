@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List
 from app.utils.database_base import DatabaseBase
 
 EU_MEMBERS = {
@@ -9,8 +9,10 @@ EU_MEMBERS = {
     "Slovenia", "Spain", "Sweden"
 }
 
+
 class StateDatabase(DatabaseBase):
-    """Region-level map + table queries (new schema only)."""
+    """Region-level map + table queries using normalized schema."""
+
     def __init__(self, db_path: str = "weeds.db", geojson_dir: str = None):
         super().__init__(db_path=db_path, geojson_dir=geojson_dir)
 
@@ -18,31 +20,53 @@ class StateDatabase(DatabaseBase):
         conn = self.get_connection()
         try:
             species_count = conn.execute(
-                "SELECT COUNT(DISTINCT canonical_name) AS count FROM weeds"
+                "SELECT COUNT(*) AS count FROM plants WHERE has_current_regulation = 1"
             ).fetchone()["count"] or 0
 
-            # Jurisdictions = region units + national countries + international groups
             region_j = conn.execute(
                 """
-                SELECT COUNT(DISTINCT country || '::' || region) AS count
-                FROM weeds
-                WHERE jurisdiction='region' AND country IS NOT NULL AND region IS NOT NULL
+                SELECT COUNT(DISTINCT j.country || '::' || j.region) AS count
+                FROM jurisdictions j
+                WHERE j.jurisdiction_type = 'region'
+                  AND j.country IS NOT NULL AND TRIM(j.country) != ''
+                  AND j.region IS NOT NULL AND TRIM(j.region) != ''
+                  AND EXISTS (
+                      SELECT 1
+                      FROM regulations r
+                      WHERE r.jurisdiction_id = j.id
+                        AND r.is_webapp_scoped = 1
+                  )
                 """
             ).fetchone()["count"] or 0
 
             national_j = conn.execute(
                 """
-                SELECT COUNT(DISTINCT country) AS count
-                FROM weeds
-                WHERE jurisdiction='national' AND country IS NOT NULL
+                SELECT COUNT(DISTINCT j.country) AS count
+                FROM jurisdictions j
+                WHERE j.jurisdiction_type = 'national'
+                  AND j.country IS NOT NULL AND TRIM(j.country) != ''
+                  AND EXISTS (
+                      SELECT 1
+                      FROM regulations r
+                      WHERE r.jurisdiction_id = j.id
+                        AND r.is_webapp_scoped = 1
+                  )
                 """
             ).fetchone()["count"] or 0
 
             international_j = conn.execute(
                 """
-                SELECT COUNT(DISTINCT jurisdiction_group) AS count
-                FROM weeds
-                WHERE jurisdiction='international' AND jurisdiction_group IS NOT NULL
+                SELECT COUNT(
+                    DISTINCT COALESCE(NULLIF(TRIM(j.jurisdiction_group), ''), NULLIF(TRIM(j.country), ''), 'International')
+                ) AS count
+                FROM jurisdictions j
+                WHERE j.jurisdiction_type = 'international'
+                  AND EXISTS (
+                      SELECT 1
+                      FROM regulations r
+                      WHERE r.jurisdiction_id = j.id
+                        AND r.is_webapp_scoped = 1
+                  )
                 """
             ).fetchone()["count"] or 0
 
@@ -50,10 +74,16 @@ class StateDatabase(DatabaseBase):
 
             latest_country_row = conn.execute(
                 """
-                SELECT country
-                FROM weeds
-                WHERE country IS NOT NULL AND TRIM(country) != ''
-                ORDER BY id DESC
+                SELECT j.country
+                FROM jurisdictions j
+                WHERE j.country IS NOT NULL AND TRIM(j.country) != ''
+                  AND EXISTS (
+                      SELECT 1
+                      FROM regulations r
+                      WHERE r.jurisdiction_id = j.id
+                        AND r.is_webapp_scoped = 1
+                  )
+                ORDER BY j.id DESC
                 LIMIT 1
                 """
             ).fetchone()
@@ -64,32 +94,55 @@ class StateDatabase(DatabaseBase):
             if latest_country:
                 latest_country_regions = conn.execute(
                     """
-                    SELECT COUNT(DISTINCT region) AS count
-                    FROM weeds
-                    WHERE jurisdiction='region' AND country=? AND region IS NOT NULL AND TRIM(region) != ''
+                    SELECT COUNT(DISTINCT j.region) AS count
+                    FROM jurisdictions j
+                    WHERE j.jurisdiction_type = 'region'
+                      AND j.country = ?
+                      AND j.region IS NOT NULL AND TRIM(j.region) != ''
+                      AND EXISTS (
+                          SELECT 1
+                          FROM regulations r
+                          WHERE r.jurisdiction_id = j.id
+                            AND r.is_webapp_scoped = 1
+                      )
                     """,
-                    (latest_country,)
+                    (latest_country,),
                 ).fetchone()["count"] or 0
 
                 row = conn.execute(
                     """
-                    SELECT region
-                    FROM weeds
-                    WHERE jurisdiction='region' AND country=? AND region IS NOT NULL AND TRIM(region) != ''
-                    ORDER BY region ASC
+                    SELECT j.region
+                    FROM jurisdictions j
+                    WHERE j.jurisdiction_type = 'region'
+                      AND j.country = ?
+                      AND j.region IS NOT NULL AND TRIM(j.region) != ''
+                      AND EXISTS (
+                          SELECT 1
+                          FROM regulations r
+                          WHERE r.jurisdiction_id = j.id
+                            AND r.is_webapp_scoped = 1
+                      )
+                    ORDER BY j.region ASC
                     LIMIT 1
                     """,
-                    (latest_country,)
+                    (latest_country,),
                 ).fetchone()
                 latest_country_region = row["region"] if row else None
 
             top_species_row = conn.execute(
                 """
-                SELECT canonical_name, COUNT(DISTINCT country || '::' || region) AS jurisdiction_count
-                FROM weeds
-                WHERE jurisdiction='region' AND country IS NOT NULL AND region IS NOT NULL
-                GROUP BY canonical_name
-                ORDER BY jurisdiction_count DESC, canonical_name ASC
+                SELECT
+                    p.canonical_name,
+                    COUNT(DISTINCT j.country || '::' || j.region) AS jurisdiction_count
+                FROM regulations r
+                JOIN plants p ON p.id = r.plant_id
+                JOIN jurisdictions j ON j.id = r.jurisdiction_id
+                WHERE r.is_webapp_scoped = 1
+                  AND j.jurisdiction_type = 'region'
+                  AND j.country IS NOT NULL AND TRIM(j.country) != ''
+                  AND j.region IS NOT NULL AND TRIM(j.region) != ''
+                GROUP BY p.canonical_name
+                ORDER BY jurisdiction_count DESC, p.canonical_name ASC
                 LIMIT 1
                 """
             ).fetchone()
@@ -98,17 +151,18 @@ class StateDatabase(DatabaseBase):
             if top_species_row:
                 common_name_row = conn.execute(
                     """
-                    SELECT common_name
-                    FROM weeds
-                    WHERE canonical_name=? AND common_name IS NOT NULL AND TRIM(common_name)!=''
+                    SELECT english_name
+                    FROM plants
+                    WHERE canonical_name = ?
+                      AND english_name IS NOT NULL
+                      AND TRIM(english_name) != ''
                     LIMIT 1
                     """,
-                    (top_species_row["canonical_name"],)
+                    (top_species_row["canonical_name"],),
                 ).fetchone()
-
                 common_name = None
-                if common_name_row and common_name_row["common_name"]:
-                    common_name = common_name_row["common_name"].split(",")[0].strip()
+                if common_name_row and common_name_row["english_name"]:
+                    common_name = common_name_row["english_name"].split(",")[0].strip()
 
                 top_species = {
                     "name": top_species_row["canonical_name"],
@@ -118,11 +172,19 @@ class StateDatabase(DatabaseBase):
 
             top_j_row = conn.execute(
                 """
-                SELECT country, region, COUNT(DISTINCT canonical_name) AS species_count
-                FROM weeds
-                WHERE jurisdiction='region' AND country IS NOT NULL AND region IS NOT NULL
-                GROUP BY country, region
-                ORDER BY species_count DESC, region ASC
+                SELECT
+                    j.country,
+                    j.region,
+                    COUNT(DISTINCT p.id) AS species_count
+                FROM regulations r
+                JOIN plants p ON p.id = r.plant_id
+                JOIN jurisdictions j ON j.id = r.jurisdiction_id
+                WHERE r.is_webapp_scoped = 1
+                  AND j.jurisdiction_type = 'region'
+                  AND j.country IS NOT NULL AND TRIM(j.country) != ''
+                  AND j.region IS NOT NULL AND TRIM(j.region) != ''
+                GROUP BY j.country, j.region
+                ORDER BY species_count DESC, j.region ASC
                 LIMIT 1
                 """
             ).fetchone()
@@ -153,7 +215,7 @@ class StateDatabase(DatabaseBase):
         region: str,
         include_region: bool = True,
         include_national: bool = True,
-        include_international: bool = True
+        include_international: bool = True,
     ) -> List[Dict]:
         conn = self.get_connection()
         try:
@@ -161,105 +223,134 @@ class StateDatabase(DatabaseBase):
             params = []
 
             if include_region:
-                clauses.append("(jurisdiction='region' AND country=? AND region=?)")
+                clauses.append(
+                    """
+                    SELECT
+                        p.canonical_name,
+                        p.english_name AS common_name,
+                        p.family_name,
+                        p.gbif_usage_key AS usage_key,
+                        'region' AS jurisdiction
+                    FROM regulations r
+                    JOIN plants p ON p.id = r.plant_id
+                    JOIN jurisdictions j ON j.id = r.jurisdiction_id
+                    WHERE r.is_webapp_scoped = 1
+                      AND j.jurisdiction_type = 'region'
+                      AND j.country = ?
+                      AND j.region = ?
+                    """
+                )
                 params.extend([country, region])
 
             if include_national:
-                clauses.append("(jurisdiction='national' AND country=?)")
+                clauses.append(
+                    """
+                    SELECT
+                        p.canonical_name,
+                        p.english_name AS common_name,
+                        p.family_name,
+                        p.gbif_usage_key AS usage_key,
+                        'national' AS jurisdiction
+                    FROM regulations r
+                    JOIN plants p ON p.id = r.plant_id
+                    JOIN jurisdictions j ON j.id = r.jurisdiction_id
+                    WHERE r.is_webapp_scoped = 1
+                      AND j.jurisdiction_type = 'national'
+                      AND j.country = ?
+                    """
+                )
                 params.append(country)
 
             if include_international and country in EU_MEMBERS:
-                clauses.append("(jurisdiction='international' AND jurisdiction_group='EU')")
+                clauses.append(
+                    """
+                    SELECT
+                        p.canonical_name,
+                        p.english_name AS common_name,
+                        p.family_name,
+                        p.gbif_usage_key AS usage_key,
+                        'international' AS jurisdiction
+                    FROM regulations r
+                    JOIN plants p ON p.id = r.plant_id
+                    JOIN jurisdictions j ON j.id = r.jurisdiction_id
+                    WHERE r.is_webapp_scoped = 1
+                      AND j.jurisdiction_type = 'international'
+                      AND j.jurisdiction_group = 'EU'
+                    """
+                )
 
             if not clauses:
                 return []
 
-            rows = conn.execute(
-                f"""
-                SELECT canonical_name, common_name, family_name, usage_key,
-                       jurisdiction, jurisdiction_group
-                FROM weeds
-                WHERE {" OR ".join(clauses)}
-                """,
-                params
-            ).fetchall()
+            rows = conn.execute(f"{' UNION ALL '.join(clauses)}", params).fetchall()
 
-            # Dedup by canonical_name with priority: region > national > international
             priority = {"region": 3, "national": 2, "international": 1}
             chosen = {}
+            scopes = {}
 
-            for r in rows:
-                d = dict(r)
-                name = d["canonical_name"]
-                p = priority.get(d["jurisdiction"], 0)
-                if name not in chosen or p > priority.get(chosen[name]["jurisdiction"], 0):
-                    chosen[name] = d
+            for row in rows:
+                data = dict(row)
+                canonical_name = data["canonical_name"]
+                jurisdiction = data["jurisdiction"]
 
-            # Optional flags (useful for UI badges)
-            names = list(chosen.keys())
-            national_set = set()
-            international_set = set()
+                if canonical_name not in scopes:
+                    scopes[canonical_name] = set()
+                scopes[canonical_name].add(jurisdiction)
 
-            if include_national and names:
-                q = f"""
-                    SELECT DISTINCT canonical_name
-                    FROM weeds
-                    WHERE jurisdiction='national' AND country=?
-                      AND canonical_name IN ({",".join(["?"] * len(names))})
-                """
-                national_set = {x["canonical_name"] for x in conn.execute(q, [country] + names).fetchall()}
+                existing = chosen.get(canonical_name)
+                if not existing:
+                    chosen[canonical_name] = data
+                    continue
 
-            if include_international and country in EU_MEMBERS and names:
-                q = f"""
-                    SELECT DISTINCT canonical_name
-                    FROM weeds
-                    WHERE jurisdiction='international' AND jurisdiction_group='EU'
-                      AND canonical_name IN ({",".join(["?"] * len(names))})
-                """
-                international_set = {x["canonical_name"] for x in conn.execute(q, names).fetchall()}
+                existing_priority = priority.get(existing["jurisdiction"], 0)
+                new_priority = priority.get(jurisdiction, 0)
+                if new_priority > existing_priority:
+                    chosen[canonical_name] = data
 
             level_map = {"region": "Regional", "national": "National", "international": "International"}
 
             results = []
-            for sp in chosen.values():
-                combined_common = None
-                if sp.get("common_name"):
-                    parts = [p.strip() for p in sp["common_name"].split(",")]
-                    combined_common = ", ".join(parts[:2]) if parts else None
+            for species in chosen.values():
+                common_name = None
+                if species.get("common_name"):
+                    parts = [part.strip() for part in species["common_name"].split(",") if part.strip()]
+                    common_name = ", ".join(parts[:2]) if parts else None
 
-                results.append({
-                    "canonical_name": sp["canonical_name"],
-                    "common_name": combined_common,
-                    "family_name": sp.get("family_name"),
-                    "usage_key": sp.get("usage_key"),
-                    "level": level_map.get(sp["jurisdiction"], "Unknown"),
-                    "has_national_regulation": sp["canonical_name"] in national_set,
-                    "has_international_regulation": sp["canonical_name"] in international_set,
-                })
+                canonical_name = species["canonical_name"]
+                species_scopes = scopes.get(canonical_name, set())
+                results.append(
+                    {
+                        "canonical_name": canonical_name,
+                        "common_name": common_name,
+                        "family_name": species.get("family_name"),
+                        "usage_key": species.get("usage_key"),
+                        "level": level_map.get(species["jurisdiction"], "Unknown"),
+                        "has_national_regulation": "national" in species_scopes,
+                        "has_international_regulation": "international" in species_scopes,
+                    }
+                )
 
             return sorted(results, key=lambda x: x["canonical_name"] or "")
         finally:
             conn.close()
 
     def country_has_data(self, country: str) -> bool:
-        """
-        Returns True if any regulations exist for the given country (any level).
-        EU countries treat EU-level international rows as data.
-        """
         if not country:
             return False
 
-        is_eu = country in EU_MEMBERS
-
         conn = self.get_connection()
         try:
-            if is_eu:
+            if country in EU_MEMBERS:
                 row = conn.execute(
                     """
                     SELECT 1
-                    FROM weeds
-                    WHERE country=?
-                       OR (jurisdiction='international' AND jurisdiction_group='EU')
+                    FROM regulations r
+                    JOIN jurisdictions j ON j.id = r.jurisdiction_id
+                    WHERE r.is_webapp_scoped = 1
+                      AND (
+                          j.country = ?
+                          OR (j.jurisdiction_type = 'international' AND j.jurisdiction_group = 'EU')
+                      )
                     LIMIT 1
                     """,
                     (country,),
@@ -269,8 +360,10 @@ class StateDatabase(DatabaseBase):
             row = conn.execute(
                 """
                 SELECT 1
-                FROM weeds
-                WHERE country=?
+                FROM regulations r
+                JOIN jurisdictions j ON j.id = r.jurisdiction_id
+                WHERE r.is_webapp_scoped = 1
+                  AND j.country = ?
                 LIMIT 1
                 """,
                 (country,),
@@ -283,58 +376,136 @@ class StateDatabase(DatabaseBase):
         self,
         include_region: bool = True,
         include_national: bool = True,
-        include_international: bool = True
+        include_international: bool = True,
     ) -> List[Dict]:
-        """
-        Returns a list of:
-        { country, region, count }
-        for every (country, region) present on the map (regions_country),
-        even if that region has only national/international regulations.
-        """
         conn = self.get_connection()
         try:
-            eu_list = sorted(EU_MEMBERS)
-            eu_placeholders = ",".join(["?"] * len(eu_list)) if eu_list else "''"
+            if not include_region and not include_national and not include_international:
+                rows = conn.execute(
+                    """
+                    SELECT country, region
+                    FROM regions_country
+                    WHERE country IS NOT NULL AND TRIM(country) != ''
+                      AND region IS NOT NULL AND TRIM(region) != ''
+                    """
+                ).fetchall()
+                return [{"country": row["country"], "region": row["region"], "count": 0} for row in rows]
 
-            ir = 1 if include_region else 0
-            inn = 1 if include_national else 0
-            ii = 1 if include_international else 0
+            applicable_clauses = []
+            params = []
+
+            if include_region:
+                applicable_clauses.append(
+                    """
+                    SELECT r.country, r.region, rg.plant_id
+                    FROM regions r
+                    JOIN jurisdictions j
+                      ON j.jurisdiction_type = 'region'
+                     AND j.country = r.country
+                     AND j.region = r.region
+                    JOIN regulations rg
+                      ON rg.jurisdiction_id = j.id
+                     AND rg.is_webapp_scoped = 1
+                    """
+                )
+
+            if include_national:
+                applicable_clauses.append(
+                    """
+                    SELECT r.country, r.region, rg.plant_id
+                    FROM regions r
+                    JOIN jurisdictions j
+                      ON j.jurisdiction_type = 'national'
+                     AND j.country = r.country
+                    JOIN regulations rg
+                      ON rg.jurisdiction_id = j.id
+                     AND rg.is_webapp_scoped = 1
+                    """
+                )
+
+            if include_international and EU_MEMBERS:
+                placeholders = ",".join(["?"] * len(EU_MEMBERS))
+                applicable_clauses.append(
+                    f"""
+                    SELECT r.country, r.region, rg.plant_id
+                    FROM regions r
+                    JOIN jurisdictions j
+                      ON j.jurisdiction_type = 'international'
+                     AND j.jurisdiction_group = 'EU'
+                    JOIN regulations rg
+                      ON rg.jurisdiction_id = j.id
+                     AND rg.is_webapp_scoped = 1
+                    WHERE r.country IN ({placeholders})
+                    """
+                )
+                params.extend(sorted(EU_MEMBERS))
+
+            if not applicable_clauses:
+                return []
 
             query = f"""
             WITH regions AS (
                 SELECT country, region
                 FROM regions_country
                 WHERE country IS NOT NULL AND TRIM(country) != ''
-                AND region  IS NOT NULL AND TRIM(region)  != ''
+                  AND region IS NOT NULL AND TRIM(region) != ''
             ),
             applicable AS (
-                SELECT r.country, r.region, w.canonical_name
-                FROM regions r
-                JOIN weeds w
-                ON (
-                        ({ir}=1 AND w.jurisdiction='region' AND w.country=r.country AND w.region=r.region)
-                    OR ({inn}=1 AND w.jurisdiction='national' AND w.country=r.country)
-                    OR ({ii}=1 AND w.jurisdiction='international'
-                            AND w.jurisdiction_group='EU'
-                            AND r.country IN ({eu_placeholders})
-                        )
-                    )
+                {' UNION ALL '.join(applicable_clauses)}
             )
-            SELECT r.country,
+            SELECT
+                r.country,
                 r.region,
-                COALESCE(COUNT(DISTINCT a.canonical_name), 0) AS count
+                COALESCE(COUNT(DISTINCT a.plant_id), 0) AS count
             FROM regions r
             LEFT JOIN applicable a
-                ON a.country=r.country AND a.region=r.region
+              ON a.country = r.country
+             AND a.region = r.region
             GROUP BY r.country, r.region
             """
-
-            params = eu_list if (include_international and eu_list) else eu_list
             rows = conn.execute(query, params).fetchall()
+            return [{"country": row["country"], "region": row["region"], "count": row["count"] or 0} for row in rows]
+        finally:
+            conn.close()
 
-            return [
-                {"country": r["country"], "region": r["region"], "count": r["count"] or 0}
-                for r in rows
-            ]
+    def get_method_sources(self) -> List[Dict]:
+        conn = self.get_connection()
+        try:
+            rows = conn.execute(
+                """
+                SELECT
+                    CASE
+                        WHEN j.jurisdiction_type = 'international'
+                             AND TRIM(COALESCE(j.jurisdiction_group, '')) != ''
+                        THEN j.jurisdiction_group
+                        ELSE j.country
+                    END AS country,
+                    CASE
+                        WHEN j.jurisdiction_type = 'national' THEN 'National'
+                        WHEN j.jurisdiction_type = 'international'
+                        THEN COALESCE(NULLIF(TRIM(j.jurisdiction_group), ''), 'International')
+                        WHEN j.jurisdiction_type = 'region' THEN j.region
+                        WHEN j.jurisdiction_type = 'habitat' THEN j.region
+                        ELSE COALESCE(NULLIF(TRIM(j.region), ''), j.country)
+                    END AS name,
+                    COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS authority,
+                    j.source_url,
+                    COALESCE(
+                        NULLIF(TRIM(CAST(j.last_updated_year AS TEXT)), ''),
+                        NULLIF(TRIM(j.last_updated), ''),
+                        'Unknown'
+                    ) AS updated,
+                    COALESCE(j.methodology_notes, '') AS methodology_notes,
+                    COALESCE(j.source_notes, '') AS source_notes
+                FROM jurisdictions j
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM regulations r
+                    WHERE r.jurisdiction_id = j.id
+                )
+                ORDER BY country ASC, j.jurisdiction_type ASC, name ASC
+                """
+            ).fetchall()
+            return [dict(row) for row in rows]
         finally:
             conn.close()

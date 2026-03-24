@@ -50,10 +50,6 @@ class Config:
       'LOCAL_SAMPLE_DB_PATH',
       os.path.join('app', 'static', 'data', 'sample', 'weeds_sample.db')
    )
-   LOCAL_SAMPLE_CSV_PATH = os.getenv(
-      'LOCAL_SAMPLE_CSV_PATH',
-      os.path.join('app', 'static', 'data', 'sample', 'regulatory_sources.csv')
-   )
    LOCAL_SAMPLE_GEOJSON_DIR = os.getenv(
       'LOCAL_SAMPLE_GEOJSON_DIR',
       os.path.join('app', 'static', 'data', 'sample', 'geojson')
