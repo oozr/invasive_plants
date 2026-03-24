@@ -24,15 +24,24 @@
     <div class="col-12">
         <div id="results" class="results-container species-results d-none">
             <div class="scientific-details">
-                <p><strong>Common name: </strong><span id="weedTitle"></span></p>
-                <p><strong>Scientific name: </strong><em id="weedCanonicalName"></em></p>
-                <p id="synonymsSection" class="d-none"><strong>Scientific name synonyms: </strong><em id="weedSynonyms"></em></p>
-                <p><strong>Family name: </strong><span id="weedFamily"></span></p>
-                <p><strong>Life form: </strong><span id="weedLifeform"></span></p>
-                <p><strong>Lifespan: </strong><span id="weedLifespan"></span></p>
-                <p><strong>Habitat: </strong><span id="weedHabitat"></span></p>
-                <p><strong>Woodiness: </strong><span id="weedWoodiness"></span></p>
-                <p><strong>More Information: </strong><a id="gbifLink" href="#" target="_blank">View on GBIF</a></p>
+                <div class="species-detail-grid">
+                    <section class="species-card">
+                        <h4 class="species-card-title">Names</h4>
+                        <p><strong>Common Name: </strong><span id="weedTitle"></span></p>
+                        <p><strong>Scientific Name: </strong><em id="weedCanonicalName"></em></p>
+                        <p id="synonymsSection" class="d-none"><strong>Scientific Name Synonyms: </strong><em id="weedSynonyms"></em></p>
+                        <p><strong>Family Name: </strong><span id="weedFamily"></span></p>
+                        <p><strong>More Information: </strong><a id="gbifLink" href="#" target="_blank">View on GBIF</a></p>
+                    </section>
+
+                    <section class="species-card">
+                        <h4 class="species-card-title">Traits</h4>
+                        <p><strong>Life Form: </strong><span id="weedLifeform"></span></p>
+                        <p><strong>Lifespan: </strong><span id="weedLifespan"></span></p>
+                        <p><strong>Habitat: </strong><span id="weedHabitat"></span></p>
+                        <p><strong>Woodiness: </strong><span id="weedWoodiness"></span></p>
+                    </section>
+                </div>
             </div>
             
             <h4>Regulated in:</h4>

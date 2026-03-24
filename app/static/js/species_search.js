@@ -95,6 +95,18 @@ document.addEventListener('DOMContentLoaded', function () {
         return normalized;
     }
 
+    function formatTraitValue(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return 'Not Available';
+
+        // Preserve short all-caps codes (e.g., "W").
+        if (raw === raw.toUpperCase() && raw.length <= 4) return raw;
+
+        return raw
+            .toLowerCase()
+            .replace(/(^|[\s\-\/,(])([a-z])/g, (_, prefix, letter) => `${prefix}${letter.toUpperCase()}`);
+    }
+
     function displayWeedDetails(selectedWeed) {
         // Common name display (truncate)
         const commonName = selectedWeed.common_name || '';
@@ -111,10 +123,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('weedTitle').textContent = displayName;
         document.getElementById('weedCanonicalName').textContent = selectedWeed.canonical_name;
         document.getElementById('weedFamily').textContent = selectedWeed.family_name || 'Not available';
-        document.getElementById('weedLifeform').textContent = selectedWeed.lifeform_final || 'Not available';
-        document.getElementById('weedLifespan').textContent = selectedWeed.lifespan_final || 'Not available';
-        document.getElementById('weedHabitat').textContent = selectedWeed.habitat_final || 'Not available';
-        document.getElementById('weedWoodiness').textContent = selectedWeed.woodiness_final || 'Not available';
+        document.getElementById('weedLifeform').textContent = formatTraitValue(selectedWeed.lifeform_final);
+        document.getElementById('weedLifespan').textContent = formatTraitValue(selectedWeed.lifespan_final);
+        document.getElementById('weedHabitat').textContent = formatTraitValue(selectedWeed.habitat_final);
+        document.getElementById('weedWoodiness').textContent = formatTraitValue(selectedWeed.woodiness_final);
 
         // Synonyms (first 3)
         const synonymsSection = document.getElementById('synonymsSection');
