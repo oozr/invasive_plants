@@ -28,7 +28,7 @@ class Config:
    OOZR_METRICS_ENABLED = os.getenv('OOZR_METRICS_ENABLED', '0')
 
    # Highlights override (single country name; optional)
-   LATEST_COUNTRY_NAME = os.getenv('LATEST_COUNTRY_NAME', 'Saudi Arabia')
+   LATEST_COUNTRY_NAME = os.getenv('LATEST_COUNTRY_NAME', 'South Africa')
 
    # Development vs Production
    DEBUG = os.getenv('FLASK_DEBUG', False)
