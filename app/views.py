@@ -282,15 +282,70 @@ def index():
     sources = []
     try:
         rows = _get_state_db().get_method_sources()
+        rows_by_country = {}
         for row in rows:
-            safe_source_url = _safe_external_url(row.get("source_url", ""))
-            sources.append(
-                {
-                    "country": row.get("country", "Unknown"),
+            country = (row.get("country") or "Unknown").strip() or "Unknown"
+            rows_by_country.setdefault(country, []).append(row)
+
+        for country in sorted(rows_by_country.keys()):
+            country_rows = rows_by_country[country]
+            linked_by_url = {}
+
+            for row in country_rows:
+                safe_source_url = _safe_external_url(row.get("source_url", ""))
+                if not safe_source_url:
+                    continue
+                candidate = {
+                    "country": country,
                     "name": row.get("name", "Unknown"),
                     "authority": row.get("authority", "Unknown"),
                     "source_url": safe_source_url,
                     "updated": row.get("updated", "Unknown"),
+                }
+                existing = linked_by_url.get(safe_source_url)
+                if existing is None:
+                    linked_by_url[safe_source_url] = candidate
+                    continue
+
+                # If multiple rows share one URL, prefer a specific jurisdiction
+                # label over synthetic country-level placeholders.
+                existing_name = (existing.get("name") or "").strip()
+                candidate_name = (candidate.get("name") or "").strip()
+                existing_is_generic = existing_name in {"National", "International"}
+                candidate_is_generic = candidate_name in {"National", "International"}
+                if existing_is_generic and not candidate_is_generic:
+                    linked_by_url[safe_source_url] = candidate
+
+            if linked_by_url:
+                linked_items = sorted(
+                    linked_by_url.values(),
+                    key=lambda x: ((x.get("name") or "").strip().lower(), (x.get("authority") or "").strip().lower()),
+                )
+                sources.extend(linked_items)
+                continue
+
+            preferred = None
+            for row in country_rows:
+                name = (row.get("name") or "").strip()
+                if name in {"National", "International"}:
+                    preferred = row
+                    break
+            if preferred is None:
+                preferred = country_rows[0]
+
+            authority = (preferred.get("authority") or "").strip()
+            if not authority or authority == "Unknown":
+                authority = "Source URL pending"
+
+            fallback_name = (preferred.get("name") or "").strip() or "National"
+            fallback_updated = (preferred.get("updated") or "").strip() or "Unknown"
+            sources.append(
+                {
+                    "country": country,
+                    "name": fallback_name,
+                    "authority": authority,
+                    "source_url": None,
+                    "updated": fallback_updated,
                 }
             )
     except Exception as e:
