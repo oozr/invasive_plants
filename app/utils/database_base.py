@@ -51,12 +51,17 @@ class DatabaseBase:
         return " ".join(w.capitalize() for w in base.split())
 
     def _extract_region_name(self, props: dict) -> Optional[str]:
-        for key in ("name", "NAME", "STATE_NAME", "state", "STATE", "region", "REGION"):
+        country = str(props.get("country") or "").strip()
+        # Prefer canonical `region` first; fall back to source-specific fields.
+        for key in ("region", "REGION", "shapeName", "STATE_NAME", "state", "STATE", "name", "NAME"):
             v = props.get(key)
             if v is None:
                 continue
             v = str(v).strip()
             if v:
+                if key in {"name", "NAME"} and country and v.lower() == country.lower():
+                    # `name` can be country-level on ADM1 files; skip it.
+                    continue
                 return v
         return None
 
@@ -100,6 +105,8 @@ class DatabaseBase:
 
         conn = self.get_connection()
         try:
+            # Rebuild from current GeoJSON so stale mappings do not linger.
+            conn.execute("DELETE FROM regions_country")
             conn.executemany(
                 """
                 INSERT OR IGNORE INTO regions_country (country, region)

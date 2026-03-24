@@ -107,11 +107,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function extractRegionName(feature) {
         const props = feature && feature.properties ? feature.properties : {};
-        const possibleNameProps = ['region', 'REGION', 'name', 'NAME', 'STATE_NAME', 'state', 'STATE'];
+        const country = extractCountryName(feature);
+        // Prefer canonical `region`; fall back to source-specific names.
+        const possibleNameProps = ['region', 'REGION', 'shapeName', 'STATE_NAME', 'state', 'STATE', 'name', 'NAME'];
         for (const prop of possibleNameProps) {
             if (props[prop]) {
                 const v = String(props[prop]).trim();
-                if (v) return v;
+                if (!v) continue;
+                if ((prop === 'name' || prop === 'NAME') && country && v.toLowerCase() === country.toLowerCase()) {
+                    // `name` can be country-level on ADM1 files; skip it.
+                    continue;
+                }
+                return v;
             }
         }
         return null;
