@@ -230,22 +230,45 @@ class DataManager:
         if not path:
             return
         url = urllib.parse.urljoin(self.base_url.rstrip("/") + "/", path.lstrip("/"))
+        expected = entry.get("sha256") or entry.get("checksum")
+        attempts = 3 if expected else 1
+        last_actual = None
+
         headers = {}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         headers["Accept"] = "application/octet-stream"
-        data = self._fetch_bytes(url, headers=headers)
 
-        tmp_path = dest_path + ".tmp"
-        with open(tmp_path, "wb") as f:
-            f.write(data)
-        os.replace(tmp_path, dest_path)
+        for attempt in range(1, attempts + 1):
+            data = self._fetch_bytes(url, headers=headers)
 
-        expected = entry.get("sha256") or entry.get("checksum")
-        if expected:
+            tmp_path = dest_path + ".tmp"
+            with open(tmp_path, "wb") as f:
+                f.write(data)
+            os.replace(tmp_path, dest_path)
+
+            if not expected:
+                return
+
             actual = self._sha256(dest_path)
-            if actual.lower() != expected.lower():
-                raise ValueError(f"Checksum mismatch for {dest_path}")
+            last_actual = actual
+            if actual.lower() == expected.lower():
+                return
+
+            self.app.logger.warning(
+                "Checksum mismatch for %s (attempt %s/%s): expected %s, got %s",
+                dest_path,
+                attempt,
+                attempts,
+                expected,
+                actual,
+            )
+            if attempt < attempts:
+                time.sleep(1)
+
+        raise ValueError(
+            f"Checksum mismatch for {dest_path} (expected {expected}, got {last_actual})"
+        )
 
     def _fetch_json(self, url: str) -> dict:
         headers = {"Accept": "application/json"}
