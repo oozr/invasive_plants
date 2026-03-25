@@ -1,3 +1,4 @@
+import sqlite3
 from typing import Dict, List
 from app.utils.database_base import DatabaseBase
 
@@ -380,14 +381,27 @@ class StateDatabase(DatabaseBase):
     ) -> List[Dict]:
         conn = self.get_connection()
         try:
+            regions_sql = """
+                SELECT country, region
+                FROM regions_country
+                WHERE country IS NOT NULL AND TRIM(country) != ''
+                  AND region IS NOT NULL AND TRIM(region) != ''
+            """
+            try:
+                conn.execute("SELECT 1 FROM regions_country LIMIT 1").fetchone()
+            except sqlite3.Error:
+                # Fallback when regions_country is unavailable (e.g. read-only init failure).
+                regions_sql = """
+                    SELECT DISTINCT j.country AS country, j.region AS region
+                    FROM jurisdictions j
+                    WHERE j.jurisdiction_type = 'region'
+                      AND j.country IS NOT NULL AND TRIM(j.country) != ''
+                      AND j.region IS NOT NULL AND TRIM(j.region) != ''
+                """
+
             if not include_region and not include_national and not include_international:
                 rows = conn.execute(
-                    """
-                    SELECT country, region
-                    FROM regions_country
-                    WHERE country IS NOT NULL AND TRIM(country) != ''
-                      AND region IS NOT NULL AND TRIM(region) != ''
-                    """
+                    regions_sql
                 ).fetchall()
                 return [{"country": row["country"], "region": row["region"], "count": 0} for row in rows]
 
@@ -445,10 +459,7 @@ class StateDatabase(DatabaseBase):
 
             query = f"""
             WITH regions AS (
-                SELECT country, region
-                FROM regions_country
-                WHERE country IS NOT NULL AND TRIM(country) != ''
-                  AND region IS NOT NULL AND TRIM(region) != ''
+                {regions_sql}
             ),
             applicable AS (
                 {' UNION ALL '.join(applicable_clauses)}

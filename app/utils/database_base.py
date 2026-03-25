@@ -16,8 +16,12 @@ class DatabaseBase:
     def __init__(self, db_path: str = "weeds.db", geojson_dir: Optional[str] = None):
         self.db_path = db_path
         self.geojson_dir = geojson_dir or os.path.join("app", "static", "data", "geographic")
-        self._ensure_regions_country_table()
-        self._sync_regions_from_geojson()
+        try:
+            self._ensure_regions_country_table()
+            self._sync_regions_from_geojson()
+        except sqlite3.Error as e:
+            # Keep read paths alive in deployments where DB writes are restricted.
+            print(f"Warning: regions_country sync skipped ({e})")
 
     def get_connection(self):
         conn = sqlite3.connect(self.db_path)
