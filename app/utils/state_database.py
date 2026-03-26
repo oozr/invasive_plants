@@ -269,6 +269,7 @@ class StateDatabase(DatabaseBase):
                     WHERE r.is_webapp_scoped = 1
                       AND j.jurisdiction_type = 'national'
                       AND j.country = ?
+                      AND (j.region IS NULL OR TRIM(j.region) = '')
                     """
                 )
                 params.append(country)
@@ -434,6 +435,7 @@ class StateDatabase(DatabaseBase):
                     JOIN jurisdictions j
                       ON j.jurisdiction_type = 'national'
                      AND j.country = r.country
+                     AND (j.region IS NULL OR TRIM(j.region) = '')
                     JOIN regulations rg
                       ON rg.jurisdiction_id = j.id
                      AND rg.is_webapp_scoped = 1
