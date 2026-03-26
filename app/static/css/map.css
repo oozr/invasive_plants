@@ -1,7 +1,7 @@
 /* Map container styles */
 .map-wrapper {
     position: relative;
-    margin: 2rem 0;
+    margin: 0.1rem 0 2rem;
  }
  
  #map {
@@ -85,7 +85,7 @@
 
 /* Toggle Controls */
 .toggle-controls {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.25rem;
 }
 
 .toggle-controls .form-check {

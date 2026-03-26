@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
         national: true,
         international: true
     };
+    const SAMPLE_PLANT_LIMIT = 10;
     const ANONYMOUS_USER_COOKIE = 'anonymous_user_id';
     const AHA_ACTIVATED_COOKIE = 'aha_activated';
     const COOKIE_MAX_AGE_DAYS = 730;
@@ -144,6 +145,12 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    function primaryCommonName(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        return raw.split(',').map(part => part.trim()).find(Boolean) || raw;
     }
 
     function getCookie(name) {
@@ -332,22 +339,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateTable(country, region, weeds, hasAnyData) {
         const scopeText = buildScopeText();
+        const allWeeds = Array.isArray(weeds) ? weeds : [];
+        const sampleWeeds = allWeeds.slice(0, SAMPLE_PLANT_LIMIT);
 
         // Title
         const titleLocation = formatLocation(region, country);
-        const title = `Regulated weeds in ${titleLocation}`;
+        const title = `Regulated plants in ${titleLocation}`;
         const titleEl = document.getElementById('state-title');
         if (titleEl) titleEl.textContent = title;
 
+        const warningEl = document.getElementById('state-warning');
+        if (warningEl) {
+            warningEl.innerHTML = '<strong>Sample only.</strong> For full list please contact our team.';
+            warningEl.classList.remove('d-none');
+        }
+
         const subtitleEl = document.getElementById('state-subtitle');
-        if (subtitleEl) subtitleEl.textContent = scopeText ? `Filters: ${scopeText}` : '';
+        if (subtitleEl) {
+            subtitleEl.textContent = scopeText ? `Filters: ${scopeText}` : '';
+        }
 
         const table = document.getElementById('species-table');
         if (!table) return;
 
         const hasDataAnyLevel = !!hasAnyData;
         const isEUCountry = EU_MEMBERS.has(country);
-        let emptyMessage = 'No data available. Please change the level of regulation using the toggles.';
+        let emptyMessage = 'No plants are available for the selected filters. Please change the level of regulation using the toggles.';
         if (!hasDataAnyLevel && !isEUCountry) {
             emptyMessage = 'No published species specific regulations have been found for this country.';
         }
@@ -359,12 +376,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         $(table).DataTable({
-            data: weeds || [],
+            data: sampleWeeds,
             columns: [
                 {
                     data: 'canonical_name',
                     title: 'Scientific Name',
-                    width: '25%',
+                    width: '30%',
                     render: function (data, type, row) {
                         if (type !== 'display') return data || '';
                         if (type === 'display' && data) {
@@ -376,13 +393,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     data: 'common_name',
                     title: 'Common Name',
-                    width: '45%',
+                    width: '30%',
                     render: function (data, type, row) {
+                        const displayCommonName = primaryCommonName(data);
                         if (type !== 'display') return data || '';
-                        if (!data || String(data).includes('No English common names available')) {
+                        if (!displayCommonName || String(data).includes('No English common names available')) {
                             return `(${escapeHtml(row.canonical_name || 'Unknown')})`;
                         }
-                        return escapeHtml(data);
+                        return escapeHtml(displayCommonName);
                     }
                 },
                 {
@@ -396,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     data: 'level',
                     title: 'Source',
-                    width: '15%',
+                    width: '20%',
                     className: 'text-center',
                     render: function (data, type, row) {
                         if (type !== 'display') return data;
@@ -419,7 +437,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
             ],
-            pageLength: 10,
+            paging: false,
+            searching: false,
+            info: false,
+            lengthChange: false,
             order: [[0, 'asc']],
             autoWidth: false,
             width: '100%',
@@ -461,6 +482,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error fetching region data:', err);
                 const titleEl = document.getElementById('state-title');
                 if (titleEl) titleEl.textContent = `Error loading data for ${formatLocation(region, country)}`;
+                const warningEl = document.getElementById('state-warning');
+                if (warningEl) {
+                    warningEl.innerHTML = '';
+                    warningEl.classList.add('d-none');
+                }
                 const subtitleEl = document.getElementById('state-subtitle');
                 if (subtitleEl) subtitleEl.textContent = '';
             });

@@ -1,4 +1,3 @@
-import sqlite3
 from typing import Dict, List
 from app.utils.database_base import DatabaseBase
 
@@ -16,6 +15,14 @@ class StateDatabase(DatabaseBase):
 
     def __init__(self, db_path: str = "weeds.db", geojson_dir: str = None):
         super().__init__(db_path=db_path, geojson_dir=geojson_dir)
+
+    @staticmethod
+    def _primary_common_name(value: str, fallback: str = None) -> str:
+        raw = (value or "").strip()
+        if not raw:
+            return fallback
+        parts = [part.strip() for part in raw.split(",") if part.strip()]
+        return parts[0] if parts else (fallback or raw)
 
     def get_highlight_metrics(self) -> Dict:
         conn = self.get_connection()
@@ -312,17 +319,15 @@ class StateDatabase(DatabaseBase):
 
             results = []
             for species in chosen.values():
-                common_name = None
-                if species.get("common_name"):
-                    parts = [part.strip() for part in species["common_name"].split(",") if part.strip()]
-                    common_name = ", ".join(parts[:2]) if parts else None
-
                 canonical_name = species["canonical_name"]
                 species_scopes = scopes.get(canonical_name, set())
                 results.append(
                     {
                         "canonical_name": canonical_name,
-                        "common_name": common_name,
+                        "common_name": self._primary_common_name(
+                            species.get("common_name"),
+                            canonical_name,
+                        ),
                         "family_name": species.get("family_name"),
                         "usage_key": species.get("usage_key"),
                         "level": level_map.get(species["jurisdiction"], "Unknown"),
@@ -382,22 +387,12 @@ class StateDatabase(DatabaseBase):
         conn = self.get_connection()
         try:
             regions_sql = """
-                SELECT country, region
-                FROM regions_country
-                WHERE country IS NOT NULL AND TRIM(country) != ''
-                  AND region IS NOT NULL AND TRIM(region) != ''
+                SELECT DISTINCT j.country AS country, j.region AS region
+                FROM jurisdictions j
+                WHERE j.jurisdiction_type = 'region'
+                  AND j.country IS NOT NULL AND TRIM(j.country) != ''
+                  AND j.region IS NOT NULL AND TRIM(j.region) != ''
             """
-            try:
-                conn.execute("SELECT 1 FROM regions_country LIMIT 1").fetchone()
-            except sqlite3.Error:
-                # Fallback when regions_country is unavailable (e.g. read-only init failure).
-                regions_sql = """
-                    SELECT DISTINCT j.country AS country, j.region AS region
-                    FROM jurisdictions j
-                    WHERE j.jurisdiction_type = 'region'
-                      AND j.country IS NOT NULL AND TRIM(j.country) != ''
-                      AND j.region IS NOT NULL AND TRIM(j.region) != ''
-                """
 
             if not include_region and not include_national and not include_international:
                 rows = conn.execute(

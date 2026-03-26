@@ -8,6 +8,14 @@ class SpeciesDatabase(DatabaseBase):
     def __init__(self, db_path: str = "weeds.db", geojson_dir: str = None):
         super().__init__(db_path=db_path, geojson_dir=geojson_dir)
 
+    @staticmethod
+    def _primary_common_name(value: str, fallback: str = None) -> str:
+        raw = (value or "").strip()
+        if not raw:
+            return fallback
+        parts = [part.strip() for part in raw.split(",") if part.strip()]
+        return parts[0] if parts else (fallback or raw)
+
     def get_all_weeds(self) -> List[Dict]:
         conn = self.get_connection()
         try:
@@ -32,7 +40,13 @@ class SpeciesDatabase(DatabaseBase):
                 ORDER BY j.country, j.jurisdiction_type, j.region, p.canonical_name
                 """
             )
-            return [dict(row) for row in cursor.fetchall()]
+            results = [dict(row) for row in cursor.fetchall()]
+            for row in results:
+                row["common_name"] = self._primary_common_name(
+                    row.get("common_name"),
+                    row.get("canonical_name"),
+                )
+            return results
         finally:
             conn.close()
 
@@ -84,7 +98,13 @@ class SpeciesDatabase(DatabaseBase):
                     contains,
                 ),
             )
-            return [dict(row) for row in cursor.fetchall()]
+            results = [dict(row) for row in cursor.fetchall()]
+            for row in results:
+                row["common_name"] = self._primary_common_name(
+                    row.get("common_name"),
+                    row.get("canonical_name"),
+                )
+            return results
         finally:
             conn.close()
 
@@ -114,7 +134,13 @@ class SpeciesDatabase(DatabaseBase):
                 """,
                 (usage_key,),
             )
-            return [dict(row) for row in cursor.fetchall()]
+            results = [dict(row) for row in cursor.fetchall()]
+            for row in results:
+                row["common_name"] = self._primary_common_name(
+                    row.get("common_name"),
+                    row.get("canonical_name"),
+                )
+            return results
         finally:
             conn.close()
 

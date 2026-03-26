@@ -67,7 +67,7 @@
     </p>
 </div>
 
-<div class="toggle-controls mb-4">
+<div class="toggle-controls">
     <div class="d-flex flex-column flex-md-row gap-2 gap-md-4 align-items-start align-items-md-start">
         <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="regionToggle" checked>
@@ -103,6 +103,7 @@
 <div class="results-container">
     <div id="state-species" class="d-none">
         <h3 id="state-title" class="mb-3"></h3>
+        <div id="state-warning" class="sample-warning d-none" role="note"></div>
         <div id="state-subtitle" class="text-muted small mb-3"></div>
         <div class="table-responsive">
             <table id="species-table" class="table">
@@ -122,15 +123,12 @@
 <div class="mt-5">
     <h2>Project Description</h2>
     <p>
-        This database provides comprehensive information about regulated plant species
-        across different countries. It serves as a resource for researchers, agricultural
-        professionals, and the public to understand the distribution and regulation status
-        of various plant species that can be considered noxious. The database includes information on the regulatory status of plant species at
-        regional, national, and international levels.
+        This database brings together regulated plant records across regional, national,
+        and international jurisdictions. It is designed to support clearer comparison of
+        plant regulations across countries for research, compliance, and public reference.
     </p>
-    <p>
-        Users can explore the data throughan interactive map and access detailed information about specific jurisdictions
-        and species.
+    <p class="mb-0">
+        <a href="{{ url_for('about.index') }}">Find out more</a>
     </p>
 </div>
 {% endblock %}

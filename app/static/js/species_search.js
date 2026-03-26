@@ -10,6 +10,12 @@ document.addEventListener('DOMContentLoaded', function () {
         return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
     }
 
+    function getPrimaryCommonName(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        return raw.split(',').map(part => part.trim()).find(Boolean) || raw;
+    }
+
     /******************************
      * SELECT2 SEARCH
      ******************************/
@@ -26,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
             processResults: function (data) {
                 return {
                     results: data.map(weed => {
-                        let displayCommonName = weed.common_name;
+                        let displayCommonName = getPrimaryCommonName(weed.common_name);
                         if (!displayCommonName || displayCommonName.includes('No English common names available')) {
                             displayCommonName = null;
                         }
@@ -54,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
         templateResult: function (weed) {
             if (!weed.id) return weed.text;
 
-            let commonName = weed.common_name || '';
+            let commonName = getPrimaryCommonName(weed.common_name);
             if (commonName.includes('No English common names available')) commonName = '';
 
             const canonicalName = weed.canonical_name || '';
@@ -108,14 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function displayWeedDetails(selectedWeed) {
-        // Common name display (truncate)
-        const commonName = selectedWeed.common_name || '';
-        const commonNameParts = commonName.split(',');
-        const truncatedCommonName = commonNameParts.length > 3
-            ? commonNameParts.slice(0, 3).join(', ')
-            : commonName;
-
-        let displayName = truncatedCommonName;
+        let displayName = getPrimaryCommonName(selectedWeed.common_name);
         if (!displayName || displayName.includes('No English common names available')) {
             displayName = `(${selectedWeed.canonical_name || 'Unknown'})`;
         }
@@ -256,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const weedData = exactMatch || results[0];
                 if (!weedData) return;
 
-                let displayCommonName = weedData.common_name;
+                let displayCommonName = getPrimaryCommonName(weedData.common_name);
                 if (!displayCommonName || displayCommonName.includes('No English common names available')) {
                     displayCommonName = null;
                 }

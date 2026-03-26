@@ -15,6 +15,7 @@ home = Blueprint("home", __name__)
 species = Blueprint("species", __name__, url_prefix="/species")
 blog = Blueprint("blog", __name__, url_prefix="/blog")
 method = Blueprint("method", __name__, url_prefix="/method")
+api_page = Blueprint("api_page", __name__, url_prefix="/api")
 about = Blueprint("about", __name__, url_prefix="/about")
 
 # Blog generator
@@ -353,6 +354,14 @@ def index():
         return render_template("method.html", sources=[])
 
     return render_template("method.html", sources=sources)
+
+
+# ----------------------------
+# API page routes
+# ----------------------------
+@api_page.route("")
+def api_index():
+    return render_template("api.html")
 
 
 # ----------------------------

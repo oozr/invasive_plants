@@ -1,0 +1,106 @@
+/* ========================================
+   API PAGE STYLES
+   ======================================== */
+
+.api-hero,
+.api-section {
+   margin-bottom: 2rem;
+   padding-bottom: 1.5rem;
+   border-bottom: 1px solid var(--border-light);
+}
+
+.api-section:last-child {
+   border-bottom: none;
+   margin-bottom: 0;
+   padding-bottom: 0;
+}
+
+.api-hero {
+   border: 1px solid var(--border-light);
+   border-radius: 0.5rem;
+   padding: 1.5rem;
+   background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+}
+
+.api-status {
+   display: inline-block;
+   margin-bottom: 0.75rem;
+   text-transform: uppercase;
+   letter-spacing: 0.08em;
+   font-size: 0.82rem;
+   color: var(--text-muted);
+}
+
+.api-hero h2 {
+   margin-bottom: 1rem;
+}
+
+.api-hero p:last-child {
+   margin-bottom: 0;
+}
+
+.api-hero-note {
+   color: var(--text-medium);
+}
+
+.api-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+   gap: 1rem;
+   margin-top: 1rem;
+}
+
+.api-card {
+   border: 1px solid var(--border-light);
+   border-radius: 0.5rem;
+   padding: 1.25rem;
+   background-color: var(--white);
+   height: 100%;
+}
+
+.api-card h3 {
+   color: var(--text-dark);
+   margin-bottom: 0.75rem;
+}
+
+.api-card p:last-child {
+   margin-bottom: 0;
+}
+
+.api-list {
+   list-style: none;
+   padding-left: 0;
+   margin: 1rem 0 0;
+}
+
+.api-list li {
+   position: relative;
+   padding-left: 1.25rem;
+   margin-bottom: 0.65rem;
+   color: var(--text-medium);
+}
+
+.api-list li:last-child {
+   margin-bottom: 0;
+}
+
+.api-list li:before {
+   content: "•";
+   position: absolute;
+   left: 0;
+   color: var(--black);
+}
+
+.api-cta-section p {
+   max-width: 52rem;
+}
+
+@media (max-width: 767.98px) {
+   .api-hero {
+      padding: 1.25rem;
+   }
+
+   .api-card {
+      padding: 1rem;
+   }
+}

@@ -33,6 +33,9 @@
                         <a class="nav-link" href="{{ url_for('method.index') }}">Method</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('api_page.api_index') }}">API</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('about.index') }}">About</a>
                     </li>
                 </ul>
@@ -69,7 +72,12 @@
                 </div>
                 <div class="col-md-4">
                     <p class="mb-1">© 2026 Regulated Plants Database</p>
-{#                    <p class="text-muted mb-0">Research and Developed by the UCD Department of Plant Sciences</p>#}
+                    <p class="footer-license mb-0">
+                        Content licensed under the
+                        <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer">
+                            Creative Commons Attribution-NonCommercial 4.0 International License
+                        </a>.
+                    </p>
                 </div>
                 <div class="col-md-4 text-md-end">
                     <img src="{{ url_for('static', filename='img/UNU-INWEH_LOGO_NV.svg') }}"
