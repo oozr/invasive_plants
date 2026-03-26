@@ -239,7 +239,6 @@ class StateDatabase(DatabaseBase):
                         p.family_name,
                         p.gbif_usage_key AS usage_key,
                         COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
-                        j.source_url AS source_url,
                         'region' AS jurisdiction
                     FROM regulations r
                     JOIN plants p ON p.id = r.plant_id
@@ -261,7 +260,6 @@ class StateDatabase(DatabaseBase):
                         p.family_name,
                         p.gbif_usage_key AS usage_key,
                         COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
-                        j.source_url AS source_url,
                         'national' AS jurisdiction
                     FROM regulations r
                     JOIN plants p ON p.id = r.plant_id
@@ -283,7 +281,6 @@ class StateDatabase(DatabaseBase):
                         p.family_name,
                         p.gbif_usage_key AS usage_key,
                         COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
-                        j.source_url AS source_url,
                         'international' AS jurisdiction
                     FROM regulations r
                     JOIN plants p ON p.id = r.plant_id
@@ -339,7 +336,6 @@ class StateDatabase(DatabaseBase):
                         "usage_key": species.get("usage_key"),
                         "level": level_map.get(species["jurisdiction"], "Unknown"),
                         "source_authority": species.get("source_authority"),
-                        "source_url": species.get("source_url"),
                         "has_national_regulation": "national" in species_scopes,
                         "has_international_regulation": "international" in species_scopes,
                     }
@@ -505,7 +501,6 @@ class StateDatabase(DatabaseBase):
                         ELSE COALESCE(NULLIF(TRIM(j.region), ''), j.country)
                     END AS name,
                     COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS authority,
-                    j.source_url,
                     COALESCE(
                         NULLIF(TRIM(CAST(j.last_updated_year AS TEXT)), ''),
                         NULLIF(TRIM(j.last_updated), ''),
