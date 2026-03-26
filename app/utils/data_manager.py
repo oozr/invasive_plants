@@ -17,6 +17,7 @@ class DataManager:
         manifest_path: str,
         cache_dir: str,
         manifest_ttl_seconds: int = 3600,
+        remote_timeout_seconds: int = 90,
     ):
         self.app = app
         self.mode = (mode or "local_sample").strip()
@@ -25,6 +26,7 @@ class DataManager:
         self.manifest_path = manifest_path or "/manifest.json"
         self.cache_dir = cache_dir or "data_cache"
         self.manifest_ttl_seconds = max(0, int(manifest_ttl_seconds or 0))
+        self.remote_timeout_seconds = max(1, int(remote_timeout_seconds or 0))
         self.last_checked = 0.0
         self.current_version = None
         self.lock = threading.Lock()
@@ -39,6 +41,7 @@ class DataManager:
             manifest_path=app.config.get("DATA_MANIFEST_PATH", "/manifest.json"),
             cache_dir=app.config.get("DATA_CACHE_DIR", "data_cache"),
             manifest_ttl_seconds=app.config.get("DATA_MANIFEST_TTL_SECONDS", 3600),
+            remote_timeout_seconds=app.config.get("DATA_REMOTE_TIMEOUT_SECONDS", 90),
         )
 
     def ensure_ready(self, force: bool = False):
@@ -279,7 +282,7 @@ class DataManager:
 
     def _fetch_bytes(self, url: str, headers: dict = None) -> bytes:
         req = urllib.request.Request(url, headers=headers or {})
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=self.remote_timeout_seconds) as resp:
             return resp.read()
 
     def _sha256(self, path: str) -> str:
