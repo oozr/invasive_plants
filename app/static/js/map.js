@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     data: 'canonical_name',
                     title: 'Scientific Name',
-                    width: '30%',
+                    width: '27%',
                     render: function (data, type, row) {
                         if (type !== 'display') return data || '';
                         if (type === 'display' && data) {
@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     data: 'common_name',
                     title: 'Common Name',
-                    width: '30%',
+                    width: '23%',
                     render: function (data, type, row) {
                         const displayCommonName = primaryCommonName(data);
                         if (type !== 'display') return data || '';
@@ -406,34 +406,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     data: 'family_name',
                     title: 'Family',
-                    width: '20%',
+                    width: '15%',
                     render: function (data) {
                         return escapeHtml(data || 'Unknown');
                     }
                 },
                 {
-                    data: 'level',
+                    data: 'source_authority',
                     title: 'Source',
-                    width: '20%',
-                    className: 'text-center',
+                    width: '35%',
                     render: function (data, type, row) {
-                        if (type !== 'display') return data;
-
-                        // Backend returns level: Regional | National | International
-                        const level = row.level || 'Unknown';
-                        const hasNat = !!row.has_national_regulation;
-                        const hasIntl = !!row.has_international_regulation;
-
-                        // Multiple if regional but also has national/international, or national also has intl
-                        const isMultiple =
-                            (level === 'Regional' && (hasNat || hasIntl)) ||
-                            (level === 'National' && hasIntl);
-
-                        if (isMultiple) return '<span class="source-both">Multiple</span>';
-                        if (level === 'Regional') return '<span class="source-state">Regional</span>';
-                        if (level === 'National') return '<span class="source-federal">National</span>';
-                        if (level === 'International') return '<span class="source-international">International</span>';
-                        return `<span>${escapeHtml(level)}</span>`;
+                        const sourceAuthority = data || row.level || 'Unknown';
+                        if (type !== 'display') return sourceAuthority;
+                        return `<span>${escapeHtml(sourceAuthority)}</span>`;
                     }
                 }
             ],
