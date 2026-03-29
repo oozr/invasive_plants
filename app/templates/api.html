@@ -7,73 +7,60 @@
 
 {% block content %}
 <h1 class="page-title">API</h1>
-<p class="lead">Two API tracks: the current website API and a future external US compliance API.</p>
+<p class="lead">Coming soon: a US-focused external compliance API.</p>
 
 <section class="api-hero">
-    <span class="api-status">Website API Active</span>
-    <h2>API A: Global website API</h2>
+    <span class="api-status">Coming Soon</span>
+    <h2>US External Compliance API</h2>
     <p>
-        This API powers the public Regulated Plants website. It is global, supports exploratory use, and can evolve quickly
-        to support website features and research communication.
-    </p>
-    <p class="api-hero-note">
-        Scope: website UX and public-facing product functionality.
+        We are preparing a production API focused on US jurisdiction compliance workflows.
+        Initial release scope is US-only with stable, integration-ready responses.
     </p>
 </section>
 
 <section class="api-section">
-    <h2>Current Website API Scope</h2>
+    <h2>Two Core Benefits</h2>
     <div class="api-grid">
         <article class="api-card">
-            <h3>Global map + jurisdiction data</h3>
-            <p>Supports site map rendering, jurisdiction overlays, and public data exploration workflows.</p>
+            <h3>Full list of regulations by category</h3>
+            <p>
+                Access complete regulation coverage with category-level detail across supported US jurisdictions.
+            </p>
             <ul class="api-list">
-                <li>Global jurisdiction coverage</li>
-                <li>Regional, national, and international toggles</li>
-                <li>Optimized for website interaction patterns</li>
+                <li>Category-aware regulation outputs</li>
+                <li>Jurisdiction-specific compliance context</li>
+                <li>Structured responses for operational checks</li>
             </ul>
         </article>
         <article class="api-card">
-            <h3>Species search + species detail</h3>
-            <p>Supports scientific/common name discovery and jurisdiction-linked species navigation on the website.</p>
+            <h3>Full plant details with complete common names</h3>
+            <p>
+                Retrieve plant records with complete naming detail to improve matching and screening workflows.
+            </p>
             <ul class="api-list">
-                <li>Search and detail routes for the site UI</li>
-                <li>Global dataset context</li>
-                <li>Flexible response shape for front-end iteration</li>
+                <li>Scientific and common-name coverage</li>
+                <li>Cleaner matching for catalog/seller content</li>
+                <li>Consistent plant identity fields</li>
             </ul>
         </article>
     </div>
 </section>
 
 <section class="api-section">
-    <h2>Next Track (Planned)</h2>
-    <div class="api-grid">
-        <article class="api-card">
-            <h3>API B: US external compliance API</h3>
-            <p>
-                A separate API will be released for external partner integrations. Initial scope is US-only, with stricter
-                stability, authentication, and versioning requirements.
-            </p>
-        </article>
-        <article class="api-card">
-            <h3>Partner-focused characteristics</h3>
-            <p>
-                Smaller endpoint surface, cleaner contract, stable versioning, and implementation-grade documentation.
-            </p>
-        </article>
-        <article class="api-card">
-            <h3>Shared core engine</h3>
-            <p>
-                Both APIs will run on the same core data and compliance logic to avoid duplicate business rules.
-            </p>
-        </article>
-    </div>
+    <h2>Organisations That May Be Interested</h2>
+    <ul class="api-list">
+        <li>Marketplaces and e-commerce platforms</li>
+        <li>Seller onboarding and compliance teams</li>
+        <li>Catalog governance and policy operations teams</li>
+        <li>Trust and safety teams handling restricted listings</li>
+        <li>Regulatory and legal review teams</li>
+    </ul>
 </section>
 
 <section class="api-section api-cta-section">
-    <h2>Questions or Requirements</h2>
+    <h2>Early Access</h2>
     <p>
-        If you are using the website API or want to share requirements for the external US compliance API track, contact us.
+        If your organisation wants early access updates or integration discussions, contact us.
     </p>
     <a href="{{ url_for('about.index') }}" class="btn btn-primary">Contact Our Team</a>
 </section>
