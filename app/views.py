@@ -92,8 +92,8 @@ def robots_txt():
 @home.route("/api/region-weed-counts")
 def region_weed_counts():
     """
-    Returns list of {country, region, count}.
-    Used to colour the map.
+    Returns map rows keyed by stable geo_region_id.
+    Used to colour the map and drive tooltip provenance.
     """
     include_region, include_national, include_international = _toggle_params()
     counts = _get_state_db().get_region_weed_counts(
@@ -107,29 +107,28 @@ def region_weed_counts():
 @home.route("/api/region")
 def region_weeds():
     """
-    Returns weeds for a specific (country, region).
+    Returns weeds for a specific mapped geo region.
     Called by map click.
 
     Query args:
-      country=<country name>
-      region=<region name>
+      geo_region_id=<stable map region id>
       includeRegion/includeNational/includeInternational
     """
-    country = request.args.get("country", "").strip()
-    region = request.args.get("region", "").strip()
-    if not country or not region:
-        return jsonify({"error": "country and region are required"}), 400
+    geo_region_id = request.args.get("geo_region_id", "").strip()
+    if not geo_region_id:
+        return jsonify({"error": "geo_region_id is required"}), 400
 
     include_region, include_national, include_international = _toggle_params()
-    weeds = _get_state_db().get_weeds_for_region(
-        country=country,
-        region=region,
+    payload = _get_state_db().get_weeds_for_geo_region(
+        geo_region_id=geo_region_id,
         include_region=include_region,
         include_national=include_national,
         include_international=include_international,
     )
-    has_any_data = _get_state_db().country_has_data(country)
-    return jsonify({"weeds": weeds, "has_any_data": has_any_data})
+    if not payload.get("geo_region"):
+        return jsonify({"error": "geo_region_id not found"}), 404
+
+    return jsonify(payload)
 
 
 @home.route("/api/geojson-files")

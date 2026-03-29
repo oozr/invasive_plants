@@ -44,7 +44,7 @@ class Config:
    DATA_REMOTE_BASE_URL = os.getenv('DATA_REMOTE_BASE_URL')
    DATA_REMOTE_TOKEN = os.getenv('DATA_REMOTE_TOKEN')
    DATA_MANIFEST_PATH = os.getenv('DATA_MANIFEST_PATH', '/manifest.json')
-   DATA_MANIFEST_TTL_SECONDS = int(os.getenv('DATA_MANIFEST_TTL_SECONDS', '3600'))
+   DATA_MANIFEST_TTL_SECONDS = int(os.getenv('DATA_MANIFEST_TTL_SECONDS', '0'))
    DATA_CACHE_DIR = os.getenv('DATA_CACHE_DIR', 'data_cache')
    DATA_REMOTE_TIMEOUT_SECONDS = int(os.getenv('DATA_REMOTE_TIMEOUT_SECONDS', '90'))
    LOCAL_SAMPLE_DB_PATH = os.getenv(

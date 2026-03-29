@@ -7,94 +7,73 @@
 
 {% block content %}
 <h1 class="page-title">API</h1>
-<p class="lead">Coming soon: a professional API for jurisdiction-aware regulated plant compliance workflows.</p>
+<p class="lead">Two API tracks: the current website API and a future external US compliance API.</p>
 
 <section class="api-hero">
-    <span class="api-status">Coming Soon</span>
-    <h2>Built for trusted operational use</h2>
+    <span class="api-status">Website API Active</span>
+    <h2>API A: Global website API</h2>
     <p>
-        We are preparing an API release for teams that need machine-readable regulated plant data in production systems.
-        The initial focus is on helping marketplaces, retail platforms, and seller operations teams identify listings that
-        may conflict with jurisdiction regulations before they create downstream compliance risk.
+        This API powers the public Regulated Plants website. It is global, supports exploratory use, and can evolve quickly
+        to support website features and research communication.
     </p>
     <p class="api-hero-note">
-        This release is being shaped around trust, clarity, and integration readiness.
+        Scope: website UX and public-facing product functionality.
     </p>
 </section>
 
 <section class="api-section">
-    <h2>Two Core Benefits</h2>
+    <h2>Current Website API Scope</h2>
     <div class="api-grid">
         <article class="api-card">
-            <h3>Full set of jurisdiction regulations</h3>
-            <p>
-                Access regulation coverage across regional, national, and international layers in a machine-readable format.
-                This is intended to support compliance screening, policy checks, and jurisdiction-aware decision workflows.
-            </p>
+            <h3>Global map + jurisdiction data</h3>
+            <p>Supports site map rendering, jurisdiction overlays, and public data exploration workflows.</p>
             <ul class="api-list">
-                <li>Regional, national, and international scope</li>
-                <li>Structured outputs for platform and compliance systems</li>
-                <li>Clear jurisdiction context for downstream operational rules</li>
+                <li>Global jurisdiction coverage</li>
+                <li>Regional, national, and international toggles</li>
+                <li>Optimized for website interaction patterns</li>
             </ul>
         </article>
         <article class="api-card">
-            <h3>Full set of species data, including common names</h3>
-            <p>
-                Retrieve the species data needed for matching and review workflows, including scientific names, common names,
-                and related taxonomic context. This is especially important for seller-submitted product titles and catalog data.
-            </p>
+            <h3>Species search + species detail</h3>
+            <p>Supports scientific/common name discovery and jurisdiction-linked species navigation on the website.</p>
             <ul class="api-list">
-                <li>Scientific names and common names</li>
-                <li>Cleaner matching for catalog and seller content</li>
-                <li>More reliable handling of plant identity in operational checks</li>
+                <li>Search and detail routes for the site UI</li>
+                <li>Global dataset context</li>
+                <li>Flexible response shape for front-end iteration</li>
             </ul>
         </article>
     </div>
 </section>
 
 <section class="api-section">
-    <h2>Planned Release Priorities</h2>
+    <h2>Next Track (Planned)</h2>
     <div class="api-grid">
         <article class="api-card">
-            <h3>Professional documentation</h3>
+            <h3>API B: US external compliance API</h3>
             <p>
-                The API release will include professional documentation with endpoint references, response examples, schema notes,
-                and implementation guidance suitable for engineering and compliance teams.
+                A separate API will be released for external partner integrations. Initial scope is US-only, with stricter
+                stability, authentication, and versioning requirements.
             </p>
         </article>
         <article class="api-card">
-            <h3>Stable and integration-ready</h3>
+            <h3>Partner-focused characteristics</h3>
             <p>
-                We intend to ship versioned endpoints, predictable response structures, and clear change communication so teams
-                can integrate with confidence.
+                Smaller endpoint surface, cleaner contract, stable versioning, and implementation-grade documentation.
             </p>
         </article>
         <article class="api-card">
-            <h3>Traceable and reviewable</h3>
+            <h3>Shared core engine</h3>
             <p>
-                Source provenance, update visibility, and transparent data handling are core to the release plan, because trust
-                matters when the API is used in compliance-sensitive workflows.
+                Both APIs will run on the same core data and compliance logic to avoid duplicate business rules.
             </p>
         </article>
     </div>
-</section>
-
-<section class="api-section">
-    <h2>Potential Use Cases</h2>
-    <ul class="api-list">
-        <li>Pre-listing checks for products that may be restricted in specific jurisdictions</li>
-        <li>Seller guidance and onboarding workflows for regulated plant categories</li>
-        <li>Catalog screening and exception review by compliance teams</li>
-        <li>Jurisdiction-aware policy checks inside marketplace operations</li>
-        <li>Internal tooling for trust, safety, and regulatory review teams</li>
-    </ul>
 </section>
 
 <section class="api-section api-cta-section">
-    <h2>Early Access</h2>
+    <h2>Questions or Requirements</h2>
     <p>
-        We are not publicly releasing the API yet. If your team is interested in pilot access, integration planning, or API
-        requirements for marketplace use, please contact us.
+        If you are using the website API or want to share requirements for the external US compliance API track, contact us.
     </p>
     <a href="{{ url_for('about.index') }}" class="btn btn-primary">Contact Our Team</a>
 </section>

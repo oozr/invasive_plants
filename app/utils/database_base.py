@@ -11,6 +11,7 @@ class DatabaseBase:
 
     def __init__(self, db_path: str = "weeds.db", geojson_dir=None):
         self.db_path = db_path
+        self.geojson_dir = geojson_dir
 
     def get_connection(self):
         conn = sqlite3.connect(self.db_path)

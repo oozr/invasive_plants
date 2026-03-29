@@ -13,10 +13,18 @@ document.addEventListener('DOMContentLoaded', function () {
         "Slovenia", "Spain", "Sweden"
     ]);
     const EU_LABEL = "European Union";
+    const COUNTRY_NAME_ALIASES = {
+        "federal republic of germany": "Germany",
+        "the federal republic of germany": "Germany",
+        "deutschland": "Germany",
+        "kingdom of saudi arabia": "Saudi Arabia",
+        "united states of america": "United States"
+    };
 
-    // Region counts lookup:
-    // key = `${country}::${region}` -> { country, region, count }
+    // Region counts lookup keyed by stable geo_region_id.
+    // Legacy key fallback (`country::region`) is kept for backward compatibility.
     let regionWeedData = {};
+    let regionWeedDataByLegacyKey = {};
     let geojsonLayer = null;
 
     // Current selection
@@ -49,6 +57,20 @@ document.addEventListener('DOMContentLoaded', function () {
             hash |= 0; // convert to 32-bit int
         }
         return Math.abs(hash);
+    }
+
+    function normalizeLabel(value) {
+        return String(value || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function canonicalCountryName(value) {
+        const normalized = normalizeLabel(value);
+        if (!normalized) return '';
+        return COUNTRY_NAME_ALIASES[normalized.toLowerCase()] || normalized;
+    }
+
+    function canonicalRegionName(value) {
+        return normalizeLabel(value).replace(/\s*&\s*/g, ' & ');
     }
 
     // Get a colour config (thresholds + scheme) for a given country name
@@ -97,45 +119,115 @@ document.addEventListener('DOMContentLoaded', function () {
         return scheme[0];
     }
 
+    function slugify(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
+
+    function geojsonSlugFromFilename(filename) {
+        return String(filename || '')
+            .replace(/\.geojson$/i, '')
+            .trim()
+            .toLowerCase();
+    }
+
+    function buildGeoRegionId(geojsonSlug, region) {
+        return `geo:${geojsonSlug}:${slugify(canonicalRegionName(region))}`;
+    }
+
     function inferCountryFromFilename(filename) {
         // e.g. "united_states.geojson" -> "United States"
         const base = filename.replace(/\.geojson$/i, '');
-        return base
+        return canonicalCountryName(base
             .replace(/[_-]+/g, ' ')
             .replace(/\b\w/g, c => c.toUpperCase())
-            .trim();
+            .trim());
     }
 
     function extractRegionName(feature) {
         const props = feature && feature.properties ? feature.properties : {};
         const country = extractCountryName(feature);
+        let sawCountryLevelName = false;
         // Prefer canonical `region`; fall back to source-specific names.
-        const possibleNameProps = ['region', 'REGION', 'shapeName', 'STATE_NAME', 'state', 'STATE', 'name', 'NAME'];
+        const possibleNameProps = ['region', 'REGION', 'STATE_NAME', 'state', 'STATE', 'name', 'NAME', 'shapeName'];
         for (const prop of possibleNameProps) {
             if (props[prop]) {
-                const v = String(props[prop]).trim();
+                const v = canonicalRegionName(props[prop]);
                 if (!v) continue;
-                if ((prop === 'name' || prop === 'NAME') && country && v.toLowerCase() === country.toLowerCase()) {
-                    // `name` can be country-level on ADM1 files; skip it.
+                if (country) {
+                    const canonicalName = canonicalCountryName(v);
+                    if (canonicalName && canonicalName.toLowerCase() === country.toLowerCase()) {
+                        // Some files expose official long-form names for the
+                        // whole country. Collapse those to country-level labels.
+                        sawCountryLevelName = true;
+                        continue;
+                    }
+                }
+                if (sawCountryLevelName) {
+                    // If we've already identified a country-level name, ignore
+                    // fallback labels (for example verbose `shapeName` values).
                     continue;
                 }
                 return v;
             }
         }
-        return null;
+        if (sawCountryLevelName && country) return country;
+        return country || null;
     }
 
     function extractCountryName(feature) {
         const props = feature && feature.properties ? feature.properties : {};
         if (props.country) {
-            const v = String(props.country).trim();
+            const v = canonicalCountryName(props.country);
             if (v) return v;
         }
         return '';
     }
 
+    function extractGeoRegionId(feature) {
+        const props = feature && feature.properties ? feature.properties : {};
+        if (props.geo_region_id) {
+            return String(props.geo_region_id).trim();
+        }
+        const geojsonSlug = props.geojson_slug ? String(props.geojson_slug).trim() : '';
+        const region = extractRegionName(feature);
+        if (!geojsonSlug || !region) return '';
+        return buildGeoRegionId(geojsonSlug, region);
+    }
+
     function regionKey(country, region) {
-        return `${country}::${region}`;
+        return `${canonicalCountryName(country)}::${canonicalRegionName(region)}`;
+    }
+
+    function getRegionData(geoRegionId, country, region) {
+        if (geoRegionId && regionWeedData[geoRegionId]) {
+            return regionWeedData[geoRegionId];
+        }
+
+        const exact = regionWeedDataByLegacyKey[regionKey(country, region)];
+        if (exact) return exact;
+
+        const countryFallback = regionWeedDataByLegacyKey[regionKey(country, country)];
+        if (countryFallback) {
+            return {
+                count: countryFallback.count || 0,
+                country: canonicalCountryName(country),
+                region: canonicalRegionName(region),
+                count_source_level: 'national',
+                jurisdiction_match: 'country_overlay',
+            };
+        }
+
+        return {
+            count: 0,
+            country,
+            region,
+            count_source_level: 'none',
+            jurisdiction_match: 'none',
+        };
     }
 
     function escapeHtml(value) {
@@ -232,18 +324,35 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function buildRegionLookup(list) {
-        const lookup = {};
-        if (!Array.isArray(list)) return lookup;
+        const byId = {};
+        const byLegacyKey = {};
+        if (!Array.isArray(list)) return { byId, byLegacyKey };
 
         for (const row of list) {
             if (!row || !row.country || !row.region) continue;
-            lookup[regionKey(row.country, row.region)] = {
+            const country = canonicalCountryName(row.country);
+            const region = canonicalRegionName(row.region);
+            if (!country || !region) continue;
+
+            const payload = {
                 count: row.count || 0,
-                country: row.country,
-                region: row.region
+                country,
+                region,
+                geo_region_id: row.geo_region_id || null,
+                count_source_level: row.count_source_level || 'none',
+                jurisdiction_match: row.jurisdiction_match || 'none',
+                regulation_status: row.regulation_status || 'unknown',
+                jurisdiction_uid: row.jurisdiction_uid || null,
+                canonical_display_name: row.canonical_display_name || region,
+                geojson_slug: row.geojson_slug || null,
             };
+
+            if (payload.geo_region_id) {
+                byId[payload.geo_region_id] = payload;
+            }
+            byLegacyKey[regionKey(country, region)] = payload;
         }
-        return lookup;
+        return { byId, byLegacyKey };
     }
 
     function displayCountryLabel(country) {
@@ -314,7 +423,9 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch(`/api/region-weed-counts?${buildQueryParams()}`)
             .then(r => r.json())
             .then(list => {
-                regionWeedData = buildRegionLookup(list);
+                const lookup = buildRegionLookup(list);
+                regionWeedData = lookup.byId;
+                regionWeedDataByLegacyKey = lookup.byLegacyKey;
                 if (geojsonLayer) geojsonLayer.setStyle(styleFeature);
             })
             .catch(err => console.error('Error refreshing map colors:', err));
@@ -322,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function refreshTableData() {
         if (!currentSelected) return;
-        loadRegionDetails(currentSelected.country, currentSelected.region);
+        loadRegionDetails(currentSelected.geoRegionId, currentSelected.country, currentSelected.region);
     }
 
     /******************************
@@ -449,18 +560,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function loadRegionDetails(country, region) {
-        if (!country || !region) return;
+    function loadRegionDetails(geoRegionId, country, region) {
+        if (!geoRegionId) return;
 
         const url =
-            `/api/region?country=${encodeURIComponent(country)}&region=${encodeURIComponent(region)}&${buildQueryParams()}`;
+            `/api/region?geo_region_id=${encodeURIComponent(geoRegionId)}&${buildQueryParams()}`;
 
         fetch(url)
             .then(r => r.json())
             .then(result => {
                 const weeds = Array.isArray(result) ? result : (result.weeds || []);
                 const hasAnyData = Array.isArray(result) ? weeds.length > 0 : !!result.has_any_data;
-                updateTable(country, region, weeds, hasAnyData);
+                const resolvedGeo = result.geo_region || {};
+                const resolvedCountry = resolvedGeo.country || country;
+                const resolvedRegion = resolvedGeo.region || region;
+                updateTable(resolvedCountry, resolvedRegion, weeds, hasAnyData);
                 sendAhaActivationIfNeeded(weeds.length);
             })
             .catch(err => {
@@ -493,6 +607,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const region = extractRegionName(feature);
         const country = extractCountryName(feature);
+        const geoRegionId = extractGeoRegionId(feature);
 
         if (!region || !country) {
             return {
@@ -504,8 +619,7 @@ document.addEventListener('DOMContentLoaded', function () {
             };
         }
 
-        const key = regionKey(country, region);
-        const data = regionWeedData[key] || { count: 0, country, region };
+        const data = getRegionData(geoRegionId, country, region);
         const weedCount = data.count || 0;
         const locationLabel = formatLocation(region, country);
 
@@ -540,7 +654,9 @@ document.addEventListener('DOMContentLoaded', function () {
     fetch(`/api/region-weed-counts?${buildQueryParams()}`)
         .then(r => r.json())
         .then(list => {
-            regionWeedData = buildRegionLookup(list);
+            const lookup = buildRegionLookup(list);
+            regionWeedData = lookup.byId;
+            regionWeedDataByLegacyKey = lookup.byLegacyKey;
             return fetch('/api/geojson-files');
         })
         .then(r => {
@@ -557,12 +673,19 @@ document.addEventListener('DOMContentLoaded', function () {
                         return response.json();
                     })
                     .then(geojson => {
-                        // Attach country to each feature (inferred from filename) if not present
+                        // Force canonical country from filename so GeoJSON long-form
+                        // aliases do not break API key matching.
+                        const geojsonSlug = geojsonSlugFromFilename(filename);
                         const inferredCountry = inferCountryFromFilename(filename);
                         if (geojson && Array.isArray(geojson.features)) {
                             geojson.features.forEach(f => {
                                 f.properties = f.properties || {};
-                                if (!f.properties.country) f.properties.country = inferredCountry;
+                                f.properties.country = inferredCountry;
+                                f.properties.geojson_slug = geojsonSlug;
+                                const inferredRegion = extractRegionName(f);
+                                if (inferredRegion) {
+                                    f.properties.geo_region_id = buildGeoRegionId(geojsonSlug, inferredRegion);
+                                }
                             });
                         }
                         return geojson;
@@ -598,6 +721,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 onEachFeature: function (feature, layer) {
                     const region = extractRegionName(feature);
                     const country = extractCountryName(feature);
+                    const geoRegionId = extractGeoRegionId(feature);
                     if (!region || !country) return;
 
                     const key = regionKey(country, region);
@@ -609,9 +733,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (previouslyClickedLayer) geojsonLayer.resetStyle(previouslyClickedLayer);
                         previouslyClickedLayer = layer;
 
-                        currentSelected = { country, region };
+                        currentSelected = { geoRegionId, country, region };
                         pendingScrollToTable = true;
-                        loadRegionDetails(country, region);
+                        loadRegionDetails(geoRegionId, country, region);
                     });
 
                     // Hover
@@ -624,7 +748,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         layer.setStyle({ weight: 2, fillOpacity: 0.9 });
 
-                        const data = regionWeedData[key] || { count: 0, country, region };
+                        const data = getRegionData(geoRegionId, country, region);
                         const weedCount = data.count || 0;
                         const locationLabel = formatLocation(region, country);
                         const safeLocationLabel = escapeHtml(locationLabel);
@@ -657,6 +781,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     layer.featureRegionNameLower = region.toLowerCase();
                     layer.featureCountryName = country;
                     layer.featureKey = key;
+                    layer.featureGeoRegionId = geoRegionId;
                 }
             }).addTo(map);
 

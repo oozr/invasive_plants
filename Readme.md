@@ -71,7 +71,8 @@ Copy `.env.example` to `.env` (or export variables another way) and set:
 | `DATA_MODE` | `local_sample` (default) or `remote_production` |
 | `DATA_REMOTE_BASE_URL` | Base URL of the private data service (remote mode) |
 | `DATA_REMOTE_TOKEN` | Bearer token for the data service (remote mode) |
-| `DATA_MANIFEST_TTL_SECONDS` | Poll interval for data updates (default `3600`) |
+| `DATA_MANIFEST_TTL_SECONDS` | Poll interval for data updates (default `0`, disabled) |
+| `DATA_REMOTE_TIMEOUT_SECONDS` | Remote fetch timeout in seconds (default `90`) |
 | `OOZR_BASE_URL` | OOZR dashboard base URL (example: `https://oozr.up.railway.app`) |
 | `OOZR_PROJECT_SLUG` | Project slug for activations (default `regulatedplants`) |
 | `OOZR_METRICS_ENABLED` | Enable activation tracking (`1`/`0`, default `0`) |
@@ -109,7 +110,26 @@ Expected endpoints on the data service:
 - `GET /artifacts/weeds.db`
 - `GET /artifacts/geojson/<file>.geojson`
 
+Remote data behavior in `remote_production`:
+- If a valid local cache exists, boot immediately from cache.
+- Refresh runs in the background only when `DATA_MANIFEST_TTL_SECONDS > 0`.
+- If refresh fails (timeout/checksum/network), the app keeps serving the last valid cache.
+- Only first-ever cold start (no cache) blocks on remote bootstrap.
+
 The data service lives in a separate private repo (e.g., `regulated_plants_data`).
+
+## Website API Scope
+This repository exposes the website-facing API only (global and optimized for the site UX).
+
+Current routes include:
+- `/api/region-weed-counts`
+- `/api/region`
+- `/api/geojson-files`
+- `/api/home-highlights`
+- `/species/api/search`
+- `/species/api/weed-states/by-key/<usage_key>`
+
+A separate stricter external compliance API (US-focused, versioned, partner-facing) is planned as a distinct surface.
 
 ## Deployment
 1. Set environment variables for production.
