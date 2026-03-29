@@ -1,12 +1,10 @@
 ---
-
-## title: Nuanced Biosecurity Regulations Matter
-
-date: 2026-03-29
+title: Nuanced Biosecurity Regulations Matter
+date: 2026-03-03
 author: Publishing team
-tags: ["regulations", "weed", "data","south africa", "australia"]
+tags: ["regulations", "weed", "data", "south africa", "australia"]
 image: sa_au.jpg
-
+---
 The regulated plants database (RPD) work has shown that the lists and mechanims behind those regulatory instruments, especially how species are classified and which activities are regulated, often matter more than the list itself.
 
 Two jurisdictions in our dataset, Queensland (Australia) and South Africa, illustrate this point well. Both have moved towards more nuanced classification systems that link restrictions to invasion stage and pathway, rather than relying on a single, undifferentiated blacklist.

@@ -2,8 +2,21 @@ import os
 import markdown
 import frontmatter
 import bleach
-from datetime import datetime
+from datetime import date, datetime
 from app.config import Config
+
+
+def _date_to_iso(d):
+    """Normalize frontmatter dates (date, datetime, or str) to YYYY-MM-DD for sort and display."""
+    if d is None:
+        return datetime.now().strftime("%Y-%m-%d")
+    if isinstance(d, datetime):
+        return d.date().isoformat()
+    if isinstance(d, date):
+        return d.isoformat()
+    if isinstance(d, str):
+        return d.strip()[:10]
+    return str(d)[:10]
 
 
 ALLOWED_BLOG_TAGS = set(bleach.sanitizer.ALLOWED_TAGS).union(
@@ -123,7 +136,7 @@ class BlogGenerator:
 
             blog_posts.append({
                 "title": metadata.get('title', 'Untitled'),
-                "date": metadata.get('date', datetime.now().strftime('%Y-%m-%d')),
+                "date": _date_to_iso(metadata.get("date")),
                 "author": metadata.get('author', Config.SITE_AUTHOR),
                 "tags": metadata.get('tags', []),
                 "excerpt": excerpt,
