@@ -84,6 +84,11 @@ def index():
     )
 
 
+@home.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+
 @home.route("/robots.txt")
 def robots_txt():
     return current_app.send_static_file("robots.txt")
