@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
         national: true,
         international: true
     };
-    const SAMPLE_PLANT_LIMIT = 10;
+    const SAMPLE_PLANT_LIMIT = 5;
     const ANONYMOUS_USER_COOKIE = 'anonymous_user_id';
     const AHA_ACTIVATED_COOKIE = 'aha_activated';
     const COOKIE_MAX_AGE_DAYS = 730;
