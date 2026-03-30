@@ -461,8 +461,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const warningEl = document.getElementById('state-warning');
         if (warningEl) {
-            warningEl.innerHTML = '<strong>Sample only.</strong> For full list please contact our team.';
-            warningEl.classList.remove('d-none');
+            const shouldShowSampleWarning = Boolean(hasAnyData) && sampleWeeds.length > 0;
+            if (shouldShowSampleWarning) {
+                warningEl.innerHTML = '<strong>Sample only.</strong> For full list please contact our team.';
+                warningEl.classList.remove('d-none');
+            } else {
+                warningEl.innerHTML = '';
+                warningEl.classList.add('d-none');
+            }
         }
 
         const subtitleEl = document.getElementById('state-subtitle');

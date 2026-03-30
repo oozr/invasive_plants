@@ -105,7 +105,7 @@
     }
     
     .toggle-controls .form-check {
-        padding: 0.25rem 0;
+        padding: 0.1rem 0;
         width: 100%;
         margin-left: 0 !important;
         padding-left: 0 !important;
@@ -114,6 +114,7 @@
     .toggle-controls .d-flex {
         align-items: stretch !important;
         width: 100%;
+        gap: 0.15rem !important;
     }
     
     .toggle-error {

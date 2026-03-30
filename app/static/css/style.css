@@ -220,6 +220,19 @@ textarea.form-control {
    width: 100%;
 }
 
+.navbar-brand {
+   display: inline-flex;
+   align-items: center;
+   gap: 0.45rem;
+}
+
+.navbar-brand-icon {
+   width: 1rem;
+   height: 1rem;
+   display: inline-block;
+   filter: brightness(0) invert(1);
+}
+
 /* ========================================
    TABLES
    ======================================== */

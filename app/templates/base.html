@@ -25,7 +25,10 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home.index') }}">Regulated Plants</a>
+            <a class="navbar-brand" href="{{ url_for('home.index') }}">
+                <img src="{{ url_for('static', filename='img/plant-icon.svg') }}" alt="" aria-hidden="true" class="navbar-brand-icon">
+                <span>Regulated Plants</span>
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
