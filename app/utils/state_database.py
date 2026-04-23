@@ -257,7 +257,15 @@ class StateDatabase(DatabaseBase):
         conn = self.get_connection()
         try:
             species_count = conn.execute(
-                "SELECT COUNT(*) AS count FROM plants WHERE has_current_regulation = 1"
+                """
+                SELECT COUNT(DISTINCT p.id) AS count
+                FROM plants p
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM regulations r
+                    WHERE r.plant_id = p.id
+                )
+                """
             ).fetchone()["count"] or 0
 
             region_j = conn.execute(
