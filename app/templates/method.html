@@ -55,7 +55,6 @@
     </ul>
     <p>Genus, species, in the context of the regulated plant list, is considered to include all species, subspecies, cultivars, varieties, and forms of that species (including genetically modified variants), unless specifically excluded. However, a species is considered to exclude any hybrids of that species with another species, unless otherwise stated.</p>
 
-
     <div class="sources-container">
         {% for country, items in sources|groupby('country') %}
         <button class="sources-toggle" id="sourcesToggle{{ country|replace(' ', '') }}" aria-expanded="false">
@@ -81,6 +80,48 @@
             </div>
         </div>
         {% endfor %}
+    </div>
+
+    <h3>Versions</h3>
+    <div class="sources-container">
+        <button class="sources-toggle" id="versionsToggle" aria-expanded="false">
+            <span>View Data Version History</span>
+            <svg class="chevron-icon" viewBox="0 0 24 24" width="24" height="24">
+                <path d="M6 9l6 6 6-6"></path>
+            </svg>
+        </button>
+        <div class="sources-content versions-content" id="versionsContent">
+            <div class="state-item">
+                <span class="state-name">2026.03</span>
+                <div class="details">
+                    <span class="authority">South Africa added</span>
+                </div>
+            </div>
+            <div class="state-item">
+                <span class="state-name">2025.12</span>
+                <div class="details">
+                    <span class="authority">EU, Israel, Qatar, Oman, Bahrain, Saudi Arabia, and UAE added, Idaho updated</span>
+                </div>
+            </div>
+            <div class="state-item">
+                <span class="state-name">2025.11</span>
+                <div class="details">
+                    <span class="authority">New Zealand added</span>
+                </div>
+            </div>
+            <div class="state-item">
+                <span class="state-name">2025.05</span>
+                <div class="details">
+                    <span class="authority">Australia and Canada added</span>
+                </div>
+            </div>
+            <div class="state-item">
+                <span class="state-name">2025.01</span>
+                <div class="details">
+                    <span class="authority">Project initiation, US added</span>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 {% endblock %}
