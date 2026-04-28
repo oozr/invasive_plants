@@ -227,6 +227,14 @@ def search_species():
     return jsonify(results)
 
 
+@species.route("/api/by-species-id/<species_id>")
+def species_by_id(species_id: str):
+    result = _get_species_db().get_species_by_id(species_id)
+    if not result:
+        return jsonify({"error": "Species not found"}), 404
+    return jsonify(result)
+
+
 @species.route("/api/weed-states/by-key/<int:usage_key>")
 def weed_states_by_key(usage_key: int):
     """
@@ -239,6 +247,20 @@ def weed_states_by_key(usage_key: int):
         return jsonify(regulations_by_group)
     except Exception as e:
         current_app.logger.error(f"Error fetching states for usage key {usage_key}: {str(e)}")
+        return jsonify({"error": "Failed to fetch states"}), 500
+
+
+@species.route("/api/weed-states/by-species-id/<species_id>")
+def weed_states_by_species_id(species_id: str):
+    """
+    Returns regulations for one stable species row. GBIF usage keys are not
+    unique in the v1.1 data, so species search uses species_id for lookups.
+    """
+    try:
+        regulations_by_group = _get_species_db().get_states_by_species_id(species_id)
+        return jsonify(regulations_by_group)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching states for species ID {species_id}: {str(e)}")
         return jsonify({"error": "Failed to fetch states"}), 500
 
 

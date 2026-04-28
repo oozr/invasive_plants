@@ -502,7 +502,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     render: function (data, type, row) {
                         if (type !== 'display') return data || '';
                         if (type === 'display' && data) {
-                            return `<a href="/species?name=${encodeURIComponent(data)}" class="species-link" target="_blank"><em>${escapeHtml(data)}</em></a>`;
+                            const speciesUrl = row.species_id
+                                ? `/species?species_id=${encodeURIComponent(row.species_id)}`
+                                : `/species?name=${encodeURIComponent(data)}`;
+                            return `<a href="${speciesUrl}" class="species-link" target="_blank"><em>${escapeHtml(data)}</em></a>`;
                         }
                         return 'Unknown';
                     }

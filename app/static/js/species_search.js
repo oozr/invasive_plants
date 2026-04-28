@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
 
                         return {
-                            id: weed.usage_key,
+                            id: weed.species_id || weed.usage_key,
                             text: displayCommonName
                                 ? `${displayCommonName} (${weed.canonical_name})`
                                 : `(${weed.canonical_name})`,
@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             canonical_name: weed.canonical_name,
                             family_name: weed.family_name,
                             synonyms: weed.synonyms,
+                            species_id: weed.species_id,
                             usage_key: weed.usage_key,
                             lifeform_final: weed.lifeform_final,
                             lifespan_final: weed.lifespan_final,
@@ -147,8 +148,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const gbifLink = document.getElementById('gbifLink');
         gbifLink.href = `https://www.gbif.org/species/${selectedWeed.usage_key}`;
 
-        // Fetch regulation jurisdictions by usage_key
-        fetch(`/species/api/weed-states/by-key/${selectedWeed.usage_key}`)
+        // Fetch regulation jurisdictions by stable species_id. GBIF is not unique.
+        const speciesLookupId = selectedWeed.species_id || selectedWeed.id;
+        const statesUrl = speciesLookupId
+            ? `/species/api/weed-states/by-species-id/${encodeURIComponent(speciesLookupId)}`
+            : `/species/api/weed-states/by-key/${selectedWeed.usage_key}`;
+
+        fetch(statesUrl)
             .then(response => {
                 if (!response.ok) throw new Error('Network response was not ok');
                 return response.json();
@@ -237,11 +243,53 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
+    function selectAndDisplayWeed(weedData) {
+        if (!weedData) return;
+
+        let displayCommonName = getPrimaryCommonName(weedData.common_name);
+        if (!displayCommonName || displayCommonName.includes('No English common names available')) {
+            displayCommonName = null;
+        }
+
+        const formattedData = {
+            id: weedData.species_id || weedData.usage_key,
+            text: displayCommonName
+                ? `${displayCommonName} (${weedData.canonical_name})`
+                : `(${weedData.canonical_name})`,
+            common_name: displayCommonName || weedData.canonical_name,
+            canonical_name: weedData.canonical_name,
+            family_name: weedData.family_name,
+            synonyms: weedData.synonyms,
+            species_id: weedData.species_id,
+            usage_key: weedData.usage_key,
+            lifeform_final: weedData.lifeform_final,
+            lifespan_final: weedData.lifespan_final,
+            habitat_final: weedData.habitat_final,
+            woodiness_final: weedData.woodiness_final
+        };
+
+        const newOption = new Option(formattedData.text, formattedData.id, true, true);
+        $('#weedSearch').append(newOption).trigger('change');
+
+        displayWeedDetails(formattedData);
+    }
+
     /******************************
-     * AUTOLOAD BY URL ?name=
+     * AUTOLOAD BY URL ?species_id= or ?name=
      ******************************/
+    const speciesId = getUrlParameter('species_id');
     const plantName = getUrlParameter('name');
-    if (plantName) {
+    if (speciesId) {
+        fetch(`/species/api/by-species-id/${encodeURIComponent(speciesId)}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(selectAndDisplayWeed)
+            .catch(error => {
+                console.error('Error fetching plant data:', error);
+            });
+    } else if (plantName) {
         fetch(`/species/api/search?q=${encodeURIComponent(plantName)}`)
             .then(response => {
                 if (!response.ok) throw new Error('Network response was not ok');
@@ -253,33 +301,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 );
 
                 const weedData = exactMatch || results[0];
-                if (!weedData) return;
-
-                let displayCommonName = getPrimaryCommonName(weedData.common_name);
-                if (!displayCommonName || displayCommonName.includes('No English common names available')) {
-                    displayCommonName = null;
-                }
-
-                const formattedData = {
-                    id: weedData.usage_key,
-                    text: displayCommonName
-                        ? `${displayCommonName} (${weedData.canonical_name})`
-                        : `(${weedData.canonical_name})`,
-                    common_name: displayCommonName || weedData.canonical_name,
-                    canonical_name: weedData.canonical_name,
-                    family_name: weedData.family_name,
-                    synonyms: weedData.synonyms,
-                    usage_key: weedData.usage_key,
-                    lifeform_final: weedData.lifeform_final,
-                    lifespan_final: weedData.lifespan_final,
-                    habitat_final: weedData.habitat_final,
-                    woodiness_final: weedData.woodiness_final
-                };
-
-                const newOption = new Option(formattedData.text, formattedData.id, true, true);
-                $('#weedSearch').append(newOption).trigger('change');
-
-                displayWeedDetails(formattedData);
+                selectAndDisplayWeed(weedData);
             })
             .catch(error => {
                 console.error('Error fetching plant data:', error);

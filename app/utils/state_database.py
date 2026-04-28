@@ -487,6 +487,7 @@ class StateDatabase(DatabaseBase):
                             p.canonical_name,
                             p.english_name AS common_name,
                             p.family_name,
+                            p.species_id,
                             p.gbif_usage_key AS usage_key,
                             COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
                             'region' AS count_source_level
@@ -506,6 +507,7 @@ class StateDatabase(DatabaseBase):
                             p.canonical_name,
                             p.english_name AS common_name,
                             p.family_name,
+                            p.species_id,
                             p.gbif_usage_key AS usage_key,
                             COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
                             'region' AS count_source_level
@@ -527,6 +529,7 @@ class StateDatabase(DatabaseBase):
                         p.canonical_name,
                         p.english_name AS common_name,
                         p.family_name,
+                        p.species_id,
                         p.gbif_usage_key AS usage_key,
                         COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
                         'national' AS count_source_level
@@ -548,6 +551,7 @@ class StateDatabase(DatabaseBase):
                         p.canonical_name,
                         p.english_name AS common_name,
                         p.family_name,
+                        p.species_id,
                         p.gbif_usage_key AS usage_key,
                         COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
                         'international' AS count_source_level
@@ -602,6 +606,7 @@ class StateDatabase(DatabaseBase):
                             canonical_name,
                         ),
                         "family_name": species.get("family_name"),
+                        "species_id": species.get("species_id"),
                         "usage_key": species.get("usage_key"),
                         "level": level_map.get(species["count_source_level"], "Unknown"),
                         "count_source_level": species["count_source_level"],

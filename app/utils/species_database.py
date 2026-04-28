@@ -22,6 +22,7 @@ class SpeciesDatabase(DatabaseBase):
             cursor = conn.execute(
                 """
                 SELECT
+                    p.species_id,
                     p.gbif_usage_key AS usage_key,
                     p.canonical_name,
                     COALESCE(NULLIF(TRIM(p.english_name), ''), p.canonical_name) AS common_name,
@@ -65,6 +66,7 @@ class SpeciesDatabase(DatabaseBase):
                 """
                 SELECT
                     COALESCE(NULLIF(TRIM(p.english_name), ''), p.canonical_name) AS common_name,
+                    p.species_id,
                     p.canonical_name,
                     p.family_name,
                     p.synonyms,
@@ -108,12 +110,47 @@ class SpeciesDatabase(DatabaseBase):
         finally:
             conn.close()
 
+    def get_species_by_id(self, species_id: str) -> Dict:
+        conn = self.get_connection()
+        try:
+            row = conn.execute(
+                """
+                SELECT
+                    COALESCE(NULLIF(TRIM(p.english_name), ''), p.canonical_name) AS common_name,
+                    p.species_id,
+                    p.canonical_name,
+                    p.family_name,
+                    p.synonyms,
+                    p.gbif_usage_key AS usage_key,
+                    p.lifeform_final,
+                    p.lifespan_final,
+                    p.habitat_final,
+                    p.woodiness_final
+                FROM plants p
+                WHERE p.species_id = ?
+                  AND p.has_current_regulation = 1
+                LIMIT 1
+                """,
+                (species_id,),
+            ).fetchone()
+            if not row:
+                return {}
+            result = dict(row)
+            result["common_name"] = self._primary_common_name(
+                result.get("common_name"),
+                result.get("canonical_name"),
+            )
+            return result
+        finally:
+            conn.close()
+
     def get_weeds_by_usage_key(self, usage_key: int) -> List[Dict]:
         conn = self.get_connection()
         try:
             cursor = conn.execute(
                 """
                 SELECT
+                    p.species_id,
                     p.gbif_usage_key AS usage_key,
                     p.canonical_name,
                     COALESCE(NULLIF(TRIM(p.english_name), ''), p.canonical_name) AS common_name,
@@ -133,6 +170,43 @@ class SpeciesDatabase(DatabaseBase):
                 ORDER BY j.country, j.jurisdiction_type, j.region
                 """,
                 (usage_key,),
+            )
+            results = [dict(row) for row in cursor.fetchall()]
+            for row in results:
+                row["common_name"] = self._primary_common_name(
+                    row.get("common_name"),
+                    row.get("canonical_name"),
+                )
+            return results
+        finally:
+            conn.close()
+
+    def get_weeds_by_species_id(self, species_id: str) -> List[Dict]:
+        conn = self.get_connection()
+        try:
+            cursor = conn.execute(
+                """
+                SELECT
+                    p.species_id,
+                    p.gbif_usage_key AS usage_key,
+                    p.canonical_name,
+                    COALESCE(NULLIF(TRIM(p.english_name), ''), p.canonical_name) AS common_name,
+                    p.family_name,
+                    p.synonyms,
+                    j.country,
+                    j.region,
+                    j.jurisdiction_type AS jurisdiction,
+                    j.jurisdiction_group,
+                    r.classification,
+                    r.note
+                FROM regulations r
+                JOIN plants p ON p.id = r.plant_id
+                JOIN jurisdictions j ON j.id = r.jurisdiction_id
+                WHERE p.species_id = ?
+                  AND r.is_webapp_scoped = 1
+                ORDER BY j.country, j.jurisdiction_type, j.region
+                """,
+                (species_id,),
             )
             results = [dict(row) for row in cursor.fetchall()]
             for row in results:
@@ -189,11 +263,14 @@ class SpeciesDatabase(DatabaseBase):
         finally:
             conn.close()
 
-    def get_states_by_usage_key(self, usage_key: int) -> Dict[str, List[str]]:
+    def _get_states_by_plant_column(self, column: str, value) -> Dict[str, List[str]]:
+        if column not in {"species_id", "gbif_usage_key"}:
+            raise ValueError(f"Unsupported plant lookup column: {column}")
+
         conn = self.get_connection()
         try:
             cursor = conn.execute(
-                """
+                f"""
                 SELECT DISTINCT
                     CASE
                         WHEN j.jurisdiction_type = 'international'
@@ -206,11 +283,11 @@ class SpeciesDatabase(DatabaseBase):
                 FROM regulations r
                 JOIN plants p ON p.id = r.plant_id
                 JOIN jurisdictions j ON j.id = r.jurisdiction_id
-                WHERE p.gbif_usage_key = ?
+                WHERE p.{column} = ?
                   AND r.is_webapp_scoped = 1
                 ORDER BY country_key, jurisdiction, region
                 """,
-                (usage_key,),
+                (value,),
             )
             results = cursor.fetchall()
 
@@ -239,3 +316,9 @@ class SpeciesDatabase(DatabaseBase):
             return regulations_by_country
         finally:
             conn.close()
+
+    def get_states_by_species_id(self, species_id: str) -> Dict[str, List[str]]:
+        return self._get_states_by_plant_column("species_id", species_id)
+
+    def get_states_by_usage_key(self, usage_key: int) -> Dict[str, List[str]]:
+        return self._get_states_by_plant_column("gbif_usage_key", usage_key)
