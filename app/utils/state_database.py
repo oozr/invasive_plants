@@ -258,13 +258,8 @@ class StateDatabase(DatabaseBase):
         try:
             species_count = conn.execute(
                 """
-                SELECT COUNT(DISTINCT p.id) AS count
-                FROM plants p
-                WHERE EXISTS (
-                    SELECT 1
-                    FROM regulations r
-                    WHERE r.plant_id = p.id
-                )
+                SELECT COUNT(*) AS count
+                FROM plants
                 """
             ).fetchone()["count"] or 0
 
