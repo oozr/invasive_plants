@@ -2,12 +2,12 @@
 import os
 from datetime import datetime
 from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory, abort, session
-from flask_mail import Message
 
-from app import mail, limiter, recaptcha
+from app import limiter, recaptcha
 from app.utils.state_database import StateDatabase
 from app.utils.species_database import SpeciesDatabase
 from app.utils.generate_blog import BlogGenerator
+from app.utils.email_sender import send_email
 
 # Blueprints
 home = Blueprint("home", __name__)
@@ -373,13 +373,13 @@ Message:
 """.strip()
 
     try:
-        msg = Message(
-            subject=email_subject,
-            recipients=[current_app.config.get("EMAIL_USERNAME")],
-            body=email_body,
+        send_email(
+            current_app.config,
+            email_subject,
+            current_app.config.get("CONTACT_EMAIL"),
+            email_body,
             reply_to=email,
         )
-        mail.send(msg)
         flash("Thank you for your message! We will get back to you soon.", "success")
     except Exception as e:
         current_app.logger.error(f"Error sending email: {str(e)}")

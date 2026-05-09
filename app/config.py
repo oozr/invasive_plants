@@ -20,6 +20,7 @@ class Config:
    DATABASE_PATH = os.getenv('DATABASE_PATH', 'weeds.db')
    
    # Email configuration
+   EMAIL_PROVIDER = os.getenv('EMAIL_PROVIDER', 'smtp')
    EMAIL_USERNAME = os.environ.get('EMAIL_USERNAME')
    EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
    MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
@@ -37,7 +38,11 @@ class Config:
       'on',
    }
    MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER') or EMAIL_USERNAME
+   CONTACT_EMAIL = os.getenv('CONTACT_EMAIL') or EMAIL_USERNAME
    EMAIL_SEND_TIMEOUT_SECONDS = int(os.getenv('EMAIL_SEND_TIMEOUT_SECONDS', '8'))
+   POSTMARK_SERVER_TOKEN = os.getenv('POSTMARK_SERVER_TOKEN')
+   POSTMARK_MESSAGE_STREAM = os.getenv('POSTMARK_MESSAGE_STREAM', 'outbound')
+   POSTMARK_API_URL = os.getenv('POSTMARK_API_URL', 'https://api.postmarkapp.com/email')
 
    # reCAPTCHA configuration  
    RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY')
