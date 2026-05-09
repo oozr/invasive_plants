@@ -1,11 +1,12 @@
 import os
+import smtplib
+from email.message import EmailMessage
 from urllib.parse import urlparse
 
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, session, url_for
-from flask_mail import Message
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
-from app import limiter, mail
+from app import limiter
 from app.utils.auth_store import (
     AuthStore,
     is_allowed_researcher_email,
@@ -117,6 +118,36 @@ def researcher_logged_in() -> bool:
     return bool(researcher_email())
 
 
+def _send_smtp_email(recipient: str, subject: str, body: str):
+    server = current_app.config.get("MAIL_SERVER")
+    port = int(current_app.config.get("MAIL_PORT") or 25)
+    username = current_app.config.get("MAIL_USERNAME")
+    password = current_app.config.get("MAIL_PASSWORD")
+    sender = current_app.config.get("MAIL_DEFAULT_SENDER") or username
+    timeout = max(1, int(current_app.config.get("EMAIL_SEND_TIMEOUT_SECONDS", 8) or 8))
+
+    if not server or not sender or not username or not password:
+        raise RuntimeError("SMTP email is not configured")
+
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = sender
+    message["To"] = recipient
+    message.set_content(body)
+
+    if current_app.config.get("MAIL_USE_SSL"):
+        with smtplib.SMTP_SSL(server, port, timeout=timeout) as smtp:
+            smtp.login(username, password)
+            smtp.send_message(message)
+        return
+
+    with smtplib.SMTP(server, port, timeout=timeout) as smtp:
+        if current_app.config.get("MAIL_USE_TLS"):
+            smtp.starttls()
+        smtp.login(username, password)
+        smtp.send_message(message)
+
+
 def _send_magic_link(email: str, affiliation_name: str, affiliation_ror_id: str, next_url: str) -> str:
     token = _build_login_token(email, affiliation_name, affiliation_ror_id)
     verify_url = url_for("auth.verify", token=token, next=next_url, _external=True)
@@ -132,8 +163,7 @@ This link expires in 30 minutes. If you did not request it, you can ignore this 
     if current_app.config.get("AUTH_DEV_SHOW_MAGIC_LINK"):
         return verify_url
 
-    msg = Message(subject=subject, recipients=[email], body=body)
-    mail.send(msg)
+    _send_smtp_email(email, subject, body)
     return verify_url
 
 
@@ -179,14 +209,14 @@ def login():
             dev_link = _send_magic_link(email, affiliation_name, affiliation_ror_id, next_url)
         except Exception as exc:
             current_app.logger.error("Unable to send researcher login email: %s", exc)
-            flash("We could not send the login email. Please try again later.", "error")
+            flash("We could not send the login email. Please check email delivery settings or try again later.", "error")
             return render_template(
                 "auth/login.html",
                 email=email,
                 affiliation_name=affiliation_name,
                 affiliation_ror_id=affiliation_ror_id,
                 next_url=next_url,
-            ), 500
+            )
 
         return render_template(
             "auth/login_sent.html",

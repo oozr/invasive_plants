@@ -22,6 +22,22 @@ class Config:
    # Email configuration
    EMAIL_USERNAME = os.environ.get('EMAIL_USERNAME')
    EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+   MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+   MAIL_PORT = int(os.getenv('MAIL_PORT', '587'))
+   MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', '1').strip().lower() in {
+      '1',
+      'true',
+      'yes',
+      'on',
+   }
+   MAIL_USE_SSL = os.getenv('MAIL_USE_SSL', '0').strip().lower() in {
+      '1',
+      'true',
+      'yes',
+      'on',
+   }
+   MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER') or EMAIL_USERNAME
+   EMAIL_SEND_TIMEOUT_SECONDS = int(os.getenv('EMAIL_SEND_TIMEOUT_SECONDS', '8'))
 
    # reCAPTCHA configuration  
    RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY')

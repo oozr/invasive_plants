@@ -66,7 +66,12 @@ Copy `.env.example` to `.env` (or export variables another way) and set:
 | Variable | Description |
 | --- | --- |
 | `SECRET_KEY` | Flask session key |
-| `EMAIL_USERNAME` / `EMAIL_PASSWORD` | SMTP credentials for contact form |
+| `EMAIL_USERNAME` / `EMAIL_PASSWORD` | SMTP credentials for contact form and researcher login |
+| `MAIL_SERVER` | SMTP host (default `smtp.gmail.com`) |
+| `MAIL_PORT` | SMTP port (default `587`) |
+| `MAIL_USE_TLS` / `MAIL_USE_SSL` | SMTP encryption flags (defaults `MAIL_USE_TLS=1`, `MAIL_USE_SSL=0`) |
+| `MAIL_DEFAULT_SENDER` | Sender email address (default `EMAIL_USERNAME`) |
+| `EMAIL_SEND_TIMEOUT_SECONDS` | Timeout for researcher login email delivery (default `8`) |
 | `RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` | Google reCAPTCHA keys |
 | `DATA_MODE` | `local_sample` (default) or `remote_production` |
 | `DATA_REMOTE_BASE_URL` | Base URL of the private data service (remote mode) |
