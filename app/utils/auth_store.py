@@ -19,6 +19,25 @@ def email_domain(email: str) -> str:
     return email.rsplit("@", 1)[1].strip().lower()
 
 
+def normalize_affiliation_name(value: str) -> str:
+    return " ".join(str(value or "").strip().split())
+
+
+def parse_allowed_domains(value) -> tuple:
+    if isinstance(value, (list, tuple, set)):
+        raw_parts = value
+    else:
+        raw_parts = str(value or "").split(",")
+
+    domains = []
+    for raw in raw_parts:
+        domain = str(raw or "").strip().lower()
+        if not domain:
+            continue
+        domains.append(domain.lstrip("@"))
+    return tuple(domains)
+
+
 def parse_allowed_suffixes(value) -> tuple:
     if isinstance(value, (list, tuple, set)):
         raw_parts = value
@@ -36,11 +55,13 @@ def parse_allowed_suffixes(value) -> tuple:
     return tuple(suffixes)
 
 
-def is_allowed_researcher_email(email: str, allowed_suffixes) -> bool:
+def is_allowed_researcher_email(email: str, allowed_suffixes, allowed_domains=None) -> bool:
     normalized = normalize_email(email)
     domain = email_domain(normalized)
     if not normalized or not domain:
         return False
+    if domain in parse_allowed_domains(allowed_domains):
+        return True
     return any(domain.endswith(suffix) for suffix in parse_allowed_suffixes(allowed_suffixes))
 
 
@@ -71,26 +92,40 @@ class AuthStore:
                 """
                 CREATE TABLE IF NOT EXISTS researcher_logins (
                     email TEXT PRIMARY KEY,
+                    affiliation_name TEXT NOT NULL DEFAULT '',
+                    affiliation_ror_id TEXT,
                     created_at TEXT NOT NULL,
                     last_login_at TEXT NOT NULL
                 )
                 """
             )
             columns = {row["name"] for row in conn.execute("PRAGMA table_info(researcher_logins)").fetchall()}
-            if "email_domain" in columns:
+            if "email_domain" in columns or "affiliation_name" not in columns or "affiliation_ror_id" not in columns:
                 conn.execute(
                     """
                     CREATE TABLE researcher_logins_new (
                         email TEXT PRIMARY KEY,
+                        affiliation_name TEXT NOT NULL DEFAULT '',
+                        affiliation_ror_id TEXT,
                         created_at TEXT NOT NULL,
                         last_login_at TEXT NOT NULL
                     )
                     """
                 )
+                affiliation_expr = (
+                    "COALESCE(NULLIF(TRIM(affiliation_name), ''), '')"
+                    if "affiliation_name" in columns
+                    else "''"
+                )
+                ror_expr = (
+                    "COALESCE(NULLIF(TRIM(affiliation_ror_id), ''), NULL)"
+                    if "affiliation_ror_id" in columns
+                    else "NULL"
+                )
                 conn.execute(
-                    """
-                    INSERT OR REPLACE INTO researcher_logins_new (email, created_at, last_login_at)
-                    SELECT email, created_at, last_login_at
+                    f"""
+                    INSERT OR REPLACE INTO researcher_logins_new (email, affiliation_name, affiliation_ror_id, created_at, last_login_at)
+                    SELECT email, {affiliation_expr}, {ror_expr}, created_at, last_login_at
                     FROM researcher_logins
                     """
                 )
@@ -100,20 +135,24 @@ class AuthStore:
         finally:
             conn.close()
 
-    def record_login(self, email: str):
+    def record_login(self, email: str, affiliation_name: str, affiliation_ror_id: str = None):
         normalized = normalize_email(email)
+        affiliation = normalize_affiliation_name(affiliation_name)
+        ror_id = str(affiliation_ror_id or "").strip() or None
         now = utc_now_iso()
 
         conn = self._connect()
         try:
             conn.execute(
                 """
-                INSERT INTO researcher_logins (email, created_at, last_login_at)
-                VALUES (?, ?, ?)
+                INSERT INTO researcher_logins (email, affiliation_name, affiliation_ror_id, created_at, last_login_at)
+                VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(email) DO UPDATE SET
+                    affiliation_name = excluded.affiliation_name,
+                    affiliation_ror_id = excluded.affiliation_ror_id,
                     last_login_at = excluded.last_login_at
                 """,
-                (normalized, now, now),
+                (normalized, affiliation, ror_id, now, now),
             )
             conn.commit()
         finally:

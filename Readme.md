@@ -76,6 +76,14 @@ Copy `.env.example` to `.env` (or export variables another way) and set:
 | `OOZR_BASE_URL` | OOZR dashboard base URL (example: `https://oozr.up.railway.app`) |
 | `OOZR_PROJECT_SLUG` | Project slug for activations (default `regulatedplants`) |
 | `OOZR_METRICS_ENABLED` | Enable activation tracking (`1`/`0`, default `0`) |
+| `AUTH_EMAIL_SUFFIXES` | Comma-separated allowed email suffixes for researcher login (defaults include `.edu`, `.gov`, `.ac.uk`, `.edu.au`, selected government suffixes) |
+| `AUTH_EMAIL_DOMAINS` | Comma-separated exact email domains to allow, useful for universities or agencies on normal country domains such as `wur.nl` or `uni-example.de` |
+| `AUTH_DATABASE_PATH` | SQLite path for verified researcher login records (default `auth_users.db`) |
+| `AUTH_DEV_SHOW_MAGIC_LINK` | Show login link on the confirmation page for local development (`1`/`0`, default `0`) |
+| `AUTH_ROR_ENABLED` | Enable ROR-backed affiliation autocomplete and ROR domain matching (`1`/`0`, default `1`) |
+| `AUTH_ROR_ALLOWED_TYPES` | Comma-separated ROR organization types eligible for domain matching (default `education,government,facility,healthcare,nonprofit`) |
+| `ROR_API_BASE_URL` | ROR organizations API base URL (default `https://api.ror.org/v2/organizations`) |
+| `ROR_API_TIMEOUT_SECONDS` | Timeout for ROR API calls (default `4`) |
 
 The app reads these via `Config` in `app/config.py`.
 

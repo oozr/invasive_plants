@@ -37,9 +37,43 @@ class Config:
 
    # Researcher login configuration
    AUTH_DATABASE_PATH = os.getenv('AUTH_DATABASE_PATH', 'auth_users.db')
-   AUTH_EMAIL_SUFFIXES = os.getenv('AUTH_EMAIL_SUFFIXES', '.edu,.gov')
+   AUTH_EMAIL_DOMAINS = os.getenv('AUTH_EMAIL_DOMAINS', '')
+   AUTH_EMAIL_SUFFIXES = os.getenv(
+      'AUTH_EMAIL_SUFFIXES',
+      ','.join([
+         # US
+         '.edu',
+         '.gov',
+         # UK
+         '.ac.uk',
+         '.gov.uk',
+         '.gov.scot',
+         '.gov.wales',
+         '.llyw.cymru',
+         # Australia
+         '.edu.au',
+         '.gov.au',
+         # Canada
+         '.gc.ca',
+         '.canada.ca',
+         # New Zealand
+         '.govt.nz',
+         # Singapore
+         '.edu.sg',
+         '.gov.sg',
+      ])
+   )
    AUTH_TOKEN_MAX_AGE_SECONDS = int(os.getenv('AUTH_TOKEN_MAX_AGE_SECONDS', '1800'))
    AUTH_ANONYMOUS_SAMPLE_LIMIT = int(os.getenv('AUTH_ANONYMOUS_SAMPLE_LIMIT', '5'))
+   AUTH_ROR_ENABLED = os.getenv('AUTH_ROR_ENABLED', '1').strip().lower() in {
+      '1',
+      'true',
+      'yes',
+      'on',
+   }
+   AUTH_ROR_ALLOWED_TYPES = os.getenv('AUTH_ROR_ALLOWED_TYPES', 'education,government,facility,healthcare,nonprofit')
+   ROR_API_BASE_URL = os.getenv('ROR_API_BASE_URL', 'https://api.ror.org/v2/organizations')
+   ROR_API_TIMEOUT_SECONDS = int(os.getenv('ROR_API_TIMEOUT_SECONDS', '4'))
    AUTH_DEV_SHOW_MAGIC_LINK = os.getenv('AUTH_DEV_SHOW_MAGIC_LINK', '0').strip().lower() in {
       '1',
       'true',

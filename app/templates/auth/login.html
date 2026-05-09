@@ -6,12 +6,13 @@
 <section class="auth-panel">
     <h1 class="page-title">Researcher Login</h1>
     <p class="lead">
-        Sign in with a .edu or .gov email address to view full regulated plant lists by jurisdiction.
+        Sign in with an approved university, research institution, or government email address to view full regulated plant lists by jurisdiction.
     </p>
 
     <form class="auth-form" method="post" action="{{ url_for('auth.login') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="next" value="{{ next_url }}">
+        <input type="hidden" id="affiliation_ror_id" name="affiliation_ror_id" value="{{ affiliation_ror_id or '' }}">
 
         <div class="mb-3">
             <label class="form-label" for="email">Email address</label>
@@ -26,7 +27,129 @@
             >
         </div>
 
+        <div class="mb-3">
+            <label class="form-label" for="affiliation_name">Affiliation</label>
+            <div class="affiliation-search">
+                <input
+                    class="form-control"
+                    type="text"
+                    id="affiliation_name"
+                    name="affiliation_name"
+                    value="{{ affiliation_name }}"
+                    autocomplete="organization"
+                    placeholder="University, research institution, or government body"
+                    maxlength="160"
+                    aria-describedby="affiliationHelp"
+                    aria-controls="affiliation-results"
+                    required
+                >
+                <div id="affiliation-results" class="affiliation-results d-none" role="listbox"></div>
+            </div>
+            <div id="affiliationHelp" class="form-text">
+                Select your organization if it appears. Government users can enter their official agency or department name if it is not listed.
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-primary">Send login link</button>
     </form>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('affiliation_name');
+    const hiddenRorId = document.getElementById('affiliation_ror_id');
+    const resultsEl = document.getElementById('affiliation-results');
+    if (!input || !hiddenRorId || !resultsEl) return;
+
+    let requestTimer = null;
+    let activeController = null;
+
+    function hideResults() {
+        resultsEl.classList.add('d-none');
+        resultsEl.innerHTML = '';
+    }
+
+    function resultMeta(item) {
+        const parts = [];
+        if (item.country) parts.push(item.country);
+        if (Array.isArray(item.domains) && item.domains.length) {
+            parts.push(item.domains.slice(0, 2).join(', '));
+        }
+        return parts.join(' · ');
+    }
+
+    function renderResults(results) {
+        resultsEl.innerHTML = '';
+        if (!Array.isArray(results) || !results.length) {
+            hideResults();
+            return;
+        }
+
+        for (const item of results) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'affiliation-result';
+            button.setAttribute('role', 'option');
+            button.dataset.rorId = item.id || '';
+            button.dataset.name = item.name || '';
+
+            const name = document.createElement('span');
+            name.className = 'affiliation-result-name';
+            name.textContent = item.name || 'Unknown organization';
+            button.appendChild(name);
+
+            const metaText = resultMeta(item);
+            if (metaText) {
+                const meta = document.createElement('span');
+                meta.className = 'affiliation-result-meta';
+                meta.textContent = metaText;
+                button.appendChild(meta);
+            }
+
+            button.addEventListener('click', function () {
+                input.value = this.dataset.name;
+                hiddenRorId.value = this.dataset.rorId;
+                hideResults();
+                input.focus();
+            });
+
+            resultsEl.appendChild(button);
+        }
+        resultsEl.classList.remove('d-none');
+    }
+
+    input.addEventListener('input', function () {
+        hiddenRorId.value = '';
+        const query = input.value.trim();
+
+        if (requestTimer) clearTimeout(requestTimer);
+        if (activeController) activeController.abort();
+
+        if (query.length < 3) {
+            hideResults();
+            return;
+        }
+
+        requestTimer = setTimeout(function () {
+            activeController = new AbortController();
+            fetch(`/auth/api/affiliations?q=${encodeURIComponent(query)}`, {
+                signal: activeController.signal
+            })
+                .then(response => response.ok ? response.json() : { results: [] })
+                .then(payload => renderResults(payload.results || []))
+                .catch(error => {
+                    if (error.name !== 'AbortError') hideResults();
+                });
+        }, 300);
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!resultsEl.contains(event.target) && event.target !== input) {
+            hideResults();
+        }
+    });
+});
+</script>
 {% endblock %}
