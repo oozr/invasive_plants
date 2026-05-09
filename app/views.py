@@ -1,7 +1,9 @@
 # app/views.py
+import gzip
 import os
 from datetime import datetime
 from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory, abort, session
+from werkzeug.utils import safe_join
 
 from app import limiter, recaptcha
 from app.utils.state_database import StateDatabase
@@ -176,17 +178,34 @@ def geojson_file(filename: str):
     geo_dir = current_app.config.get("GEOJSON_DIR")
     if not geo_dir:
         return jsonify({"error": "GeoJSON directory not configured"}), 500
+    file_path = safe_join(geo_dir, filename)
+    if not file_path or not os.path.isfile(file_path):
+        abort(404)
 
     data_version = str(current_app.config.get("DATA_VERSION") or "").strip()
     request_version = request.args.get("v", "").strip()
     has_current_version = bool(data_version and request_version == data_version)
     max_age = int(current_app.config.get("GEOJSON_CACHE_MAX_AGE_SECONDS", 31536000))
 
+    accepts_gzip = "gzip" in request.headers.get("Accept-Encoding", "").lower()
+    if has_current_version and accepts_gzip:
+        with open(file_path, "rb") as f:
+            compressed = gzip.compress(f.read(), compresslevel=6)
+        response = current_app.response_class(
+            compressed,
+            mimetype="application/geo+json",
+        )
+        response.headers["Content-Encoding"] = "gzip"
+        response.headers["Vary"] = "Accept-Encoding"
+        response.headers["Cache-Control"] = f"public, max-age={max_age}, immutable"
+        return response
+
     response = send_from_directory(
         geo_dir,
         filename,
         max_age=max_age if has_current_version else 0,
     )
+    response.headers["Vary"] = "Accept-Encoding"
     if has_current_version:
         response.headers["Cache-Control"] = f"public, max-age={max_age}, immutable"
     else:
