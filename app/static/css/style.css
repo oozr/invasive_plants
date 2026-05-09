@@ -233,6 +233,36 @@ textarea.form-control {
    filter: brightness(0) invert(1);
 }
 
+.researcher-email {
+   color: rgba(255, 255, 255, 0.75);
+   max-width: 18rem;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+.nav-logout-form {
+   margin: 0;
+}
+
+.nav-button {
+   background: transparent;
+   border: 0;
+   color: rgba(255, 255, 255, 0.55);
+   cursor: pointer;
+   padding: 0.5rem;
+}
+
+.nav-button:hover,
+.nav-button:focus {
+   color: rgba(255, 255, 255, 0.75);
+   text-decoration: none;
+}
+
+.auth-panel {
+   max-width: 34rem;
+}
+
 /* ========================================
    TABLES
    ======================================== */

@@ -382,6 +382,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return params.toString();
     }
 
+    function researcherLoginUrl() {
+        const next = `${window.location.pathname}${window.location.search}`;
+        return `/auth/login?next=${encodeURIComponent(next || '/')}`;
+    }
+
     function allTogglesOff() {
         return (!toggleState.region && !toggleState.national && !toggleState.international);
     }
@@ -448,10 +453,13 @@ document.addEventListener('DOMContentLoaded', function () {
         return parts.length ? parts.join(' + ') : 'No layers selected';
     }
 
-    function updateTable(country, region, weeds, hasAnyData) {
+    function updateTable(country, region, weeds, hasAnyData, options = {}) {
         const scopeText = buildScopeText();
         const allWeeds = Array.isArray(weeds) ? weeds : [];
-        const sampleWeeds = allWeeds.slice(0, SAMPLE_PLANT_LIMIT);
+        const totalCount = Number.isFinite(options.totalCount) ? options.totalCount : allWeeds.length;
+        const isSample = Boolean(options.isSample);
+        const authenticated = Boolean(options.authenticated);
+        const showFullControls = authenticated && allWeeds.length > SAMPLE_PLANT_LIMIT;
 
         // Title
         const titleLocation = formatLocation(region, country);
@@ -461,9 +469,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const warningEl = document.getElementById('state-warning');
         if (warningEl) {
-            const shouldShowSampleWarning = Boolean(hasAnyData) && sampleWeeds.length > 0;
+            const shouldShowSampleWarning = Boolean(hasAnyData) && isSample && allWeeds.length > 0;
             if (shouldShowSampleWarning) {
-                warningEl.innerHTML = '<strong>Sample only.</strong> For full list please contact our team.';
+                warningEl.innerHTML = `<strong>Sample only.</strong> Showing ${allWeeds.length.toLocaleString()} of ${totalCount.toLocaleString()} regulated plants. <a href="${researcherLoginUrl()}">Sign in with a .edu or .gov email</a> to view the full list.`;
                 warningEl.classList.remove('d-none');
             } else {
                 warningEl.innerHTML = '';
@@ -473,7 +481,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const subtitleEl = document.getElementById('state-subtitle');
         if (subtitleEl) {
-            subtitleEl.textContent = scopeText ? `Filters: ${scopeText}` : '';
+            const countText = totalCount > 0 ? `Plants: ${totalCount.toLocaleString()}` : '';
+            subtitleEl.textContent = [scopeText ? `Filters: ${scopeText}` : '', countText].filter(Boolean).join(' · ');
         }
 
         const table = document.getElementById('species-table');
@@ -493,7 +502,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         $(table).DataTable({
-            data: sampleWeeds,
+            data: allWeeds,
             columns: [
                 {
                     data: 'canonical_name',
@@ -542,10 +551,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
             ],
-            paging: false,
-            searching: false,
-            info: false,
-            lengthChange: false,
+            paging: showFullControls && allWeeds.length > 25,
+            searching: showFullControls,
+            info: showFullControls,
+            lengthChange: showFullControls && allWeeds.length > 25,
+            pageLength: 25,
             order: [[0, 'asc']],
             autoWidth: false,
             width: '100%',
@@ -583,7 +593,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 const resolvedGeo = result.geo_region || {};
                 const resolvedCountry = resolvedGeo.country || country;
                 const resolvedRegion = resolvedGeo.region || region;
-                updateTable(resolvedCountry, resolvedRegion, weeds, hasAnyData);
+                updateTable(resolvedCountry, resolvedRegion, weeds, hasAnyData, {
+                    authenticated: !Array.isArray(result) && !!result.authenticated,
+                    isSample: !Array.isArray(result) && !!result.is_sample,
+                    sampleLimit: !Array.isArray(result) ? result.sample_limit : SAMPLE_PLANT_LIMIT,
+                    totalCount: !Array.isArray(result) && Number.isFinite(result.total_count)
+                        ? result.total_count
+                        : weeds.length
+                });
                 sendAhaActivationIfNeeded(weeds.length);
             })
             .catch(err => {

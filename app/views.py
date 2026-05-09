@@ -1,7 +1,7 @@
 # app/views.py
 import os
 from datetime import datetime
-from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory, abort
+from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory, abort, session
 from flask_mail import Message
 
 from app import mail, limiter, recaptcha
@@ -132,6 +132,18 @@ def region_weeds():
     )
     if not payload.get("geo_region"):
         return jsonify({"error": "geo_region_id not found"}), 404
+
+    authenticated = bool(session.get("researcher_email"))
+    sample_limit = max(0, int(current_app.config.get("AUTH_ANONYMOUS_SAMPLE_LIMIT", 5)))
+    weeds = payload.get("weeds") or []
+    total_count = len(weeds)
+    if not authenticated:
+        payload["weeds"] = weeds[:sample_limit]
+
+    payload["authenticated"] = authenticated
+    payload["sample_limit"] = sample_limit
+    payload["total_count"] = total_count
+    payload["is_sample"] = (not authenticated) and total_count > len(payload.get("weeds") or [])
 
     return jsonify(payload)
 

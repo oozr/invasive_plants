@@ -1,5 +1,5 @@
 # __init__.py
-from flask import Flask
+from flask import Flask, session
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from app.config import Config
@@ -52,11 +52,21 @@ def create_app():
 
     # Import and register blueprints
     from app.views import home, species, blog, method, api_page, about
+    from app.auth_routes import auth
     app.register_blueprint(home)
     app.register_blueprint(species)
     app.register_blueprint(blog)
     app.register_blueprint(method)
     app.register_blueprint(api_page)
     app.register_blueprint(about)
+    app.register_blueprint(auth)
+
+    @app.context_processor
+    def inject_auth_state():
+        researcher_email = session.get("researcher_email")
+        return {
+            "researcher_email": researcher_email,
+            "researcher_logged_in": bool(researcher_email),
+        }
 
     return app

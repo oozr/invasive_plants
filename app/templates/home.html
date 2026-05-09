@@ -64,6 +64,11 @@
 <div class="map-section-intro mb-3">
     <p class="mb-2 map-description">
         Explore the interactive map. Toggle between regional, national, and international regulations.
+        {% if researcher_logged_in %}
+            You are signed in for full jurisdiction lists.
+        {% else %}
+            Sign in with a .edu or .gov email to view full jurisdiction lists.
+        {% endif %}
     </p>
 </div>
 

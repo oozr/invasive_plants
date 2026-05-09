@@ -22,6 +22,7 @@ class StateDatabase(DatabaseBase):
         self._geo_regions_cache: Optional[List[Dict]] = None
         self._geo_regions_signature: Optional[Tuple] = None
         self._jurisdiction_columns_cache: Optional[set] = None
+        self._plant_columns_cache: Optional[set] = None
 
     COUNTRY_NAME_ALIASES = {
         "federal republic of germany": "Germany",
@@ -248,6 +249,16 @@ class StateDatabase(DatabaseBase):
     def _supports_jurisdiction_column(self, conn, name: str) -> bool:
         return name in self._jurisdiction_columns(conn)
 
+    def _plant_columns(self, conn) -> set:
+        if self._plant_columns_cache is not None:
+            return self._plant_columns_cache
+        rows = conn.execute("PRAGMA table_info(plants)").fetchall()
+        self._plant_columns_cache = {row["name"] for row in rows}
+        return self._plant_columns_cache
+
+    def _supports_plant_column(self, conn, name: str) -> bool:
+        return name in self._plant_columns(conn)
+
     def _fallback_jurisdiction_uid(self, country: str, region: str, j_type: str) -> str:
         country_part = self._slugify(country)
         region_part = self._slugify(region) if region else "country"
@@ -473,16 +484,17 @@ class StateDatabase(DatabaseBase):
             clauses = []
             params = []
             has_uid_column = self._supports_jurisdiction_column(conn, "jurisdiction_uid")
+            species_id_expr = "p.species_id" if self._supports_plant_column(conn, "species_id") else "NULL"
 
             if include_region:
                 if jurisdiction_uid and has_uid_column:
                     clauses.append(
-                        """
+                        f"""
                         SELECT
                             p.canonical_name,
                             p.english_name AS common_name,
                             p.family_name,
-                            p.species_id,
+                            {species_id_expr} AS species_id,
                             p.gbif_usage_key AS usage_key,
                             COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
                             'region' AS count_source_level
@@ -497,12 +509,12 @@ class StateDatabase(DatabaseBase):
                     params.append(jurisdiction_uid)
                 else:
                     clauses.append(
-                        """
+                        f"""
                         SELECT
                             p.canonical_name,
                             p.english_name AS common_name,
                             p.family_name,
-                            p.species_id,
+                            {species_id_expr} AS species_id,
                             p.gbif_usage_key AS usage_key,
                             COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
                             'region' AS count_source_level
@@ -519,12 +531,12 @@ class StateDatabase(DatabaseBase):
 
             if include_national:
                 clauses.append(
-                    """
+                    f"""
                     SELECT
                         p.canonical_name,
                         p.english_name AS common_name,
                         p.family_name,
-                        p.species_id,
+                        {species_id_expr} AS species_id,
                         p.gbif_usage_key AS usage_key,
                         COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
                         'national' AS count_source_level
@@ -541,12 +553,12 @@ class StateDatabase(DatabaseBase):
 
             if include_international and country in EU_MEMBERS:
                 clauses.append(
-                    """
+                    f"""
                     SELECT
                         p.canonical_name,
                         p.english_name AS common_name,
                         p.family_name,
-                        p.species_id,
+                        {species_id_expr} AS species_id,
                         p.gbif_usage_key AS usage_key,
                         COALESCE(NULLIF(TRIM(j.authority_name), ''), 'Unknown') AS source_authority,
                         'international' AS count_source_level

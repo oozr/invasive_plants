@@ -6,7 +6,15 @@ load_dotenv(override=False)
 
 class Config:
    # Secret key for sessions/cookies
-   SECRET_KEY = os.getenv('SECRET_KEY')
+   SECRET_KEY = os.getenv('SECRET_KEY', 'dev-only-secret-key-change-me')
+   SESSION_COOKIE_HTTPONLY = True
+   SESSION_COOKIE_SAMESITE = 'Lax'
+   SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', '0').strip().lower() in {
+      '1',
+      'true',
+      'yes',
+      'on',
+   }
    
    # Database configuration
    DATABASE_PATH = os.getenv('DATABASE_PATH', 'weeds.db')
@@ -26,6 +34,18 @@ class Config:
    OOZR_BASE_URL = os.getenv('OOZR_BASE_URL', '').rstrip('/')
    OOZR_PROJECT_SLUG = os.getenv('OOZR_PROJECT_SLUG', 'regulatedplants')
    OOZR_METRICS_ENABLED = os.getenv('OOZR_METRICS_ENABLED', '0')
+
+   # Researcher login configuration
+   AUTH_DATABASE_PATH = os.getenv('AUTH_DATABASE_PATH', 'auth_users.db')
+   AUTH_EMAIL_SUFFIXES = os.getenv('AUTH_EMAIL_SUFFIXES', '.edu,.gov')
+   AUTH_TOKEN_MAX_AGE_SECONDS = int(os.getenv('AUTH_TOKEN_MAX_AGE_SECONDS', '1800'))
+   AUTH_ANONYMOUS_SAMPLE_LIMIT = int(os.getenv('AUTH_ANONYMOUS_SAMPLE_LIMIT', '5'))
+   AUTH_DEV_SHOW_MAGIC_LINK = os.getenv('AUTH_DEV_SHOW_MAGIC_LINK', '0').strip().lower() in {
+      '1',
+      'true',
+      'yes',
+      'on',
+   }
 
    # Highlights override (single country name; optional)
    LATEST_COUNTRY_NAME = os.getenv('LATEST_COUNTRY_NAME', 'South Africa')

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Researcher Login · Regulated Plants Database{% endblock %}
+
+{% block content %}
+<section class="auth-panel">
+    <h1 class="page-title">Researcher Login</h1>
+    <p class="lead">
+        Sign in with a .edu or .gov email address to view full regulated plant lists by jurisdiction.
+    </p>
+
+    <form class="auth-form" method="post" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next_url }}">
+
+        <div class="mb-3">
+            <label class="form-label" for="email">Email address</label>
+            <input
+                class="form-control"
+                type="email"
+                id="email"
+                name="email"
+                value="{{ email }}"
+                autocomplete="email"
+                required
+            >
+        </div>
+
+        <button type="submit" class="btn btn-primary">Send login link</button>
+    </form>
+</section>
+{% endblock %}
