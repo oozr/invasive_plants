@@ -677,14 +677,14 @@ document.addEventListener('DOMContentLoaded', function () {
     /******************************
      * DATA LOADING
      ******************************/
-    fetch(`/api/region-weed-counts?${buildQueryParams()}`)
-        .then(r => r.json())
-        .then(list => {
-            const lookup = buildRegionLookup(list);
-            regionWeedData = lookup.byId;
-            regionWeedDataByLegacyKey = lookup.byLegacyKey;
-            return fetch('/api/geojson-files');
+    const regionCountsPromise = fetch(`/api/region-weed-counts?${buildQueryParams()}`)
+        .then(r => {
+            if (!r.ok) throw new Error('Failed to load region weed counts');
+            return r.json();
         })
+        .then(list => buildRegionLookup(list));
+
+    const geojsonPromise = fetch('/api/geojson-files')
         .then(r => {
             if (!r.ok) throw new Error('Failed to load GeoJSON file list');
             return r.json();
@@ -723,8 +723,13 @@ document.addEventListener('DOMContentLoaded', function () {
             );
 
             return Promise.all(geoJsonPromises);
-        })
-        .then(results => {
+        });
+
+    Promise.all([regionCountsPromise, geojsonPromise])
+        .then(([lookup, results]) => {
+            regionWeedData = lookup.byId;
+            regionWeedDataByLegacyKey = lookup.byLegacyKey;
+
             const combinedFeatures = [];
             results.forEach(result => {
                 if (result.features && Array.isArray(result.features)) {
