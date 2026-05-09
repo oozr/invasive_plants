@@ -248,6 +248,7 @@ def verify():
 
     _get_auth_store().record_login(email, affiliation_name, affiliation_ror_id)
     session.clear()
+    session.permanent = True
     session["researcher_email"] = email
     session["researcher_affiliation_name"] = affiliation_name
     session["researcher_affiliation_ror_id"] = affiliation_ror_id

@@ -66,6 +66,7 @@ Copy `.env.example` to `.env` (or export variables another way) and set:
 | Variable | Description |
 | --- | --- |
 | `SECRET_KEY` | Flask session key |
+| `PERMANENT_SESSION_LIFETIME_DAYS` | Researcher login session lifetime in days (default `90`) |
 | `MAIL_DEFAULT_SENDER` | Verified Postmark sender address |
 | `CONTACT_EMAIL` | Optional contact form recipient override (defaults to `MAIL_DEFAULT_SENDER`) |
 | `EMAIL_SEND_TIMEOUT_SECONDS` | Timeout for email delivery (default `8`) |

@@ -1,6 +1,7 @@
 # app/config.py
 from dotenv import load_dotenv
 import os
+from datetime import timedelta
 
 load_dotenv(override=False)
 
@@ -15,6 +16,9 @@ class Config:
       'yes',
       'on',
    }
+   PERMANENT_SESSION_LIFETIME = timedelta(
+      days=int(os.getenv('PERMANENT_SESSION_LIFETIME_DAYS', '90'))
+   )
    
    # Database configuration
    DATABASE_PATH = os.getenv('DATABASE_PATH', 'weeds.db')
