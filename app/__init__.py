@@ -1,6 +1,5 @@
 # __init__.py
 from flask import Flask, session
-from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from app.config import Config
 from app.utils.data_manager import DataManager
@@ -9,7 +8,6 @@ from flask_limiter.util import get_remote_address
 from app.utils.custom_recaptcha import CustomReCaptcha
 
 
-mail = Mail()
 csrf = CSRFProtect()
 limiter = Limiter(
     key_func=get_remote_address,
@@ -17,22 +15,17 @@ limiter = Limiter(
 )
 recaptcha = CustomReCaptcha()
 
-__all__ = ['mail', 'csrf', 'limiter', 'recaptcha', 'create_app']
+__all__ = ['csrf', 'limiter', 'recaptcha', 'create_app']
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Mail configuration
-    app.config['MAIL_USERNAME'] = app.config.get('EMAIL_USERNAME')
-    app.config['MAIL_PASSWORD'] = app.config.get('EMAIL_PASSWORD')
-    
     # reCAPTCHA configuration
     app.config['RECAPTCHA_SITE_KEY'] = app.config.get('RECAPTCHA_SITE_KEY')
     app.config['RECAPTCHA_SECRET_KEY'] = app.config.get('RECAPTCHA_SECRET_KEY')
     
     # Initialize extensions
-    mail.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
     recaptcha.init_app(app)

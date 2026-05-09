@@ -20,25 +20,8 @@ class Config:
    DATABASE_PATH = os.getenv('DATABASE_PATH', 'weeds.db')
    
    # Email configuration
-   EMAIL_PROVIDER = os.getenv('EMAIL_PROVIDER', 'smtp')
-   EMAIL_USERNAME = os.environ.get('EMAIL_USERNAME')
-   EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
-   MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-   MAIL_PORT = int(os.getenv('MAIL_PORT', '587'))
-   MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', '1').strip().lower() in {
-      '1',
-      'true',
-      'yes',
-      'on',
-   }
-   MAIL_USE_SSL = os.getenv('MAIL_USE_SSL', '0').strip().lower() in {
-      '1',
-      'true',
-      'yes',
-      'on',
-   }
-   MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER') or EMAIL_USERNAME
-   CONTACT_EMAIL = os.getenv('CONTACT_EMAIL') or EMAIL_USERNAME
+   MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER')
+   CONTACT_EMAIL = os.getenv('CONTACT_EMAIL')
    EMAIL_SEND_TIMEOUT_SECONDS = int(os.getenv('EMAIL_SEND_TIMEOUT_SECONDS', '8'))
    POSTMARK_SERVER_TOKEN = os.getenv('POSTMARK_SERVER_TOKEN')
    POSTMARK_MESSAGE_STREAM = os.getenv('POSTMARK_MESSAGE_STREAM', 'outbound')

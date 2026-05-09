@@ -66,15 +66,10 @@ Copy `.env.example` to `.env` (or export variables another way) and set:
 | Variable | Description |
 | --- | --- |
 | `SECRET_KEY` | Flask session key |
-| `EMAIL_PROVIDER` | Email delivery provider: `smtp` or `postmark` (default `smtp`) |
-| `EMAIL_USERNAME` / `EMAIL_PASSWORD` | SMTP credentials for contact form and researcher login |
-| `MAIL_SERVER` | SMTP host (default `smtp.gmail.com`) |
-| `MAIL_PORT` | SMTP port (default `587`) |
-| `MAIL_USE_TLS` / `MAIL_USE_SSL` | SMTP encryption flags (defaults `MAIL_USE_TLS=1`, `MAIL_USE_SSL=0`) |
-| `MAIL_DEFAULT_SENDER` | Sender email address (default `EMAIL_USERNAME`) |
-| `CONTACT_EMAIL` | Contact form recipient (default `EMAIL_USERNAME`) |
+| `MAIL_DEFAULT_SENDER` | Verified Postmark sender address |
+| `CONTACT_EMAIL` | Contact form recipient |
 | `EMAIL_SEND_TIMEOUT_SECONDS` | Timeout for email delivery (default `8`) |
-| `POSTMARK_SERVER_TOKEN` | Postmark server token when `EMAIL_PROVIDER=postmark` |
+| `POSTMARK_SERVER_TOKEN` | Postmark server token |
 | `POSTMARK_MESSAGE_STREAM` | Postmark message stream (default `outbound`) |
 | `RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` | Google reCAPTCHA keys |
 | `DATA_MODE` | `local_sample` (default) or `remote_production` |
