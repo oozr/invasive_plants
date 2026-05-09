@@ -100,6 +100,7 @@ class Config:
    CACHE_CONTROL = 'no-store, no-cache, must-revalidate'
    PRAGMA = 'no-cache'
    EXPIRES = '-1'
+   GEOJSON_CACHE_MAX_AGE_SECONDS = int(os.getenv('GEOJSON_CACHE_MAX_AGE_SECONDS', '31536000'))
 
    # Data service configuration
    DATA_MODE = os.getenv('DATA_MODE', 'local_sample')

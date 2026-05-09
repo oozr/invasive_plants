@@ -78,6 +78,7 @@ def index():
     return render_template(
         "home.html",
         geojson_path=current_app.config.get("GEOJSON_URL_PATH", "/data/geojson/"),
+        data_version=current_app.config.get("DATA_VERSION", ""),
         oozr_base_url=current_app.config.get("OOZR_BASE_URL", ""),
         oozr_project_slug=current_app.config.get("OOZR_PROJECT_SLUG", "regulatedplants"),
         oozr_metrics_enabled=metrics_enabled,
@@ -175,7 +176,22 @@ def geojson_file(filename: str):
     geo_dir = current_app.config.get("GEOJSON_DIR")
     if not geo_dir:
         return jsonify({"error": "GeoJSON directory not configured"}), 500
-    return send_from_directory(geo_dir, filename)
+
+    data_version = str(current_app.config.get("DATA_VERSION") or "").strip()
+    request_version = request.args.get("v", "").strip()
+    has_current_version = bool(data_version and request_version == data_version)
+    max_age = int(current_app.config.get("GEOJSON_CACHE_MAX_AGE_SECONDS", 31536000))
+
+    response = send_from_directory(
+        geo_dir,
+        filename,
+        max_age=max_age if has_current_version else 0,
+    )
+    if has_current_version:
+        response.headers["Cache-Control"] = f"public, max-age={max_age}, immutable"
+    else:
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 @home.route("/api/home-highlights")
