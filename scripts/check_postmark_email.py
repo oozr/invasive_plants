@@ -12,15 +12,15 @@ from app.utils.email_sender import send_email
 
 def main():
     parser = argparse.ArgumentParser(description="Check configured Postmark email delivery.")
-    parser.add_argument("--to", help="Recipient for a real test email. Defaults to CONTACT_EMAIL.")
+    parser.add_argument("--to", help="Recipient for a real test email. Defaults to MAIL_DEFAULT_SENDER.")
     args = parser.parse_args()
 
     app = create_app()
     config = app.config
 
-    recipient = args.to or config.get("CONTACT_EMAIL")
+    recipient = args.to or config.get("MAIL_DEFAULT_SENDER")
     if not recipient:
-        print("No recipient configured. Pass --to or set CONTACT_EMAIL.", file=sys.stderr)
+        print("No recipient configured. Pass --to or set MAIL_DEFAULT_SENDER.", file=sys.stderr)
         return 2
 
     try:

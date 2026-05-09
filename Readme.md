@@ -67,7 +67,7 @@ Copy `.env.example` to `.env` (or export variables another way) and set:
 | --- | --- |
 | `SECRET_KEY` | Flask session key |
 | `MAIL_DEFAULT_SENDER` | Verified Postmark sender address |
-| `CONTACT_EMAIL` | Contact form recipient |
+| `CONTACT_EMAIL` | Optional contact form recipient override (defaults to `MAIL_DEFAULT_SENDER`) |
 | `EMAIL_SEND_TIMEOUT_SECONDS` | Timeout for email delivery (default `8`) |
 | `POSTMARK_SERVER_TOKEN` | Postmark server token |
 | `POSTMARK_MESSAGE_STREAM` | Postmark message stream (default `outbound`) |
