@@ -83,6 +83,15 @@
    line-height: 1.4;
 }
 
+.species-access-summary {
+   border-left: 4px solid var(--unu-blue);
+}
+
+.species-access-summary a {
+   color: var(--unu-blue);
+   font-weight: 600;
+}
+
 .text-primary {
    color: var(--black) !important;
 }

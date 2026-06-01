@@ -114,6 +114,69 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/(^|[\s\-\/,(])([a-z])/g, (_, prefix, letter) => `${prefix}${letter.toUpperCase()}`);
     }
 
+    function formatJurisdictionCount(count) {
+        const number = Number(count || 0);
+        return `${number.toLocaleString()} ${number === 1 ? 'jurisdiction' : 'jurisdictions'}`;
+    }
+
+    function renderAnonymousRegulationSummary(statesList, jurisdictionCount) {
+        const loginUrl = statesList.dataset.researcherLoginUrl || '/auth/login';
+        const apiRequestUrl = statesList.dataset.apiRequestUrl || '/api';
+
+        if (!jurisdictionCount) {
+            statesList.innerHTML = `
+                <div class="list-group-item">
+                    <p class="mb-1">No regulations found for this species.</p>
+                </div>
+            `;
+            return;
+        }
+
+        statesList.innerHTML = `
+            <div class="list-group-item species-access-summary">
+                <h5 class="mb-2">Regulated in ${formatJurisdictionCount(jurisdictionCount)}</h5>
+                <p class="mb-0">
+                    Detailed jurisdiction lists are available to signed-in researchers.
+                    <a href="${loginUrl}">Log in as a researcher</a> or
+                    <a href="${apiRequestUrl}">request API access</a>.
+                </p>
+            </div>
+        `;
+    }
+
+    function normalizeRegulationResponse(response) {
+        if (!response || typeof response !== 'object') {
+            return {
+                authenticated: true,
+                jurisdiction_count: 0,
+                regulations_by_country: {}
+            };
+        }
+
+        if (
+            Object.prototype.hasOwnProperty.call(response, 'regulations_by_country') ||
+            Object.prototype.hasOwnProperty.call(response, 'authenticated') ||
+            Object.prototype.hasOwnProperty.call(response, 'jurisdiction_count')
+        ) {
+            return {
+                authenticated: Boolean(response.authenticated),
+                jurisdiction_count: Number(response.jurisdiction_count || 0),
+                regulations_by_country: response.regulations_by_country || {}
+            };
+        }
+
+        // Backward compatibility for older local servers that returned only the grouped map.
+        const count = Object.values(response).reduce((total, jurisdictions) => {
+            return total + (Array.isArray(jurisdictions) ? jurisdictions.length : 0);
+        }, 0);
+
+        return {
+            authenticated: true,
+            jurisdiction_count: count,
+            regulations_by_country: response
+        };
+    }
+
     function displayWeedDetails(selectedWeed) {
         let displayName = getPrimaryCommonName(selectedWeed.common_name);
         if (!displayName || displayName.includes('No English common names available')) {
@@ -159,9 +222,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!response.ok) throw new Error('Network response was not ok');
                 return response.json();
             })
-            .then(regulationsByCountry => {
+            .then(regulationResponse => {
+                const normalizedResponse = normalizeRegulationResponse(regulationResponse);
+                const regulationsByCountry = normalizedResponse.regulations_by_country;
                 const statesList = document.getElementById('statesList');
                 statesList.innerHTML = '';
+
+                if (!normalizedResponse.authenticated) {
+                    renderAnonymousRegulationSummary(statesList, normalizedResponse.jurisdiction_count);
+                    document.getElementById('results').classList.remove('d-none');
+                    return;
+                }
 
                 if (!regulationsByCountry || Object.keys(regulationsByCountry).length === 0) {
                     statesList.innerHTML = `

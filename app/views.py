@@ -284,6 +284,28 @@ def species_by_id(species_id: str):
     return jsonify(result)
 
 
+def _jurisdiction_count(regulations_by_group: dict) -> int:
+    if not isinstance(regulations_by_group, dict):
+        return 0
+    return sum(
+        len(jurisdictions)
+        for jurisdictions in regulations_by_group.values()
+        if isinstance(jurisdictions, list)
+    )
+
+
+def _species_regulation_payload(regulations_by_group: dict):
+    jurisdiction_count = _jurisdiction_count(regulations_by_group)
+    authenticated = bool(session.get("researcher_email"))
+    payload = {
+        "authenticated": authenticated,
+        "jurisdiction_count": jurisdiction_count,
+    }
+    if authenticated:
+        payload["regulations_by_country"] = regulations_by_group
+    return jsonify(payload)
+
+
 @species.route("/api/weed-states/by-key/<int:usage_key>")
 def weed_states_by_key(usage_key: int):
     """
@@ -293,7 +315,7 @@ def weed_states_by_key(usage_key: int):
     """
     try:
         regulations_by_group = _get_species_db().get_states_by_usage_key(usage_key)
-        return jsonify(regulations_by_group)
+        return _species_regulation_payload(regulations_by_group)
     except Exception as e:
         current_app.logger.error(f"Error fetching states for usage key {usage_key}: {str(e)}")
         return jsonify({"error": "Failed to fetch states"}), 500
@@ -307,7 +329,7 @@ def weed_states_by_species_id(species_id: str):
     """
     try:
         regulations_by_group = _get_species_db().get_states_by_species_id(species_id)
-        return jsonify(regulations_by_group)
+        return _species_regulation_payload(regulations_by_group)
     except Exception as e:
         current_app.logger.error(f"Error fetching states for species ID {species_id}: {str(e)}")
         return jsonify({"error": "Failed to fetch states"}), 500
