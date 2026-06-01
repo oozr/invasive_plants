@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}API Portal - Regulated Plants Database{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/api.css') }}">
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">API Portal</h1>
+<p class="lead mb-4">Subscriber account and integration details.</p>
+
+<section class="home-highlights api-summary mb-4" aria-label="Subscriber account summary">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="highlight-card">
+                <p class="highlight-label">Account</p>
+                <span class="highlight-value">{{ org }}</span>
+                <span class="highlight-common">{{ email }}</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="highlight-card">
+                <p class="highlight-label">Plan</p>
+                <span class="highlight-value">{{ plan }}</span>
+                <span class="highlight-common">Subscription enforcement will connect to billing later.</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="highlight-card">
+                <p class="highlight-label">API Status</p>
+                <span class="highlight-value">Token required</span>
+                <span class="highlight-common">Use your issued bearer token with protected /v1 endpoints.</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="api-section">
+    <h2>Integration example</h2>
+    <div class="api-code-panel">
+        <div class="api-code-panel-header">Authenticated request</div>
+<pre>curl -H "Authorization: Bearer &lt;your-api-token&gt;" \
+  "{{ api_service_base_url }}/v1/regulatory-check?plant_query=Cortaderia%20jubata&amp;country=US&amp;region=CA"</pre>
+    </div>
+</section>
+
+<section class="api-section">
+    <h2>Resources</h2>
+    <div class="api-action-row">
+        <a class="btn btn-primary" href="{{ url_for('api_page.docs') }}">Open developer documentation</a>
+        <a class="btn btn-outline-dark" href="{{ url_for('api_page.openapi_json') }}">Download OpenAPI JSON</a>
+        <form method="post" action="{{ url_for('api_page.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline-dark" type="submit">Sign out</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

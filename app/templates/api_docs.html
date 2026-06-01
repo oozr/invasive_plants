@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}API Docs - Regulated Plants Database{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/api.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Developer Documentation</h1>
+<p class="lead mb-4">OpenAPI documentation for the Regulated Plants API.</p>
+<div id="swagger-ui"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>
+    window.addEventListener("load", function () {
+        window.ui = SwaggerUIBundle({
+            url: "{{ url_for('api_page.openapi_json') }}",
+            dom_id: "#swagger-ui",
+            deepLinking: true,
+            persistAuthorization: true,
+            layout: "BaseLayout"
+        });
+    });
+</script>
+{% endblock %}

@@ -1,9 +1,14 @@
 # app/views.py
 import gzip
+import hmac
+import json
 import os
 from datetime import datetime
+from urllib.parse import urlparse
+import requests as http_requests
 from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory, abort, session
 from werkzeug.utils import safe_join
+from werkzeug.security import check_password_hash
 
 from app import limiter, recaptcha
 from app.utils.state_database import StateDatabase
@@ -354,9 +359,196 @@ def index():
 # ----------------------------
 # API page routes
 # ----------------------------
+def _safe_api_next_path(value: str) -> str:
+    parsed = urlparse(value or "")
+    if parsed.scheme or parsed.netloc:
+        return url_for("api_page.portal")
+    if not parsed.path.startswith("/api"):
+        return url_for("api_page.portal")
+    return parsed.path or url_for("api_page.portal")
+
+
+def _api_portal_configured() -> bool:
+    email = (current_app.config.get("API_PORTAL_EMAIL") or "").strip()
+    password = current_app.config.get("API_PORTAL_PASSWORD") or ""
+    password_hash = current_app.config.get("API_PORTAL_PASSWORD_HASH") or ""
+    return bool(email and (password or password_hash))
+
+
+def _api_portal_credentials_valid(email: str, password: str) -> bool:
+    expected_email = (current_app.config.get("API_PORTAL_EMAIL") or "").strip().lower()
+    if not expected_email or not hmac.compare_digest(email, expected_email):
+        return False
+
+    password_hash = current_app.config.get("API_PORTAL_PASSWORD_HASH") or ""
+    if password_hash:
+        return check_password_hash(password_hash, password)
+
+    expected_password = current_app.config.get("API_PORTAL_PASSWORD") or ""
+    if not expected_password:
+        return False
+    return hmac.compare_digest(password, expected_password)
+
+
+def _api_demo_rate_limit() -> str:
+    return current_app.config.get("API_DEMO_RATE_LIMIT", "30 per hour")
+
+
+def _api_demo_string(value, limit: int) -> str:
+    return str(value or "").strip()[:limit]
+
+
+def _api_demo_payload():
+    incoming = request.get_json(silent=True) or {}
+    if not isinstance(incoming, dict):
+        incoming = {}
+
+    ship_to = incoming.get("ship_to")
+    if not isinstance(ship_to, dict):
+        ship_to = {}
+
+    plant_query = _api_demo_string(incoming.get("plant_query") or incoming.get("plant"), 200)
+    country = _api_demo_string(ship_to.get("country") or incoming.get("country"), 64)
+    region = _api_demo_string(
+        ship_to.get("region") or incoming.get("region") or incoming.get("state"),
+        64,
+    )
+    return plant_query, country, region
+
+
 @api_page.route("")
 def api_index():
-    return render_template("api.html")
+    return render_template(
+        "api.html",
+        api_service_base_url=current_app.config.get("API_SERVICE_BASE_URL", "").rstrip("/"),
+    )
+
+
+@api_page.route("/login", methods=["GET", "POST"])
+def login():
+    next_path = _safe_api_next_path(request.values.get("next") or url_for("api_page.portal"))
+    error = None
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        password = request.form.get("password") or ""
+        if _api_portal_credentials_valid(email, password):
+            session["api_portal_email"] = email
+            session["api_portal_org"] = current_app.config.get("API_PORTAL_ORG")
+            session["api_portal_plan"] = current_app.config.get("API_PORTAL_PLAN")
+            return redirect(next_path)
+        error = "The email or password was not recognized."
+
+    return render_template(
+        "api_login.html",
+        error=error,
+        next_path=next_path,
+        portal_configured=_api_portal_configured(),
+    )
+
+
+@api_page.route("/logout", methods=["POST"])
+def logout():
+    session.pop("api_portal_email", None)
+    session.pop("api_portal_org", None)
+    session.pop("api_portal_plan", None)
+    return redirect(url_for("api_page.api_index"))
+
+
+@api_page.route("/demo/regulatory-check", methods=["POST"])
+@limiter.limit(_api_demo_rate_limit)
+def demo_regulatory_check():
+    plant_query, country, region = _api_demo_payload()
+    if not plant_query:
+        return jsonify({"error": "plant_query is required"}), 400
+    if not country:
+        return jsonify({"error": "ship_to.country is required"}), 400
+
+    base_url = (current_app.config.get("API_SERVICE_BASE_URL") or "").rstrip("/")
+    if not base_url:
+        return jsonify({"error": "API service base URL is not configured"}), 500
+
+    ship_to = {"country": country}
+    if region:
+        ship_to["region"] = region
+
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    demo_token = current_app.config.get("API_DEMO_TOKEN") or ""
+    if demo_token:
+        headers["Authorization"] = f"Bearer {demo_token}"
+
+    upstream_url = f"{base_url}/v1/regulatory-check"
+    try:
+        upstream_response = http_requests.post(
+            upstream_url,
+            json={"plant_query": plant_query, "ship_to": ship_to},
+            headers=headers,
+            timeout=max(1, int(current_app.config.get("API_DEMO_TIMEOUT_SECONDS", 8))),
+        )
+    except http_requests.RequestException as exc:
+        current_app.logger.warning("API demo request failed: %s", exc)
+        return jsonify({"error": "The API service is not reachable right now."}), 502
+
+    try:
+        payload = upstream_response.json()
+    except ValueError:
+        current_app.logger.warning(
+            "API demo received non-JSON response from %s with status %s",
+            upstream_url,
+            upstream_response.status_code,
+        )
+        return jsonify({"error": "The API service returned an unreadable response."}), 502
+
+    if upstream_response.status_code in {401, 403}:
+        return jsonify(
+            {
+                "error": "Demo API access is not configured.",
+                "upstream_status": upstream_response.status_code,
+            }
+        ), 502
+    if upstream_response.status_code >= 500:
+        return jsonify(
+            {
+                "error": "The API service returned an upstream error.",
+                "upstream_status": upstream_response.status_code,
+            }
+        ), 502
+    return jsonify(payload), upstream_response.status_code
+
+
+@api_page.route("/portal")
+def portal():
+    email = session.get("api_portal_email")
+    if not email:
+        return redirect(url_for("api_page.login", next=url_for("api_page.portal")))
+
+    return render_template(
+        "api_portal.html",
+        email=email,
+        org=session.get("api_portal_org") or current_app.config.get("API_PORTAL_ORG"),
+        plan=session.get("api_portal_plan") or current_app.config.get("API_PORTAL_PLAN"),
+        api_service_base_url=current_app.config.get("API_SERVICE_BASE_URL", "").rstrip("/"),
+    )
+
+
+@api_page.route("/docs")
+def docs():
+    return render_template("api_docs.html")
+
+
+@api_page.route("/openapi.json")
+def openapi_json():
+    spec_path = current_app.config.get("API_OPENAPI_PATH")
+    if not spec_path:
+        return jsonify({"error": "OpenAPI document is not configured"}), 500
+    if not os.path.isabs(spec_path):
+        spec_path = os.path.abspath(spec_path)
+    if not os.path.isfile(spec_path):
+        return jsonify({"error": "OpenAPI document not found"}), 404
+    with open(spec_path, "r", encoding="utf-8") as f:
+        return jsonify(json.load(f))
 
 
 # ----------------------------
