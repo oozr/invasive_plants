@@ -391,7 +391,21 @@ def _api_portal_credentials_valid(email: str, password: str) -> bool:
 
 
 def _api_demo_rate_limit() -> str:
-    return current_app.config.get("API_DEMO_RATE_LIMIT", "30 per hour")
+    return "30 per hour"
+
+
+def _data_service_base_url() -> str:
+    return (current_app.config.get("DATA_REMOTE_BASE_URL") or "").rstrip("/")
+
+
+def _data_service_token() -> str:
+    return current_app.config.get("DATA_REMOTE_TOKEN") or ""
+
+
+def _api_demo_timeout_seconds() -> int:
+    # The normal data sync timeout can be longer; the public demo should fail quickly.
+    remote_timeout = current_app.config.get("DATA_REMOTE_TIMEOUT_SECONDS", 8)
+    return max(1, min(int(remote_timeout or 8), 8))
 
 
 def _api_demo_string(value, limit: int) -> str:
@@ -420,7 +434,7 @@ def _api_demo_payload():
 def api_index():
     return render_template(
         "api.html",
-        api_service_base_url=current_app.config.get("API_SERVICE_BASE_URL", "").rstrip("/"),
+        api_service_base_url=_data_service_base_url(),
     )
 
 
@@ -463,13 +477,13 @@ def demo_regulatory_check():
     if not country:
         return jsonify({"error": "ship_to.country is required"}), 400
 
-    base_url = (current_app.config.get("API_SERVICE_BASE_URL") or "").rstrip("/")
+    base_url = _data_service_base_url()
     if not base_url:
         return jsonify(
             {
                 "error": (
-                    "API service base URL is not configured. Set API_SERVICE_BASE_URL "
-                    "to the v1 API host, for example http://127.0.0.1:8001 in local preview."
+                    "Data service base URL is not configured. Set DATA_REMOTE_BASE_URL "
+                    "to the regulated_plants_data service URL."
                 )
             }
         ), 500
@@ -482,7 +496,7 @@ def demo_regulatory_check():
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
-    demo_token = current_app.config.get("API_DEMO_TOKEN") or ""
+    demo_token = _data_service_token()
     if demo_token:
         headers["Authorization"] = f"Bearer {demo_token}"
 
@@ -492,7 +506,7 @@ def demo_regulatory_check():
             upstream_url,
             json={"plant_query": plant_query, "ship_to": ship_to},
             headers=headers,
-            timeout=max(1, int(current_app.config.get("API_DEMO_TIMEOUT_SECONDS", 8))),
+            timeout=_api_demo_timeout_seconds(),
         )
     except http_requests.RequestException as exc:
         current_app.logger.warning("API demo request failed: %s", exc)
@@ -536,7 +550,7 @@ def portal():
         email=email,
         org=session.get("api_portal_org") or current_app.config.get("API_PORTAL_ORG"),
         plan=session.get("api_portal_plan") or current_app.config.get("API_PORTAL_PLAN"),
-        api_service_base_url=current_app.config.get("API_SERVICE_BASE_URL", "").rstrip("/"),
+        api_service_base_url=_data_service_base_url(),
     )
 
 
