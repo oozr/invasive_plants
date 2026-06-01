@@ -12,11 +12,7 @@
   "servers": [
     {
       "url": "https://regulatedplants.unu.edu",
-      "description": "Production"
-    },
-    {
-      "url": "http://127.0.0.1:8001",
-      "description": "Local development"
+      "description": "Production API"
     }
   ],
   "tags": [

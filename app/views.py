@@ -398,6 +398,18 @@ def _data_service_base_url() -> str:
     return (current_app.config.get("DATA_REMOTE_BASE_URL") or "").rstrip("/")
 
 
+def _openapi_servers():
+    base_url = _data_service_base_url() or (current_app.config.get("BASE_URL") or "").rstrip("/")
+    if not base_url:
+        return []
+    return [
+        {
+            "url": base_url,
+            "description": "Production API",
+        }
+    ]
+
+
 def _data_service_token() -> str:
     return current_app.config.get("DATA_REMOTE_TOKEN") or ""
 
@@ -569,7 +581,12 @@ def openapi_json():
     if not os.path.isfile(spec_path):
         return jsonify({"error": "OpenAPI document not found"}), 404
     with open(spec_path, "r", encoding="utf-8") as f:
-        return jsonify(json.load(f))
+        spec = json.load(f)
+
+    servers = _openapi_servers()
+    if servers:
+        spec["servers"] = servers
+    return jsonify(spec)
 
 
 # ----------------------------
