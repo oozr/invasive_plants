@@ -1,14 +1,11 @@
 # app/views.py
 import gzip
-import hmac
 import json
 import os
 from datetime import datetime
-from urllib.parse import urlparse
 import requests as http_requests
 from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory, abort, session
 from werkzeug.utils import safe_join
-from werkzeug.security import check_password_hash
 
 from app import limiter, recaptcha
 from app.utils.state_database import StateDatabase
@@ -359,37 +356,6 @@ def index():
 # ----------------------------
 # API page routes
 # ----------------------------
-def _safe_api_next_path(value: str) -> str:
-    parsed = urlparse(value or "")
-    if parsed.scheme or parsed.netloc:
-        return url_for("api_page.portal")
-    if not parsed.path.startswith("/api"):
-        return url_for("api_page.portal")
-    return parsed.path or url_for("api_page.portal")
-
-
-def _api_portal_configured() -> bool:
-    email = (current_app.config.get("API_PORTAL_EMAIL") or "").strip()
-    password = current_app.config.get("API_PORTAL_PASSWORD") or ""
-    password_hash = current_app.config.get("API_PORTAL_PASSWORD_HASH") or ""
-    return bool(email and (password or password_hash))
-
-
-def _api_portal_credentials_valid(email: str, password: str) -> bool:
-    expected_email = (current_app.config.get("API_PORTAL_EMAIL") or "").strip().lower()
-    if not expected_email or not hmac.compare_digest(email, expected_email):
-        return False
-
-    password_hash = current_app.config.get("API_PORTAL_PASSWORD_HASH") or ""
-    if password_hash:
-        return check_password_hash(password_hash, password)
-
-    expected_password = current_app.config.get("API_PORTAL_PASSWORD") or ""
-    if not expected_password:
-        return False
-    return hmac.compare_digest(password, expected_password)
-
-
 def _api_demo_rate_limit() -> str:
     return "30 per hour"
 
@@ -448,36 +414,6 @@ def api_index():
         "api.html",
         api_service_base_url=_data_service_base_url(),
     )
-
-
-@api_page.route("/login", methods=["GET", "POST"])
-def login():
-    next_path = _safe_api_next_path(request.values.get("next") or url_for("api_page.portal"))
-    error = None
-    if request.method == "POST":
-        email = (request.form.get("email") or "").strip().lower()
-        password = request.form.get("password") or ""
-        if _api_portal_credentials_valid(email, password):
-            session["api_portal_email"] = email
-            session["api_portal_org"] = current_app.config.get("API_PORTAL_ORG")
-            session["api_portal_plan"] = current_app.config.get("API_PORTAL_PLAN")
-            return redirect(next_path)
-        error = "The email or password was not recognized."
-
-    return render_template(
-        "api_login.html",
-        error=error,
-        next_path=next_path,
-        portal_configured=_api_portal_configured(),
-    )
-
-
-@api_page.route("/logout", methods=["POST"])
-def logout():
-    session.pop("api_portal_email", None)
-    session.pop("api_portal_org", None)
-    session.pop("api_portal_plan", None)
-    return redirect(url_for("api_page.api_index"))
 
 
 @api_page.route("/demo/regulatory-check", methods=["POST"])
@@ -549,21 +485,6 @@ def demo_regulatory_check():
             }
         ), 502
     return jsonify(payload), upstream_response.status_code
-
-
-@api_page.route("/portal")
-def portal():
-    email = session.get("api_portal_email")
-    if not email:
-        return redirect(url_for("api_page.login", next=url_for("api_page.portal")))
-
-    return render_template(
-        "api_portal.html",
-        email=email,
-        org=session.get("api_portal_org") or current_app.config.get("API_PORTAL_ORG"),
-        plan=session.get("api_portal_plan") or current_app.config.get("API_PORTAL_PLAN"),
-        api_service_base_url=_data_service_base_url(),
-    )
 
 
 @api_page.route("/docs")

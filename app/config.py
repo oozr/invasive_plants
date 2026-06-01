@@ -122,12 +122,6 @@ class Config:
    # Directory paths
    BLOG_DIR = "app/blog_posts"
 
-   # Subscriber API portal configuration
-   API_PORTAL_EMAIL = os.getenv('API_PORTAL_EMAIL', '').strip()
-   API_PORTAL_PASSWORD = os.getenv('API_PORTAL_PASSWORD', '')
-   API_PORTAL_PASSWORD_HASH = os.getenv('API_PORTAL_PASSWORD_HASH', '')
-   API_PORTAL_ORG = os.getenv('API_PORTAL_ORG', 'Regulated Plants API subscriber')
-   API_PORTAL_PLAN = os.getenv('API_PORTAL_PLAN', 'Pilot access')
    API_OPENAPI_PATH = os.getenv(
       'API_OPENAPI_PATH',
       os.path.join('app', 'static', 'data', 'openapi.json')

@@ -286,10 +286,6 @@
    margin: 0;
 }
 
-.api-auth-panel {
-   max-width: 34rem;
-}
-
 #swagger-ui {
    margin-top: 1rem;
 }

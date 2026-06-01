@@ -105,6 +105,27 @@ table.dataTable tbody td a:hover,
    text-decoration: none !important;
 }
 
+.btn-outline-dark {
+   padding: 0.75rem 1.5rem;
+   background-color: var(--white);
+   border-color: var(--black);
+   color: var(--black);
+   transition: all 0.2s ease;
+   box-shadow: none !important;
+   text-decoration: none !important;
+}
+
+.btn-outline-dark:hover,
+.btn-outline-dark:focus,
+.btn-outline-dark:active {
+   background-color: var(--black) !important;
+   border-color: var(--black) !important;
+   color: var(--white) !important;
+   box-shadow: none !important;
+   outline: none !important;
+   text-decoration: none !important;
+}
+
 /* ========================================
    HOME HIGHLIGHTS
    ======================================== */
