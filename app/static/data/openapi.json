@@ -29,6 +29,10 @@
       "description": "Plant name lookup across scientific names, common names, and synonyms."
     },
     {
+      "name": "Jurisdiction matching",
+      "description": "Jurisdiction lookup for clients that want exact dataset identifiers."
+    },
+    {
       "name": "System",
       "description": "Operational health checks."
     }
@@ -39,7 +43,7 @@
         "tags": ["Regulatory checks"],
         "operationId": "getRegulatoryCheck",
         "summary": "Check whether a plant is regulated in a jurisdiction",
-        "description": "Checks the current dataset for regulation records matching a plant name and destination jurisdiction. If the plant name is ambiguous or misspelled beyond a safe confidence threshold, the API returns suggestions instead of making a decision.",
+        "description": "Checks the current dataset for regulation records matching a plant name and destination jurisdiction. Most clients should send `plant_query` plus `country` and `region` using ordinary names or ISO codes, such as `United States` and `California`. If the plant name is ambiguous or misspelled beyond a safe confidence threshold, the API returns suggestions instead of making a decision.",
         "security": [
           {
             "BearerAuth": []
@@ -51,6 +55,7 @@
             "in": "query",
             "required": true,
             "description": "Scientific name, common name, synonym, or near-spelling of the plant.",
+            "example": "Cortaderia jubata",
             "schema": {
               "type": "string",
               "examples": ["Cortaderia jubata", "pampas grass", "Abutilon theophrsti"]
@@ -61,6 +66,7 @@
             "in": "query",
             "required": false,
             "description": "Country name or ISO country code. Examples: `US`, `United States`, `CA`, `Canada`.",
+            "example": "US",
             "schema": {
               "type": "string"
             }
@@ -70,6 +76,7 @@
             "in": "query",
             "required": false,
             "description": "State, province, region name, or ISO subdivision suffix. Examples: `CA`, `California`, `Colorado`.",
+            "example": "CA",
             "schema": {
               "type": "string"
             }
@@ -78,7 +85,8 @@
             "name": "jurisdiction_uid",
             "in": "query",
             "required": false,
-            "description": "Exact jurisdiction identifier from the dataset, such as `reg:us:us-ca`.",
+            "description": "Advanced optional exact jurisdiction identifier returned by API responses and `/v1/jurisdictions/search`. Most clients should leave this blank and use `country` plus `region`.",
+            "example": "reg:us:us-ca",
             "schema": {
               "type": "string"
             }
@@ -128,7 +136,7 @@
         "tags": ["Regulatory checks"],
         "operationId": "postRegulatoryCheck",
         "summary": "Check whether a plant is regulated in a jurisdiction",
-        "description": "POST form of the regulatory check endpoint. This is the preferred integration shape for ecommerce checkout and catalog workflows.",
+        "description": "POST form of the regulatory check endpoint. This is the preferred integration shape for ecommerce checkout and catalog workflows. Send `ship_to.country` and `ship_to.region` as ordinary names or ISO codes; `jurisdiction_uid` is only needed for integrations that have already stored the exact dataset identifier.",
         "security": [
           {
             "BearerAuth": []
@@ -258,6 +266,80 @@
         }
       }
     },
+    "/v1/jurisdictions/search": {
+      "get": {
+        "tags": ["Jurisdiction matching"],
+        "operationId": "searchJurisdictions",
+        "summary": "Search jurisdictions",
+        "description": "Search country, region, ISO code, and jurisdiction identifiers. Use this endpoint when a client wants to build a jurisdiction picker or store an exact `jurisdiction_uid`; ordinary regulatory checks can use `country` and `region` directly without calling this first.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Country, region, ISO code, or exact jurisdiction identifier. Examples: `California`, `US-CA`, `reg:us:us-ca`.",
+            "example": "California",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "description": "Optional country name or ISO country code used to narrow region matches. Examples: `US`, `United States`.",
+            "example": "US",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of matches to return. Values above 50 are capped.",
+            "example": 10,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Jurisdiction search results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JurisdictionSearchResponse"
+                },
+                "examples": {
+                  "search": {
+                    "$ref": "#/components/examples/JurisdictionSearchResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": ["System"],
@@ -320,7 +402,7 @@
           },
           "jurisdiction_uid": {
             "type": "string",
-            "description": "Exact jurisdiction identifier from the dataset."
+            "description": "Advanced optional exact jurisdiction identifier returned by API responses and `/v1/jurisdictions/search`. Most clients should use `country` plus `region` instead."
           }
         },
         "additionalProperties": true
@@ -350,7 +432,7 @@
           },
           "jurisdiction_uid": {
             "type": "string",
-            "description": "Exact jurisdiction identifier from the dataset."
+            "description": "Advanced optional exact jurisdiction identifier returned by API responses and `/v1/jurisdictions/search`."
           }
         },
         "additionalProperties": true
@@ -483,6 +565,32 @@
           }
         }
       },
+      "JurisdictionSearchResponse": {
+        "type": "object",
+        "required": ["query", "matches", "release"],
+        "properties": {
+          "query": {
+            "type": "object",
+            "properties": {
+              "q": {
+                "type": ["string", "null"]
+              },
+              "country": {
+                "type": ["string", "null"]
+              }
+            }
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Jurisdiction"
+            }
+          },
+          "release": {
+            "$ref": "#/components/schemas/Release"
+          }
+        }
+      },
       "Plant": {
         "type": "object",
         "required": ["species_id", "canonical_name", "has_current_regulation"],
@@ -602,6 +710,12 @@
           "source_url": {
             "type": ["string", "null"],
             "format": "uri"
+          },
+          "match_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Returned by jurisdiction search and jurisdiction-match suggestions."
           }
         }
       },
@@ -825,6 +939,34 @@
               "match_score": 0.917,
               "confidence": "medium",
               "has_current_regulation": true
+            }
+          ],
+          "release": {
+            "version": "20260528T124621Z",
+            "generated_at": "2026-05-28T12:46:21Z"
+          }
+        }
+      },
+      "JurisdictionSearchResponse": {
+        "summary": "Jurisdiction search result",
+        "value": {
+          "query": {
+            "q": "California",
+            "country": "US"
+          },
+          "matches": [
+            {
+              "jurisdiction_uid": "reg:us:us-ca",
+              "country": "United States",
+              "region": "California",
+              "iso_country_code": "US",
+              "iso_subdivision_code": "US-CA",
+              "jurisdiction_type": "region",
+              "regulation_status": "regulated",
+              "authority_name": "California Department of Food and Agriculture",
+              "authority_type": "State Gov",
+              "source_url": "https://www.cdfa.ca.gov/plant/ipc/encycloweedia/pdf/CaliforniaNoxiousWeeds.pdf",
+              "match_score": 1
             }
           ],
           "release": {
