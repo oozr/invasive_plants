@@ -594,7 +594,25 @@ def openapi_json():
 # ----------------------------
 @about.route("/")
 def index():
-    return render_template("about.html")
+    contact_subject = (request.args.get("subject") or "general").strip()
+    allowed_subjects = {"general", "data", "collaboration", "api_access", "other"}
+    if contact_subject not in allowed_subjects:
+        contact_subject = "general"
+
+    contact_message = ""
+    if contact_subject == "api_access":
+        contact_message = (
+            "I would like to request access to the Regulated Plants API.\n\n"
+            "Organization:\n"
+            "Intended use case:\n"
+            "Expected request volume:"
+        )
+
+    return render_template(
+        "about.html",
+        contact_subject=contact_subject,
+        contact_message=contact_message,
+    )
 
 
 @about.route("/contact", methods=["POST"])
@@ -622,6 +640,7 @@ def contact():
         "general": "General Inquiry",
         "data": "Data Correction Request",
         "collaboration": "Collaboration Request",
+        "api_access": "API Access Request",
         "other": "Other Inquiry",
     }
     email_subject = f"[Regulated Plants] {subject_map.get(subject_type, 'Contact Form')}"

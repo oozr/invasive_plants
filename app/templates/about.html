@@ -105,7 +105,7 @@
 </section>
 
 <!-- Contact Section -->
-<section class="about-section">
+<section class="about-section" id="contact">
     <h2>Contact Us</h2>
     <p>Have questions, suggestions, or corrections? Get in touch with our team.</p>
     
@@ -126,15 +126,16 @@
                 <div class="mb-3">
                     <label for="subject" class="form-label">Subject</label>
                     <select class="form-select" id="subject" name="subject">
-                        <option value="general">General Inquiry</option>
-                        <option value="data">Data Correction</option>
-                        <option value="collaboration">Collaboration Request</option>
-                        <option value="other">Other</option>
+                        <option value="general" {% if contact_subject == "general" %}selected{% endif %}>General Inquiry</option>
+                        <option value="api_access" {% if contact_subject == "api_access" %}selected{% endif %}>API Access Request</option>
+                        <option value="data" {% if contact_subject == "data" %}selected{% endif %}>Data Correction</option>
+                        <option value="collaboration" {% if contact_subject == "collaboration" %}selected{% endif %}>Collaboration Request</option>
+                        <option value="other" {% if contact_subject == "other" %}selected{% endif %}>Other</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <label for="message" class="form-label">Message</label>
-                    <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                    <textarea class="form-control" id="message" name="message" rows="5" required>{{ contact_message }}</textarea>
                 </div>
                 <!-- Honeypot field to catch bots -->
                 <div style="display:none;">
