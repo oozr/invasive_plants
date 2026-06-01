@@ -465,7 +465,14 @@ def demo_regulatory_check():
 
     base_url = (current_app.config.get("API_SERVICE_BASE_URL") or "").rstrip("/")
     if not base_url:
-        return jsonify({"error": "API service base URL is not configured"}), 500
+        return jsonify(
+            {
+                "error": (
+                    "API service base URL is not configured. Set API_SERVICE_BASE_URL "
+                    "to the v1 API host, for example http://127.0.0.1:8001 in local preview."
+                )
+            }
+        ), 500
 
     ship_to = {"country": country}
     if region:

@@ -132,7 +132,7 @@ class Config:
       'API_OPENAPI_PATH',
       os.path.join('app', 'static', 'data', 'openapi.json')
    )
-   API_SERVICE_BASE_URL = os.getenv('API_SERVICE_BASE_URL', BASE_URL).rstrip('/')
+   API_SERVICE_BASE_URL = os.getenv('API_SERVICE_BASE_URL', '').rstrip('/')
    API_DEMO_TOKEN = os.getenv('API_DEMO_TOKEN', '').strip()
    API_DEMO_TIMEOUT_SECONDS = int(os.getenv('API_DEMO_TIMEOUT_SECONDS', '8'))
    API_DEMO_RATE_LIMIT = os.getenv('API_DEMO_RATE_LIMIT', '30 per hour')
