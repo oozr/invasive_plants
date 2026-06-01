@@ -12,10 +12,10 @@
             <div class="api-hero-copy">
                 <h1 class="page-title">Regulated Plants API</h1>
                 <p class="lead">
-                    A query service for checking whether a plant is regulated in a destination jurisdiction.
+                    A query service to verify if a plant is regulated in a destination jurisdiction.
                 </p>
                 <p>
-                    Built from the Regulated Plants Database, the API supports checkout,
+                    Built from the Regulated Plants Database, the API supports e-commerce checkout,
                     catalog review, and marketplace compliance workflows where a plant
                     name must be compared against a ship-to location.
                 </p>
@@ -45,7 +45,7 @@
             <div class="highlight-card">
                 <p class="highlight-label">Primary Use Case</p>
                 <span class="highlight-common">
-                    Given a plant name and a ship-to jurisdiction, return whether the species
+                    Given a plant name and a destination jurisdiction, return whether the species
                     has a regulation record in the current dataset.
                 </span>
             </div>
@@ -54,8 +54,8 @@
             <div class="highlight-card">
                 <p class="highlight-label">Access Model</p>
                 <span class="highlight-common">
-                    API usage is token protected. Approved organizations receive a bearer token
-                    after review; paid subscription and metered billing will be connected later.
+                    API usage is token protected. Approved organizations receive a access token.
+                    A paid subscription and metered billing will be connected later.
                 </span>
             </div>
         </div>
@@ -65,7 +65,7 @@
 <section class="api-section">
     <div class="row g-4 align-items-start">
         <div class="col-lg-7">
-            <h2>Designed for cautious regulatory checks</h2>
+            <h2>Designed for regulatory checks</h2>
             <p>
                 The endpoint is intentionally conservative. It reports whether a matched
                 species is regulated in a requested jurisdiction according to the current
