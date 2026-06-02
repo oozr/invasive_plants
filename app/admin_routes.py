@@ -1,9 +1,10 @@
 from functools import wraps
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 
 from app.auth_helpers import account_logged_in, current_account, current_user_is_admin, get_account_store
 from app.utils.account_store import ACCOUNT_STATUSES
+from app.utils.email_sender import EmailDeliveryError, send_email
 
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
@@ -58,6 +59,44 @@ def accounts():
     )
 
 
+def _send_account_status_email(account: dict, status: str):
+    login_url = url_for("auth.login", _external=True)
+    subject_by_status = {
+        "active": "Your Regulated Plants account is approved",
+        "rejected": "Your Regulated Plants access request was reviewed",
+        "revoked": "Your Regulated Plants account access changed",
+    }
+
+    if status == "active":
+        body = f"""
+Your Regulated Plants Database account has been approved.
+
+You can now sign in with your email address:
+{login_url}
+""".strip()
+    elif status == "rejected":
+        body = """
+Your Regulated Plants Database access request was reviewed and was not approved at this time.
+
+If your use case changes, you may submit a new access request.
+""".strip()
+    elif status == "revoked":
+        body = """
+Your Regulated Plants Database account access has been revoked.
+
+If you believe this was a mistake, contact the project team.
+""".strip()
+    else:
+        return
+
+    send_email(
+        current_app.config,
+        subject_by_status[status],
+        account["email"],
+        body,
+    )
+
+
 @admin.route("/accounts/<account_id>/<action>", methods=["POST"])
 @admin_required
 def update_account(account_id: str, action: str):
@@ -84,5 +123,11 @@ def update_account(account_id: str, action: str):
     if not account:
         abort(404)
 
-    flash(f"{account['email']} is now {status}.", "success")
+    try:
+        _send_account_status_email(account, status)
+        flash(f"{account['email']} is now {status}. Notification sent.", "success")
+    except EmailDeliveryError as exc:
+        current_app.logger.warning("Unable to send account status email to %s: %s", account["email"], exc)
+        flash(f"{account['email']} is now {status}, but the notification email could not be sent.", "error")
+
     return redirect(url_for("admin.accounts", status=account["status"]))
