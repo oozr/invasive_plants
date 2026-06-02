@@ -234,22 +234,7 @@ def affiliations():
     return jsonify({"results": results})
 
 
-@auth.route("/verify")
-def verify():
-    token = request.args.get("token", "")
-    next_url = _safe_next_url(request.args.get("next"))
-
-    if not account_database_configured():
-        flash("Account access is not configured yet. Set APP_DATABASE_URL before accepting logins.", "error")
-        return redirect(url_for("auth.login", next=next_url))
-
-    try:
-        account, status = get_account_store().consume_login_token(token)
-    except Exception as exc:
-        current_app.logger.error("Unable to verify login token: %s", exc)
-        flash("That login link could not be verified. Please request a new link.", "error")
-        return redirect(url_for("auth.login", next=next_url))
-
+def _login_token_error_redirect(status: str, next_url: str):
     if status == "expired":
         flash("That login link has expired. Please request a new link.", "error")
         return redirect(url_for("auth.login", next=next_url))
@@ -265,6 +250,51 @@ def verify():
     if status == "revoked":
         flash("This account no longer has access.", "error")
         return redirect(url_for("auth.login", next=next_url))
+
+    flash("That login link could not be verified. Please request a new link.", "error")
+    return redirect(url_for("auth.login", next=next_url))
+
+
+@auth.route("/verify", methods=["GET", "POST"])
+def verify():
+    token = request.args.get("token", "")
+    if request.method == "POST":
+        token = request.form.get("token", "")
+    next_url = _safe_next_url(request.args.get("next"))
+    if request.method == "POST":
+        next_url = _safe_next_url(request.form.get("next"))
+
+    if not account_database_configured():
+        flash("Account access is not configured yet. Set APP_DATABASE_URL before accepting logins.", "error")
+        return redirect(url_for("auth.login", next=next_url))
+
+    if request.method == "GET":
+        try:
+            account, status = get_account_store().peek_login_token(token)
+        except Exception as exc:
+            current_app.logger.error("Unable to inspect login token: %s", exc)
+            flash("That login link could not be verified. Please request a new link.", "error")
+            return redirect(url_for("auth.login", next=next_url))
+
+        if status != "active" or not account:
+            return _login_token_error_redirect(status, next_url)
+
+        return render_template(
+            "auth/verify.html",
+            token=token,
+            next_url=next_url,
+            email=account["email"],
+        )
+
+    try:
+        account, status = get_account_store().consume_login_token(token)
+    except Exception as exc:
+        current_app.logger.error("Unable to verify login token: %s", exc)
+        flash("That login link could not be verified. Please request a new link.", "error")
+        return redirect(url_for("auth.login", next=next_url))
+
+    if status != "active":
+        return _login_token_error_redirect(status, next_url)
     if not account:
         flash("That login link could not be verified. Please request a new link.", "error")
         return redirect(url_for("auth.login", next=next_url))

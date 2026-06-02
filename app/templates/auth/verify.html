@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Login · Regulated Plants Database{% endblock %}
+
+{% block content %}
+<section class="auth-panel">
+    <h1 class="page-title">Confirm Login</h1>
+    <p class="lead">
+        Continue signing in as {{ email }}.
+    </p>
+
+    <form class="auth-form" method="post" action="{{ url_for('auth.verify') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="token" value="{{ token }}">
+        <input type="hidden" name="next" value="{{ next_url }}">
+
+        <button type="submit" class="btn btn-primary">Sign in</button>
+    </form>
+</section>
+{% endblock %}

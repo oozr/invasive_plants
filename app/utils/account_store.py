@@ -289,6 +289,36 @@ class AccountStore:
             conn.commit()
         return raw_token
 
+    def peek_login_token(self, raw_token: str):
+        token_digest = hash_token(raw_token)
+        now = utc_now()
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                        login_tokens.id AS token_id,
+                        login_tokens.expires_at,
+                        login_tokens.used_at,
+                        accounts.*
+                    FROM login_tokens
+                    JOIN accounts ON accounts.id = login_tokens.account_id
+                    WHERE login_tokens.token_hash = %s
+                    """,
+                    (token_digest,),
+                )
+                row = cur.fetchone()
+
+        if not row:
+            return None, "invalid"
+        if row["used_at"]:
+            return None, "used"
+        if row["expires_at"] < now:
+            return None, "expired"
+        if row["status"] != "active":
+            return row, row["status"]
+        return row, "active"
+
     def consume_login_token(self, raw_token: str):
         token_digest = hash_token(raw_token)
         now = utc_now()
