@@ -1,11 +1,12 @@
 # __init__.py
-from flask import Flask, session
+from flask import Flask
 from flask_wtf.csrf import CSRFProtect
 from app.config import Config
 from app.utils.data_manager import DataManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.utils.custom_recaptcha import CustomReCaptcha
+from app.auth_helpers import account_logged_in, current_account, current_user_is_admin, get_account_store
 
 
 csrf = CSRFProtect()
@@ -35,6 +36,10 @@ def create_app():
     data_manager.ensure_ready()
     app.extensions["data_manager"] = data_manager
 
+    if app.config.get("APP_DATABASE_URL"):
+        with app.app_context():
+            get_account_store()
+
     @app.before_request
     def refresh_data_cache():
         data_manager.maybe_refresh()
@@ -42,6 +47,7 @@ def create_app():
     # Import and register blueprints
     from app.views import home, species, blog, method, api_page, about
     from app.auth_routes import auth
+    from app.admin_routes import admin
     app.register_blueprint(home)
     app.register_blueprint(species)
     app.register_blueprint(blog)
@@ -49,13 +55,16 @@ def create_app():
     app.register_blueprint(api_page)
     app.register_blueprint(about)
     app.register_blueprint(auth)
+    app.register_blueprint(admin)
 
     @app.context_processor
     def inject_auth_state():
-        researcher_email = session.get("researcher_email")
+        account = current_account()
         return {
-            "researcher_email": researcher_email,
-            "researcher_logged_in": bool(researcher_email),
+            "account": account,
+            "account_email": account["email"] if account else None,
+            "account_logged_in": account_logged_in(),
+            "account_is_admin": current_user_is_admin(),
         }
 
     return app

@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (warningEl) {
             const shouldShowSampleWarning = Boolean(hasAnyData) && isSample && allWeeds.length > 0;
             if (shouldShowSampleWarning) {
-                warningEl.innerHTML = `<strong>Sample only.</strong> Showing ${allWeeds.length.toLocaleString()} of ${totalCount.toLocaleString()} regulated plants. <a href="${researcherLoginUrl()}">Sign in with an approved institutional email</a> to view the full list.`;
+                warningEl.innerHTML = `<strong>Sample only.</strong> Showing ${allWeeds.length.toLocaleString()} of ${totalCount.toLocaleString()} regulated plants. <a href="${researcherLoginUrl()}">Sign in with an approved account</a> to view the full list.`;
                 warningEl.classList.remove('d-none');
             } else {
                 warningEl.innerHTML = '';

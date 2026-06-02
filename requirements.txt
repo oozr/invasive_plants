@@ -20,3 +20,4 @@ Flask-Mail==0.9.1
 Flask-Limiter==2.8.1
 Flask-WTF==1.0.1
 requests>=2.25.0
+psycopg[binary]==3.3.4

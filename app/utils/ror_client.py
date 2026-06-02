@@ -2,7 +2,7 @@ import json
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
-from app.utils.auth_store import email_domain
+from app.utils.account_store import email_domain
 
 
 def _fetch_json(url: str, timeout_seconds: int) -> dict:

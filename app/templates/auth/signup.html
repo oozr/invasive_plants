@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Request Access · Regulated Plants Database{% endblock %}
+
+{% block content %}
+<section class="auth-panel">
+    <h1 class="page-title">Request Access</h1>
+    <p class="lead">
+        Tell us who you are and how you plan to use the database. Approved accounts receive login access by email.
+    </p>
+
+    <form class="auth-form" method="post" action="{{ url_for('auth.signup') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next_url }}">
+
+        <div class="mb-3">
+            <label class="form-label" for="full_name">Name</label>
+            <input
+                class="form-control"
+                type="text"
+                id="full_name"
+                name="full_name"
+                value="{{ full_name }}"
+                autocomplete="name"
+                maxlength="160"
+                required
+            >
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="email">Email address</label>
+            <input
+                class="form-control"
+                type="email"
+                id="email"
+                name="email"
+                value="{{ email }}"
+                autocomplete="email"
+                required
+            >
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="organization_name">Organization</label>
+            <input
+                class="form-control"
+                type="text"
+                id="organization_name"
+                name="organization_name"
+                value="{{ organization_name }}"
+                autocomplete="organization"
+                maxlength="200"
+                required
+            >
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="purpose">Why do you want access?</label>
+            <textarea
+                class="form-control"
+                id="purpose"
+                name="purpose"
+                rows="6"
+                maxlength="2000"
+                required
+            >{{ purpose }}</textarea>
+        </div>
+
+        <div class="auth-action-row">
+            <button type="submit" class="btn btn-primary">Submit request</button>
+            <a href="{{ url_for('auth.login', next=next_url) }}">Already approved?</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -40,7 +40,7 @@ This project transforms raw regulatory lists into decision-ready intelligence by
 - **Supporting methodology & sources:** Blog and methodology pages document analytical assumptions, data sources, and limitations.
 
 ## Tech Stack
-- **Backend:** Flask, SQLite (via custom utility classes in `app/utils`)
+- **Backend:** Flask, Postgres for account access, SQLite release artifacts for plant data
 - **Frontend:** Bootstrap 5, Leaflet, DataTables, Select2, vanilla JS
 - **Email & Security:** Flask-Mail, Flask-Limiter, reCAPTCHA
 
@@ -81,16 +81,24 @@ Copy `.env.example` to `.env` (or export variables another way) and set:
 | `OOZR_BASE_URL` | OOZR dashboard base URL (example: `https://oozr.up.railway.app`) |
 | `OOZR_PROJECT_SLUG` | Project slug for activations (default `regulatedplants`) |
 | `OOZR_METRICS_ENABLED` | Enable activation tracking (`1`/`0`, default `0`) |
-| `AUTH_EMAIL_SUFFIXES` | Comma-separated allowed email suffixes for researcher login (defaults include `.edu`, `.gov`, `.ac.uk`, `.edu.au`, selected government suffixes) |
-| `AUTH_EMAIL_DOMAINS` | Comma-separated exact email domains to allow, useful for universities or agencies on normal country domains such as `wur.nl` or `uni-example.de` |
-| `AUTH_DATABASE_PATH` | SQLite path for verified researcher login records (default `auth_users.db`) |
-| `AUTH_DEV_SHOW_MAGIC_LINK` | Show login link on the confirmation page for local development (`1`/`0`, default `0`) |
+| `APP_DATABASE_URL` | Postgres connection URL for web app accounts, login tokens, and admin audit events |
+| `AUTH_ADMIN_EMAILS` | Comma-separated admin emails. These accounts are bootstrapped as approved admins when `APP_DATABASE_URL` is configured |
+| `AUTH_DEV_SHOW_MAGIC_LINK` | Show login link on the confirmation page for development (`1`/`0`, default `0`) |
 | `AUTH_ROR_ENABLED` | Enable ROR-backed affiliation autocomplete and ROR domain matching (`1`/`0`, default `1`) |
 | `AUTH_ROR_ALLOWED_TYPES` | Comma-separated ROR organization types eligible for domain matching (default `education,government,facility,healthcare,nonprofit`) |
 | `ROR_API_BASE_URL` | ROR organizations API base URL (default `https://api.ror.org/v2/organizations`) |
 | `ROR_API_TIMEOUT_SECONDS` | Timeout for ROR API calls (default `4`) |
 
 The app reads these via `Config` in `app/config.py`.
+
+## Account Access
+The web app uses a Postgres-backed account lifecycle:
+
+- `/auth/signup` creates or updates a pending account request with name, email, organization, and reason for access.
+- `/auth/login` sends a one-time email login link only for approved accounts.
+- `/admin/accounts` lets configured admins approve, reject, and revoke accounts.
+
+The account schema is created by application code on startup when `APP_DATABASE_URL` is configured. Do not create the tables manually. For Railway, provision a Postgres service and set `APP_DATABASE_URL` on the web service to that database connection URL. Keep `AUTH_ADMIN_EMAILS` configured so at least one admin can sign in and review requests.
 
 ## OOZR Activation Tracking
 This research project tracks one signal only: activation.

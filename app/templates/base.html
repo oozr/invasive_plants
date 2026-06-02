@@ -51,9 +51,14 @@
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
-                    {% if researcher_logged_in %}
+                    {% if account_logged_in %}
+                        {% if account_is_admin %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin.accounts', status='pending') }}">Admin</a>
+                            </li>
+                        {% endif %}
                         <li class="nav-item navbar-text researcher-email">
-                            {{ researcher_email }}
+                            {{ account_email }}
                         </li>
                         <li class="nav-item">
                             <form action="{{ url_for('auth.logout') }}" method="post" class="nav-logout-form">
@@ -63,7 +68,10 @@
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.login', next=request.full_path if request.query_string else request.path) }}">Researcher Login</a>
+                            <a class="nav-link" href="{{ url_for('auth.login', next=request.full_path if request.query_string else request.path) }}">Log in</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.signup', next=request.full_path if request.query_string else request.path) }}">Request access</a>
                         </li>
                     {% endif %}
                 </ul>

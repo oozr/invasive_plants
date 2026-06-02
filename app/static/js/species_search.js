@@ -136,8 +136,8 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="list-group-item species-access-summary">
                 <h5 class="mb-2">Regulated in ${formatJurisdictionCount(jurisdictionCount)}</h5>
                 <p class="mb-0">
-                    Detailed jurisdiction lists are available to signed-in researchers.
-                    <a href="${loginUrl}">Log in as a researcher</a> or
+                    Detailed jurisdiction lists are available to approved accounts.
+                    <a href="${loginUrl}">Log in</a> or
                     <a href="${apiRequestUrl}">request API access</a>.
                 </p>
             </div>

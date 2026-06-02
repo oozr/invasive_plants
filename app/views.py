@@ -4,10 +4,11 @@ import json
 import os
 from datetime import datetime
 import requests as http_requests
-from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory, abort, session
+from flask import Blueprint, render_template, jsonify, current_app, request, flash, url_for, redirect, send_from_directory, abort
 from werkzeug.utils import safe_join
 
 from app import limiter, recaptcha
+from app.auth_helpers import account_logged_in
 from app.utils.state_database import StateDatabase
 from app.utils.species_database import SpeciesDatabase
 from app.utils.generate_blog import BlogGenerator
@@ -138,7 +139,7 @@ def region_weeds():
     if not payload.get("geo_region"):
         return jsonify({"error": "geo_region_id not found"}), 404
 
-    authenticated = bool(session.get("researcher_email"))
+    authenticated = account_logged_in()
     sample_limit = max(0, int(current_app.config.get("AUTH_ANONYMOUS_SAMPLE_LIMIT", 5)))
     weeds = payload.get("weeds") or []
     total_count = len(weeds)
@@ -296,7 +297,7 @@ def _jurisdiction_count(regulations_by_group: dict) -> int:
 
 def _species_regulation_payload(regulations_by_group: dict):
     jurisdiction_count = _jurisdiction_count(regulations_by_group)
-    authenticated = bool(session.get("researcher_email"))
+    authenticated = account_logged_in()
     payload = {
         "authenticated": authenticated,
         "jurisdiction_count": jurisdiction_count,

@@ -10,5 +10,6 @@ Allow: /blog
 Allow: /method
 Allow: /about
 
-# Disallow administrative or sensitive areas (if any)
-# Add any paths you want to keep private here
+# Disallow administrative or sensitive areas
+Disallow: /admin
+Disallow: /auth

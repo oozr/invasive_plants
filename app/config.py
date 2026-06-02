@@ -43,34 +43,9 @@ class Config:
    OOZR_PROJECT_SLUG = os.getenv('OOZR_PROJECT_SLUG', 'regulatedplants')
    OOZR_METRICS_ENABLED = os.getenv('OOZR_METRICS_ENABLED', '0')
 
-   # Researcher login configuration
-   AUTH_DATABASE_PATH = os.getenv('AUTH_DATABASE_PATH', 'auth_users.db')
-   AUTH_EMAIL_DOMAINS = os.getenv('AUTH_EMAIL_DOMAINS', '')
-   AUTH_EMAIL_SUFFIXES = os.getenv(
-      'AUTH_EMAIL_SUFFIXES',
-      ','.join([
-         # US
-         '.edu',
-         '.gov',
-         # UK
-         '.ac.uk',
-         '.gov.uk',
-         '.gov.scot',
-         '.gov.wales',
-         '.llyw.cymru',
-         # Australia
-         '.edu.au',
-         '.gov.au',
-         # Canada
-         '.gc.ca',
-         '.canada.ca',
-         # New Zealand
-         '.govt.nz',
-         # Singapore
-         '.edu.sg',
-         '.gov.sg',
-      ])
-   )
+   # Account access configuration
+   APP_DATABASE_URL = os.getenv('APP_DATABASE_URL', '').strip()
+   AUTH_ADMIN_EMAILS = os.getenv('AUTH_ADMIN_EMAILS', '')
    AUTH_TOKEN_MAX_AGE_SECONDS = int(os.getenv('AUTH_TOKEN_MAX_AGE_SECONDS', '1800'))
    AUTH_ANONYMOUS_SAMPLE_LIMIT = int(os.getenv('AUTH_ANONYMOUS_SAMPLE_LIMIT', '5'))
    AUTH_ROR_ENABLED = os.getenv('AUTH_ROR_ENABLED', '1').strip().lower() in {
