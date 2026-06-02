@@ -413,6 +413,27 @@ def _api_demo_string(value, limit: int) -> str:
     return str(value or "").strip()[:limit]
 
 
+def _format_count(value) -> str:
+    try:
+        return f"{int(value or 0):,}"
+    except (TypeError, ValueError):
+        return "0"
+
+
+def _api_release_metrics() -> dict:
+    try:
+        metrics = _get_state_db().get_highlight_metrics()
+    except Exception as exc:
+        current_app.logger.warning("Unable to load API release metrics: %s", exc)
+        metrics = {}
+
+    return {
+        "species": _format_count(metrics.get("species_count")),
+        "jurisdictions": _format_count(metrics.get("jurisdiction_count")),
+        "regulations": _format_count(metrics.get("regulation_count")),
+    }
+
+
 def _api_demo_payload():
     incoming = request.get_json(silent=True) or {}
     if not isinstance(incoming, dict):
@@ -436,6 +457,7 @@ def api_index():
     return render_template(
         "api.html",
         api_service_base_url=_data_service_base_url(),
+        api_release_metrics=_api_release_metrics(),
     )
 
 

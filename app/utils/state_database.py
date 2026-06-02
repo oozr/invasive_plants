@@ -274,6 +274,14 @@ class StateDatabase(DatabaseBase):
                 """
             ).fetchone()["count"] or 0
 
+            regulation_count = conn.execute(
+                """
+                SELECT COUNT(*) AS count
+                FROM regulations
+                WHERE is_webapp_scoped = 1
+                """
+            ).fetchone()["count"] or 0
+
             region_j = conn.execute(
                 """
                 SELECT COUNT(DISTINCT j.country || '::' || j.region) AS count
@@ -450,6 +458,7 @@ class StateDatabase(DatabaseBase):
 
             return {
                 "species_count": species_count,
+                "regulation_count": regulation_count,
                 "jurisdiction_count": jurisdiction_count,
                 "latest_country": latest_country,
                 "latest_country_regions": latest_country_regions,
