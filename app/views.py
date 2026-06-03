@@ -568,8 +568,9 @@ def index():
     contact_message = ""
     if contact_subject == "api_access":
         contact_message = (
-            "I would like to request access to the Regulated Plants API.\n\n"
+            "I would like to request Enterprise access for automated plant compliance checks.\n\n"
             "Organization:\n"
+            "Commercial workflow or platform:\n"
             "Intended use case:\n"
             "Expected request volume:"
         )
@@ -606,7 +607,7 @@ def contact():
         "general": "General Inquiry",
         "data": "Data Correction Request",
         "collaboration": "Collaboration Request",
-        "api_access": "API Access Request",
+        "api_access": "Enterprise Access Request",
         "other": "Other Inquiry",
     }
     email_subject = f"[Regulated Plants] {subject_map.get(subject_type, 'Contact Form')}"

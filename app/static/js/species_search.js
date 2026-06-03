@@ -136,9 +136,9 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="list-group-item species-access-summary">
                 <h5 class="mb-2">Regulated in ${formatJurisdictionCount(jurisdictionCount)}</h5>
                 <p class="mb-0">
-                    Detailed jurisdiction lists are available to approved accounts.
-                    <a href="${loginUrl}">Log in</a> or
-                    <a href="${apiRequestUrl}">request API access</a>.
+                    Detailed website jurisdiction lists are available through Research Access.
+                    <a href="${loginUrl}">Researchers</a>. Enterprise teams can
+                    <a href="${apiRequestUrl}">request Enterprise access</a> for automated compliance checks.
                 </p>
             </div>
         `;

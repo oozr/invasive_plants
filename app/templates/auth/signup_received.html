@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Access Request Received · Regulated Plants Database{% endblock %}
+{% block title %}Research Access Request Received · Regulated Plants Database{% endblock %}
 
 {% block content %}
 <section class="auth-panel">
-    <h1 class="page-title">Access Request Received</h1>
+    <h1 class="page-title">Research Access Request Received</h1>
     <p class="lead">
         {% if pending %}
-            The access request for {{ email }} is still pending review.
+            The research access request for {{ email }} is still pending review.
         {% else %}
-            The access request for {{ email }} has been submitted for review.
+            The research access request for {{ email }} has been submitted for review.
         {% endif %}
     </p>
     <p>

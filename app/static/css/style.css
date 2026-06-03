@@ -284,6 +284,32 @@ textarea.form-control {
    max-width: 34rem;
 }
 
+.auth-panel-wide {
+   max-width: none;
+   border: 1px solid var(--border-light);
+   border-radius: 0.5rem;
+   overflow: hidden;
+   background: var(--white);
+}
+
+.auth-panel-form-wide {
+   max-width: 48rem;
+}
+
+.auth-panel-copy {
+   padding: 2rem;
+}
+
+.auth-researcher-image {
+   min-height: 320px;
+   height: 100%;
+   background:
+      linear-gradient(90deg, rgba(21, 35, 74, 0.14), rgba(21, 35, 74, 0.02)),
+      url("../img/researchers-hero.png");
+   background-size: cover;
+   background-position: center;
+}
+
 .auth-action-row {
    display: flex;
    align-items: center;
@@ -651,6 +677,15 @@ table.dataTable tbody tr:hover {
 
 
 @media (max-width: 767.98px) {
+   .auth-panel-copy {
+      padding: 1.25rem;
+   }
+
+   .auth-action-row {
+      align-items: stretch;
+      flex-direction: column;
+   }
+
    .footer .row {
        display: flex;
        flex-direction: column;

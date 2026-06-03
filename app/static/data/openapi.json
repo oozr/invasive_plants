@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Regulated Plants API",
-    "summary": "Regulatory lookup API for plant ecommerce and catalog workflows.",
-    "description": "The Regulated Plants API reports whether a matched plant species has a regulation record in a requested jurisdiction. The API is intentionally conservative: it reports dataset records and authority details, but does not provide legal advice and does not say a plant is legally allowed, banned, or prohibited to buy.",
+    "title": "Regulated Plants Enterprise API",
+    "summary": "Enterprise regulatory lookup API for plant ecommerce and catalog workflows.",
+    "description": "The Regulated Plants Enterprise API reports whether a matched plant species has a regulation record in a requested jurisdiction. The API is intentionally conservative: it reports dataset records and authority details, but does not provide legal advice and does not say a plant is legally allowed, banned, or prohibited to buy.",
     "version": "1.0.0",
     "contact": {
       "name": "Regulated Plants"

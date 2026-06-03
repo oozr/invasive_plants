@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (warningEl) {
             const shouldShowSampleWarning = Boolean(hasAnyData) && isSample && allWeeds.length > 0;
             if (shouldShowSampleWarning) {
-                warningEl.innerHTML = `<strong>Sample only.</strong> Showing ${allWeeds.length.toLocaleString()} of ${totalCount.toLocaleString()} regulated plants. <a href="${researcherLoginUrl()}">Sign in with an approved account</a> to view the full list.`;
+                warningEl.innerHTML = `<strong>Research access sample.</strong> Showing ${allWeeds.length.toLocaleString()} of ${totalCount.toLocaleString()} regulated plants. <a href="${researcherLoginUrl()}">Use Researchers</a> to view the full website list. Enterprise teams should use Enterprise access for automated compliance checks.`;
                 warningEl.classList.remove('d-none');
             } else {
                 warningEl.innerHTML = '';

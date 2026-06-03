@@ -8,7 +8,7 @@
 {% block content %}
 <h1 class="page-title">Regulated Plants Database</h1>
 <p class="lead mb-4">
-    Official lists of regulated invasive plants
+    A reference database of regulated invasive plants and noxious weeds
 </p>
 
 <section class="home-highlights mb-4" id="home-highlights">
@@ -67,7 +67,8 @@
         {% if account_logged_in %}
             You are signed in for full jurisdiction lists.
         {% else %}
-            Sign in with an approved account to view full jurisdiction lists.
+            Research access is available for scientists, regulators, extension specialists,
+            farmers, and public-interest users who need full website lists.
         {% endif %}
     </p>
 </div>
@@ -132,7 +133,7 @@
         invasive plants, noxious weeds, or related biosecurity concerns across regional,
         national, and international jurisdictions. It is designed to support clearer
         comparison of invasive-plant regulations across countries for research,
-        compliance, and public reference.
+        agricultural decision-making, policy analysis, and public reference.
     </p>
     <p class="mb-0">
         <a href="{{ url_for('about.index') }}">Find out more</a>

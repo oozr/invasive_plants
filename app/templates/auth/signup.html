@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Request Access · Regulated Plants Database{% endblock %}
+{% block title %}Request Research Access · Regulated Plants Database{% endblock %}
 
 {% block content %}
-<section class="auth-panel">
-    <h1 class="page-title">Request Access</h1>
+<section class="auth-panel auth-panel-form-wide">
+    <h1 class="page-title">Request Research Access</h1>
     <p class="lead">
-        Tell us who you are and how you plan to use the database. Approved accounts receive login access by email.
+        Request website access to full jurisdiction lists for research, education,
+        extension, regulation, farming, or public-interest use.
+    </p>
+
+    <p>
+        If you need automated compliance checks for a marketplace, nursery platform,
+        ecommerce catalog, or internal system, request <a href="{{ url_for('about.index', subject='api_access') }}#contact">Enterprise access</a> instead.
     </p>
 
     <form class="auth-form" method="post" action="{{ url_for('auth.signup') }}">
@@ -55,7 +61,7 @@
         </div>
 
         <div class="mb-3">
-            <label class="form-label" for="purpose">Why do you want access?</label>
+            <label class="form-label" for="purpose">How will you use the website data?</label>
             <textarea
                 class="form-control"
                 id="purpose"

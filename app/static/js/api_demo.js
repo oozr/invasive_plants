@@ -175,7 +175,7 @@
     const button = root.querySelector("[data-demo-submit]");
     if (button) {
       button.disabled = isBusy;
-      button.textContent = isBusy ? "Checking..." : "Run API check";
+      button.textContent = isBusy ? "Checking..." : "Run compliance check";
     }
   }
 
