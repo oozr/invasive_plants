@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function researcherLoginUrl() {
         const next = `${window.location.pathname}${window.location.search}`;
-        return `/auth/login?next=${encodeURIComponent(next || '/')}`;
+        return `/auth/signup?next=${encodeURIComponent(next || '/')}`;
     }
 
     function allTogglesOff() {
@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (warningEl) {
             const shouldShowSampleWarning = Boolean(hasAnyData) && isSample && allWeeds.length > 0;
             if (shouldShowSampleWarning) {
-                warningEl.innerHTML = `<strong>Research access sample.</strong> Showing ${allWeeds.length.toLocaleString()} of ${totalCount.toLocaleString()} regulated plants. <a href="${researcherLoginUrl()}">Use Researchers</a> to view the full website list. Enterprise teams should use Enterprise access for automated compliance checks.`;
+                warningEl.innerHTML = `<strong>Research access sample.</strong> Showing ${allWeeds.length.toLocaleString()} of ${totalCount.toLocaleString()} regulated plants. <a href="${researcherLoginUrl()}">Request research access</a> to view the full website list. Enterprise teams should use Enterprise access for automated compliance checks.`;
                 warningEl.classList.remove('d-none');
             } else {
                 warningEl.innerHTML = '';

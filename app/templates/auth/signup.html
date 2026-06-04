@@ -1,81 +1,97 @@
 {% extends "base.html" %}
 
-{% block title %}Request Research Access · Regulated Plants Database{% endblock %}
+{% block title %}Request Research Website Access · Regulated Plants Database{% endblock %}
 
 {% block content %}
-<section class="auth-panel auth-panel-form-wide">
-    <h1 class="page-title">Request Research Access</h1>
-    <p class="lead">
-        Request website access to full jurisdiction lists for research, education,
-        extension, regulation, farming, or public-interest use.
-    </p>
+<h1 class="page-title">Researchers</h1>
+<p class="lead mb-4">
+    Request free website access to full jurisdiction lists for research, education,
+    extension, regulation, farming, or public-interest use.
+</p>
 
-    <p>
-        If you need automated compliance checks for a marketplace, nursery platform,
-        ecommerce catalog, or internal system, request <a href="{{ url_for('about.index', subject='api_access') }}#contact">Enterprise access</a> instead.
-    </p>
+<section class="auth-panel auth-panel-wide auth-researcher-panel">
+    <div class="row g-0 align-items-stretch">
+        <div class="col-lg-7">
+            <div class="auth-panel-copy">
+                <h2 class="h4">Request a research login</h2>
+                <p>
+                    Tell us who you are and how you plan to use the website.
+                    Approved accounts can sign in later with a one-time email link.
+                </p>
 
-    <form class="auth-form" method="post" action="{{ url_for('auth.signup') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="next" value="{{ next_url }}">
+                <form class="auth-form" method="post" action="{{ url_for('auth.signup') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="next" value="{{ next_url }}">
 
-        <div class="mb-3">
-            <label class="form-label" for="full_name">Name</label>
-            <input
-                class="form-control"
-                type="text"
-                id="full_name"
-                name="full_name"
-                value="{{ full_name }}"
-                autocomplete="name"
-                maxlength="160"
-                required
-            >
+                    <div class="mb-3">
+                        <label class="form-label" for="full_name">Name</label>
+                        <input
+                            class="form-control"
+                            type="text"
+                            id="full_name"
+                            name="full_name"
+                            value="{{ full_name }}"
+                            autocomplete="name"
+                            maxlength="160"
+                            required
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="email">Email address</label>
+                        <input
+                            class="form-control"
+                            type="email"
+                            id="email"
+                            name="email"
+                            value="{{ email }}"
+                            autocomplete="email"
+                            required
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="organization_name">Organization</label>
+                        <input
+                            class="form-control"
+                            type="text"
+                            id="organization_name"
+                            name="organization_name"
+                            value="{{ organization_name }}"
+                            autocomplete="organization"
+                            maxlength="200"
+                            required
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="purpose">How will you use the website data?</label>
+                        <textarea
+                            class="form-control"
+                            id="purpose"
+                            name="purpose"
+                            rows="6"
+                            maxlength="2000"
+                            required
+                        >{{ purpose }}</textarea>
+                    </div>
+
+                    <div class="auth-action-row">
+                        <button type="submit" class="btn btn-primary">Submit request</button>
+                        <a class="btn btn-outline-dark" href="{{ url_for('auth.login', next=next_url) }}">Already approved? Log in here</a>
+                    </div>
+                </form>
+            </div>
         </div>
-
-        <div class="mb-3">
-            <label class="form-label" for="email">Email address</label>
-            <input
-                class="form-control"
-                type="email"
-                id="email"
-                name="email"
-                value="{{ email }}"
-                autocomplete="email"
-                required
-            >
+        <div class="col-lg-5">
+            <div class="auth-researcher-image" role="img" aria-label="Plant scientist reviewing plant specimens"></div>
         </div>
-
-        <div class="mb-3">
-            <label class="form-label" for="organization_name">Organization</label>
-            <input
-                class="form-control"
-                type="text"
-                id="organization_name"
-                name="organization_name"
-                value="{{ organization_name }}"
-                autocomplete="organization"
-                maxlength="200"
-                required
-            >
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label" for="purpose">How will you use the website data?</label>
-            <textarea
-                class="form-control"
-                id="purpose"
-                name="purpose"
-                rows="6"
-                maxlength="2000"
-                required
-            >{{ purpose }}</textarea>
-        </div>
-
-        <div class="auth-action-row">
-            <button type="submit" class="btn btn-primary">Submit request</button>
-            <a href="{{ url_for('auth.login', next=next_url) }}">Already approved?</a>
-        </div>
-    </form>
+    </div>
 </section>
+
+<p class="auth-secondary-note mt-3">
+    Need automated compliance checks for a marketplace, nursery platform,
+    ecommerce catalog, or internal system?
+    Use <a href="{{ url_for('api_page.api_index') }}">Enterprise</a>.
+</p>
 {% endblock %}

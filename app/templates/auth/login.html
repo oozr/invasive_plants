@@ -1,51 +1,40 @@
 {% extends "base.html" %}
 
-{% block title %}Researchers · Regulated Plants Database{% endblock %}
+{% block title %}Approved Researcher Login · Regulated Plants Database{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Researchers</h1>
-<p class="lead mb-4">
-    Enabling scientists, regulators, extension specialists, farmers,
-    academics, and public-interest users with free access to use the website
-    as a regulatory reference.
-</p>
+<section class="auth-panel">
+    <h1 class="page-title">Approved Researcher Login</h1>
+    <p class="lead">
+        If your research access request has been approved, enter your email
+        address and we will send a one-time login link.
+    </p>
 
-<section class="auth-panel auth-panel-wide auth-researcher-panel">
-    <div class="row g-0 align-items-stretch">
-        <div class="col-lg-7">
-            <div class="auth-panel-copy">
-                <p>
-                    Enterprise teams integrating plant checks into marketplaces, checkout flows,
-                    or compliance systems should use <a href="{{ url_for('api_page.api_index') }}">Enterprise</a>.
-                </p>
+    <form class="auth-form" method="post" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next_url }}">
 
-                <form class="auth-form" method="post" action="{{ url_for('auth.login') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="next" value="{{ next_url }}">
-
-                    <div class="mb-3">
-                        <label class="form-label" for="email">Email address</label>
-                        <input
-                            class="form-control"
-                            type="email"
-                            id="email"
-                            name="email"
-                            value="{{ email }}"
-                            autocomplete="email"
-                            required
-                        >
-                    </div>
-
-                    <div class="auth-action-row">
-                        <button type="submit" class="btn btn-primary">Send login link</button>
-                        <a href="{{ url_for('auth.signup', next=next_url) }}">Request free research access</a>
-                    </div>
-                </form>
-            </div>
+        <div class="mb-3">
+            <label class="form-label" for="email">Email address</label>
+            <input
+                class="form-control"
+                type="email"
+                id="email"
+                name="email"
+                value="{{ email }}"
+                autocomplete="email"
+                required
+            >
         </div>
-        <div class="col-lg-5">
-            <div class="auth-researcher-image" role="img" aria-label="Plant scientist reviewing plant specimens"></div>
+
+        <div class="auth-action-row">
+            <button type="submit" class="btn btn-primary">Email me a login link</button>
+            <a href="{{ url_for('auth.signup', next=next_url) }}">Need access? Request it here</a>
         </div>
-    </div>
+    </form>
 </section>
+
+<p class="auth-secondary-note mt-3">
+    Research access is reviewed before login is enabled.
+</p>
 {% endblock %}

@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderAnonymousRegulationSummary(statesList, jurisdictionCount) {
-        const loginUrl = statesList.dataset.researcherLoginUrl || '/auth/login';
+        const loginUrl = statesList.dataset.researcherLoginUrl || '/auth/signup';
         const apiRequestUrl = statesList.dataset.apiRequestUrl || '/api';
 
         if (!jurisdictionCount) {
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <h5 class="mb-2">Regulated in ${formatJurisdictionCount(jurisdictionCount)}</h5>
                 <p class="mb-0">
                     Detailed website jurisdiction lists are available through Research Access.
-                    <a href="${loginUrl}">Researchers</a>. Enterprise teams can
+                    <a href="${loginUrl}">Request research access</a>. Enterprise teams can
                     <a href="${apiRequestUrl}">request Enterprise access</a> for automated compliance checks.
                 </p>
             </div>

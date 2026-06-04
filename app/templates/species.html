@@ -47,7 +47,7 @@
             <h4 id="regulationHeading">Regulation summary</h4>
             <div id="statesList"
                  class="list-group"
-                 data-researcher-login-url="{{ url_for('auth.login', next=request.full_path if request.query_string else request.path) }}"
+                 data-researcher-login-url="{{ url_for('auth.signup', next=request.full_path if request.query_string else request.path) }}"
                  data-api-request-url="{{ url_for('about.index', subject='api_access') }}#contact">
                 <!-- States will be inserted here -->
             </div>
