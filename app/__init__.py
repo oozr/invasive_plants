@@ -7,6 +7,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.utils.custom_recaptcha import CustomReCaptcha
 from app.auth_helpers import account_logged_in, current_account, current_user_is_admin, get_account_store
+from app.utils.release_metadata import build_release_metadata
 
 
 csrf = CSRFProtect()
@@ -65,6 +66,7 @@ def create_app():
             "account_email": account["email"] if account else None,
             "account_logged_in": account_logged_in(),
             "account_is_admin": current_user_is_admin(),
+            "release_metadata": build_release_metadata(app),
         }
 
     return app

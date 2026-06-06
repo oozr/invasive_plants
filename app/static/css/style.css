@@ -47,30 +47,24 @@ body {
    font-weight: 700;
 }
 
+.page-eyebrow {
+   display: inline-flex;
+   margin: 2rem 0 0.4rem;
+   color: var(--text-muted);
+   font-size: 0.72rem;
+   font-weight: 700;
+   letter-spacing: 0.1em;
+   text-transform: uppercase;
+}
+
+.page-eyebrow + .page-title {
+   margin-top: 0;
+}
+
 .lead {
    color: var(--unu-blue);
    font-weight: 300;
    margin-bottom: 1.25rem;
-}
-
-.release-pill {
-   display: inline-flex;
-   align-items: center;
-   gap: 0.65rem;
-   flex-wrap: wrap;
-   padding: 0.45rem 0.8rem;
-   border: 1px solid #9ac7ad;
-   border-radius: 999px;
-   background: #e8f5ee;
-   color: #174a2f;
-   font-size: 0.9rem;
-   font-weight: 600;
-}
-
-.release-pill span + span {
-   padding-left: 0.65rem;
-   border-left: 1px solid rgba(23, 74, 47, 0.25);
-   color: #38654b;
 }
 
 h2 { margin-bottom: 1.25rem; }
@@ -280,6 +274,32 @@ textarea.form-control {
    overflow: hidden;
    text-overflow: ellipsis;
    white-space: nowrap;
+}
+
+.nav-release-item {
+   display: flex;
+   align-items: center;
+}
+
+.nav-release-meta {
+   display: flex;
+   flex-direction: column;
+   align-items: flex-end;
+   padding: 0.15rem 0 0.15rem 1rem;
+   color: rgba(255, 255, 255, 0.55);
+   font-size: 0.68rem;
+   font-weight: 600;
+   line-height: 1.25;
+   white-space: nowrap;
+}
+
+.nav-release-meta strong {
+   color: #dbeade;
+   font-weight: 700;
+}
+
+.nav-release-meta span {
+   color: rgba(255, 255, 255, 0.55);
 }
 
 .nav-logout-form {
@@ -700,6 +720,13 @@ table.dataTable tbody tr:hover {
    RESPONSIVE DESIGN
    ======================================== */
 
+
+@media (max-width: 991.98px) {
+   .nav-release-meta {
+      align-items: flex-start;
+      padding: 0.5rem 0;
+   }
+}
 
 @media (max-width: 767.98px) {
    .auth-panel-copy {

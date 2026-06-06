@@ -6,12 +6,12 @@
 {% endblock %}
 
 {% block content %}
+{% set page_label = "Enterprise" %}
+{% include "partials/page_eyebrow.html" %}
 <h1 class="page-title">Plant Compliance for Marketplaces</h1>
 <p class="lead mb-4">
     Check whether a plant is regulated in a buyer's destination jurisdiction before checkout, catalog approval, or shipment.
 </p>
-
-{% include "partials/release_pill.html" %}
 
 <section class="api-intro api-intro-box mb-4">
     <div class="row g-0 align-items-stretch">

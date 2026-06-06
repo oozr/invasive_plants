@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Request Research Website Access · Regulated Plants Database{% endblock %}
+{% block title %}Full Access for Researchers · Regulated Plants Database{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Researchers</h1>
+{% set page_label = "Researchers" %}
+{% include "partials/page_eyebrow.html" %}
+<h1 class="page-title">Full Access for Researchers</h1>
 <p class="lead mb-4">
     Request free website access to full jurisdiction lists for research, education,
     extension, regulation, farming, or public-interest use.
@@ -13,7 +15,7 @@
     <div class="row g-0 align-items-stretch">
         <div class="col-lg-7">
             <div class="auth-panel-copy">
-                <h2 class="h4">Request a research login</h2>
+                <h2 class="h4">Request full website access</h2>
                 <p>
                     Tell us who you are and how you plan to use the website.
                     Approved accounts can sign in later with a one-time email link.
