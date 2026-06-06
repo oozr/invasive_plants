@@ -68,7 +68,7 @@ class DataManager:
             version = self._manifest_version(local_manifest) or "cached"
             data_paths = self._paths_from_cache(cache_paths)
             with self.lock:
-                self._apply_data_paths(data_paths, version=version, changed=False)
+                self._apply_data_paths(data_paths, version=version, changed=False, manifest=local_manifest)
             if force or not self._within_ttl():
                 self._schedule_refresh()
             return data_paths
@@ -76,9 +76,9 @@ class DataManager:
         # First-ever cold boot: block until initial data is downloaded.
         with self.lock:
             self.last_checked = time.time()
-        data_paths, version, changed = self._sync_remote_data(cache_paths=cache_paths)
+        data_paths, version, changed, manifest = self._sync_remote_data(cache_paths=cache_paths)
         with self.lock:
-            self._apply_data_paths(data_paths, version=version, changed=changed)
+            self._apply_data_paths(data_paths, version=version, changed=changed, manifest=manifest)
         return data_paths
 
     def maybe_refresh(self):
@@ -156,7 +156,15 @@ class DataManager:
             return False
         return any(name.lower().endswith(".geojson") for name in os.listdir(geojson_dir))
 
-    def _apply_data_paths(self, data_paths: dict, version: str = None, changed: bool = False):
+    def _release_metadata(self, manifest: dict, version: str = None) -> dict:
+        manifest = manifest if isinstance(manifest, dict) else {}
+        return {
+            "version": version or manifest.get("version"),
+            "generated_at": manifest.get("generated_at") or manifest.get("generatedAt"),
+            "last_updated": manifest.get("last_updated") or manifest.get("lastUpdated"),
+        }
+
+    def _apply_data_paths(self, data_paths: dict, version: str = None, changed: bool = False, manifest: dict = None):
         if not data_paths:
             return
         self.app.config["DATABASE_PATH"] = data_paths["database_path"]
@@ -165,6 +173,14 @@ class DataManager:
         self.app.config["GEOJSON_URL_PATH"] = data_paths.get("geojson_url_path", "/data/geojson/")
         if version:
             self.app.config["DATA_VERSION"] = version
+
+        release_metadata = self._release_metadata(manifest, version=version)
+        if release_metadata.get("version"):
+            self.app.config["DATA_RELEASE_VERSION"] = release_metadata["version"]
+        if release_metadata.get("generated_at"):
+            self.app.config["DATA_RELEASE_GENERATED_AT"] = release_metadata["generated_at"]
+        if release_metadata.get("last_updated"):
+            self.app.config["DATA_RELEASE_LAST_UPDATED"] = release_metadata["last_updated"]
 
         if changed or version != self.current_version:
             self.app.extensions.pop("state_db", None)
@@ -199,7 +215,7 @@ class DataManager:
         if changed:
             self._write_json(cache_paths["manifest"], manifest)
 
-        return self._paths_from_cache(cache_paths), version, changed
+        return self._paths_from_cache(cache_paths), version, changed, manifest
 
     def _download_artifacts(self, manifest: dict, cache_paths: dict):
         cache_dir = cache_paths["cache_dir"]
@@ -404,9 +420,9 @@ class DataManager:
             cache_dir = self._resolve_path(self.cache_dir)
             os.makedirs(cache_dir, exist_ok=True)
             cache_paths = self._cache_paths(cache_dir)
-            data_paths, version, changed = self._sync_remote_data(cache_paths=cache_paths)
+            data_paths, version, changed, manifest = self._sync_remote_data(cache_paths=cache_paths)
             with self.lock:
-                self._apply_data_paths(data_paths, version=version, changed=changed)
+                self._apply_data_paths(data_paths, version=version, changed=changed, manifest=manifest)
         except Exception as exc:
             self.app.logger.error(f"Periodic data refresh failed: {exc}")
         finally:

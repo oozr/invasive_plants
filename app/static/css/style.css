@@ -53,6 +53,26 @@ body {
    margin-bottom: 1.25rem;
 }
 
+.release-pill {
+   display: inline-flex;
+   align-items: center;
+   gap: 0.65rem;
+   flex-wrap: wrap;
+   padding: 0.45rem 0.8rem;
+   border: 1px solid #9ac7ad;
+   border-radius: 999px;
+   background: #e8f5ee;
+   color: #174a2f;
+   font-size: 0.9rem;
+   font-weight: 600;
+}
+
+.release-pill span + span {
+   padding-left: 0.65rem;
+   border-left: 1px solid rgba(23, 74, 47, 0.25);
+   color: #38654b;
+}
+
 h2 { margin-bottom: 1.25rem; }
 h3 { margin-bottom: 1rem; }
 

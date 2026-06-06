@@ -51,6 +51,44 @@ def _get_species_db() -> SpeciesDatabase:
     return db
 
 
+def _database_last_modified_iso() -> str:
+    db_path = current_app.config.get("DATABASE_PATH") or "weeds.db"
+    absolute_db_path = db_path if os.path.isabs(db_path) else os.path.abspath(db_path)
+    if os.path.exists(absolute_db_path):
+        return datetime.fromtimestamp(os.path.getmtime(absolute_db_path)).isoformat()
+    return ""
+
+
+def _date_label(value: str) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return raw[:10]
+    return parsed.date().isoformat()
+
+
+def _release_metadata() -> dict:
+    version = (
+        current_app.config.get("DATA_RELEASE_VERSION")
+        or current_app.config.get("DATA_VERSION")
+        or ""
+    )
+    generated_at = current_app.config.get("DATA_RELEASE_GENERATED_AT") or ""
+    last_updated = current_app.config.get("DATA_RELEASE_LAST_UPDATED") or ""
+    timestamp = generated_at or last_updated or _database_last_modified_iso()
+    date_kind = "generated" if generated_at else "refreshed"
+
+    return {
+        "version": str(version or "").strip(),
+        "timestamp": timestamp,
+        "date_label": _date_label(timestamp),
+        "date_kind": date_kind,
+    }
+
+
 def _bool_arg(name: str, default: bool = True) -> bool:
     v = request.args.get(name, str(default)).strip().lower()
     return v in {"1", "true", "yes", "y", "on"}
@@ -84,6 +122,7 @@ def index():
         "home.html",
         geojson_path=current_app.config.get("GEOJSON_URL_PATH", "/data/geojson/"),
         data_version=current_app.config.get("DATA_VERSION", ""),
+        release_metadata=_release_metadata(),
         oozr_base_url=current_app.config.get("OOZR_BASE_URL", ""),
         oozr_project_slug=current_app.config.get("OOZR_PROJECT_SLUG", "regulatedplants"),
         oozr_metrics_enabled=metrics_enabled,
@@ -224,11 +263,7 @@ def home_highlights():
     try:
         metrics = _get_state_db().get_highlight_metrics()
 
-        last_updated = None
-        db_path = current_app.config.get("DATABASE_PATH") or "weeds.db"
-        absolute_db_path = db_path if os.path.isabs(db_path) else os.path.abspath(db_path)
-        if os.path.exists(absolute_db_path):
-            last_updated = datetime.fromtimestamp(os.path.getmtime(absolute_db_path)).isoformat()
+        last_updated = _release_metadata().get("timestamp") or None
 
         override_country = current_app.config.get("LATEST_COUNTRY_NAME")
         if override_country:
@@ -458,6 +493,7 @@ def api_index():
         "api.html",
         api_service_base_url=_data_service_base_url(),
         api_release_metrics=_api_release_metrics(),
+        release_metadata=_release_metadata(),
     )
 
 

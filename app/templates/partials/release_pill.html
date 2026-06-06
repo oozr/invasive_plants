@@ -1,0 +1,8 @@
+{% if release_metadata and release_metadata.version %}
+<div class="release-pill mb-4" aria-label="Dataset release">
+    <span>Dataset release {{ release_metadata.version }}</span>
+    {% if release_metadata.date_label %}
+        <span>{{ release_metadata.date_kind|capitalize }} {{ release_metadata.date_label }}</span>
+    {% endif %}
+</div>
+{% endif %}
