@@ -276,32 +276,6 @@ textarea.form-control {
    white-space: nowrap;
 }
 
-.nav-release-item {
-   display: flex;
-   align-items: center;
-}
-
-.nav-release-meta {
-   display: flex;
-   flex-direction: column;
-   align-items: flex-end;
-   padding: 0.15rem 0 0.15rem 1rem;
-   color: rgba(255, 255, 255, 0.55);
-   font-size: 0.68rem;
-   font-weight: 600;
-   line-height: 1.25;
-   white-space: nowrap;
-}
-
-.nav-release-meta strong {
-   color: #dbeade;
-   font-weight: 700;
-}
-
-.nav-release-meta span {
-   color: rgba(255, 255, 255, 0.55);
-}
-
 .nav-logout-form {
    margin: 0;
 }
@@ -686,6 +660,15 @@ table.dataTable tbody tr:hover {
    color: var(--text-muted);
 }
 
+.footer-release {
+   font-size: 0.86rem;
+   color: var(--text-muted);
+}
+
+.footer-release a {
+   color: var(--text-muted);
+}
+
 /* ========================================
    ALERTS
    ======================================== */
@@ -720,13 +703,6 @@ table.dataTable tbody tr:hover {
    RESPONSIVE DESIGN
    ======================================== */
 
-
-@media (max-width: 991.98px) {
-   .nav-release-meta {
-      align-items: flex-start;
-      padding: 0.5rem 0;
-   }
-}
 
 @media (max-width: 767.98px) {
    .auth-panel-copy {

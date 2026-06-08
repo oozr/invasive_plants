@@ -131,6 +131,26 @@ Expected endpoints on the data service:
 - `GET /artifacts/weeds.db`
 - `GET /artifacts/geojson/<file>.geojson`
 
+The manifest may include a non-detailed release history for the website footer
+and Methodology page:
+
+```json
+{
+  "version": "20260528T124621Z",
+  "generated_at": "2026-05-28T12:46:21Z",
+  "release_history": [
+    {
+      "version": "20260528T124621Z",
+      "generated_at": "2026-05-28T12:46:21Z",
+      "summary": "Current public data release"
+    }
+  ]
+}
+```
+
+If `release_history` is absent, the app shows the current release as the only
+history entry.
+
 Remote data behavior in `remote_production`:
 - If a valid local cache exists, boot immediately from cache.
 - Refresh runs in the background only when `DATA_MANIFEST_TTL_SECONDS > 0`.

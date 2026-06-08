@@ -85,51 +85,40 @@
         {% endfor %}
     </div>
 
-    <h3>Versions</h3>
+    <h3 id="data-versions">Data Versions</h3>
+    <p>
+        Public dataset releases are recorded in the dataset manifest. The website reads
+        the current release and release history from that manifest.
+    </p>
     <div class="sources-container">
         <button class="sources-toggle" id="versionsToggle" aria-expanded="false">
-            <span>View Data Version History</span>
+            <span>View Data Release History</span>
             <svg class="chevron-icon" viewBox="0 0 24 24" width="24" height="24">
                 <path d="M6 9l6 6 6-6"></path>
             </svg>
         </button>
         <div class="sources-content versions-content" id="versionsContent">
-            <div class="state-item">
-                <span class="state-name">2026.05</span>
-                <div class="details">
-                    <span class="authority">England, Wales and Lebanon added</span>
+            {% for release in release_metadata.history %}
+                <div class="state-item">
+                    <span class="state-name">{{ release.label }}</span>
+                    <div class="details">
+                        <span class="authority">
+                            {{ release.summary or "Data release" }}
+                            {% if release.current %}(current){% endif %}
+                        </span>
+                        {% if release.date_label %}
+                            <span class="year">{{ release.date_kind|capitalize }} {{ release.date_label }}</span>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-            <div class="state-item">
-                <span class="state-name">2026.03</span>
-                <div class="details">
-                    <span class="authority">South Africa added</span>
+            {% else %}
+                <div class="state-item">
+                    <span class="state-name">No release history available</span>
+                    <div class="details">
+                        <span class="authority">Publish a release history in the dataset manifest to populate this section.</span>
+                    </div>
                 </div>
-            </div>
-            <div class="state-item">
-                <span class="state-name">2025.12</span>
-                <div class="details">
-                    <span class="authority">EU, Israel, Qatar, Oman, Bahrain, Saudi Arabia, and UAE added, Idaho updated</span>
-                </div>
-            </div>
-            <div class="state-item">
-                <span class="state-name">2025.11</span>
-                <div class="details">
-                    <span class="authority">New Zealand added</span>
-                </div>
-            </div>
-            <div class="state-item">
-                <span class="state-name">2025.05</span>
-                <div class="details">
-                    <span class="authority">Australia and Canada added</span>
-                </div>
-            </div>
-            <div class="state-item">
-                <span class="state-name">2025.01</span>
-                <div class="details">
-                    <span class="authority">Project initiation, US added</span>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </section>

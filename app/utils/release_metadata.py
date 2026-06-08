@@ -21,6 +21,76 @@ def _date_label(value: str) -> str:
     return parsed.date().isoformat()
 
 
+def _release_date_kind(entry: dict) -> str:
+    return "generated" if entry.get("generated_at") or entry.get("generatedAt") else "refreshed"
+
+
+def _release_timestamp(entry: dict) -> str:
+    return (
+        entry.get("generated_at")
+        or entry.get("generatedAt")
+        or entry.get("last_updated")
+        or entry.get("lastUpdated")
+        or ""
+    )
+
+
+def _normalize_history_entry(entry: dict) -> dict:
+    entry = entry if isinstance(entry, dict) else {}
+    version = str(entry.get("version") or entry.get("id") or "").strip()
+    label = str(entry.get("label") or entry.get("name") or version).strip()
+    timestamp = _release_timestamp(entry)
+    date_kind = _release_date_kind(entry)
+    summary = str(entry.get("summary") or entry.get("notes") or entry.get("description") or "").strip()
+
+    return {
+        "version": version,
+        "label": label,
+        "summary": summary,
+        "timestamp": timestamp,
+        "date_label": _date_label(timestamp),
+        "date_kind": date_kind,
+        "current": bool(entry.get("current")),
+    }
+
+
+def _normalize_history(history, current_release: dict) -> list:
+    if not isinstance(history, list):
+        history = []
+
+    normalized = []
+    seen_versions = set()
+    for entry in history:
+        normalized_entry = _normalize_history_entry(entry)
+        version = normalized_entry.get("version")
+        if not version:
+            continue
+        normalized.append(normalized_entry)
+        seen_versions.add(version)
+
+    current_version = current_release.get("version")
+    if current_version and current_version not in seen_versions:
+        normalized.insert(
+            0,
+            {
+                "version": current_version,
+                "label": current_version,
+                "summary": "Current public data release",
+                "timestamp": current_release.get("timestamp"),
+                "date_label": current_release.get("date_label"),
+                "date_kind": current_release.get("date_kind"),
+                "current": True,
+            },
+        )
+    elif current_version:
+        for entry in normalized:
+            if entry.get("version") == current_version:
+                entry["current"] = True
+                break
+
+    return normalized
+
+
 def build_release_metadata(app) -> dict:
     version = (
         app.config.get("DATA_RELEASE_VERSION")
@@ -32,9 +102,12 @@ def build_release_metadata(app) -> dict:
     timestamp = generated_at or last_updated or _database_last_modified_iso(app)
     date_kind = "generated" if generated_at else "refreshed"
 
-    return {
+    release = {
         "version": str(version or "").strip(),
         "timestamp": timestamp,
         "date_label": _date_label(timestamp),
         "date_kind": date_kind,
     }
+
+    release["history"] = _normalize_history(app.config.get("DATA_RELEASE_HISTORY"), release)
+    return release

@@ -162,6 +162,12 @@ class DataManager:
             "version": version or manifest.get("version"),
             "generated_at": manifest.get("generated_at") or manifest.get("generatedAt"),
             "last_updated": manifest.get("last_updated") or manifest.get("lastUpdated"),
+            "history": (
+                manifest.get("release_history")
+                or manifest.get("releaseHistory")
+                or manifest.get("history")
+                or manifest.get("releases")
+            ),
         }
 
     def _apply_data_paths(self, data_paths: dict, version: str = None, changed: bool = False, manifest: dict = None):
@@ -177,10 +183,12 @@ class DataManager:
         release_metadata = self._release_metadata(manifest, version=version)
         if release_metadata.get("version"):
             self.app.config["DATA_RELEASE_VERSION"] = release_metadata["version"]
-        if release_metadata.get("generated_at"):
-            self.app.config["DATA_RELEASE_GENERATED_AT"] = release_metadata["generated_at"]
-        if release_metadata.get("last_updated"):
-            self.app.config["DATA_RELEASE_LAST_UPDATED"] = release_metadata["last_updated"]
+        self.app.config["DATA_RELEASE_GENERATED_AT"] = release_metadata.get("generated_at")
+        self.app.config["DATA_RELEASE_LAST_UPDATED"] = release_metadata.get("last_updated")
+        if isinstance(release_metadata.get("history"), list):
+            self.app.config["DATA_RELEASE_HISTORY"] = release_metadata["history"]
+        else:
+            self.app.config.pop("DATA_RELEASE_HISTORY", None)
 
         if changed or version != self.current_version:
             self.app.extensions.pop("state_db", None)
