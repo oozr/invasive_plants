@@ -199,13 +199,18 @@ table.dataTable tbody td a:hover,
 
 .highlight-release-version {
    display: block;
-   font-size: 1.1rem;
-   line-height: 1.25;
+   font-size: 0.9rem;
+   font-weight: 400;
+   line-height: 1.35;
+   color: var(--text-medium);
    overflow-wrap: anywhere;
 }
 
 .highlight-release-date {
+   display: block;
    margin-top: 0.25rem;
+   font-size: 0.9rem;
+   color: var(--text-medium);
 }
 
 .highlight-common {

@@ -62,7 +62,6 @@
         const lastUpdatedBadge = document.getElementById('highlight-last-updated-badge');
         const releaseVersionEl = document.getElementById('highlight-release-version');
         const releaseDateEl = document.getElementById('highlight-release-date');
-        const releaseSummaryEl = document.getElementById('highlight-release-summary');
 
         const latestCountryEl = document.getElementById('highlight-latest-country');
         const latestCountryLink = document.getElementById('highlight-latest-country-link');
@@ -89,10 +88,6 @@
         const release = data.release || {};
         if (releaseVersionEl) releaseVersionEl.textContent = release.version || '--';
         if (releaseDateEl) releaseDateEl.textContent = releaseDateText(release);
-        if (releaseSummaryEl) {
-            releaseSummaryEl.textContent = release.summary || '';
-            releaseSummaryEl.classList.toggle('d-none', !release.summary);
-        }
 
         // Latest country card
         const latestCountry = data.latestCountry || {};

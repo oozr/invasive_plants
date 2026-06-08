@@ -18,10 +18,10 @@
         <div class="col-12 col-md-6 col-xl">
             <div class="highlight-card">
                 <p class="highlight-label">Database Release</p>
-                <span class="highlight-value highlight-release-version" id="highlight-release-version">
+                <span class="highlight-release-version" id="highlight-release-version">
                     {{ release_metadata.version or "--" }}
                 </span>
-                <span class="highlight-common highlight-release-date" id="highlight-release-date">
+                <span class="highlight-release-date" id="highlight-release-date">
                     {% if release_metadata.date_label %}
                         {% if release_metadata.date_kind == "generated" %}Published{% else %}Refreshed{% endif %}
                         {{ release_metadata.date_label }}
@@ -29,9 +29,6 @@
                         Date pending
                     {% endif %}
                 </span>
-                <p class="highlight-meta {% if not release_metadata.summary %}d-none{% endif %}" id="highlight-release-summary">
-                    {{ release_metadata.summary }}
-                </p>
             </div>
         </div>
         <div class="col-12 col-md-6 col-xl">
