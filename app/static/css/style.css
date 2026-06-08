@@ -199,6 +199,10 @@ table.dataTable tbody td a:hover,
    gap: 0.55rem;
 }
 
+.catalogue-partners .catalogue-meta-label {
+   transform: translateY(1.5px);
+}
+
 .catalogue-partners img {
    max-height: 21px;
    max-width: 100px;
