@@ -85,6 +85,7 @@
 
 /* Toggle Controls */
 .toggle-controls {
+    padding-top: 0.65rem;
     margin-bottom: 0.25rem;
 }
 
@@ -101,7 +102,7 @@
 /* Mobile-specific spacing */
 @media (max-width: 767.98px) {
     .toggle-controls {
-        padding: 0;
+        padding: 0.65rem 0 0;
     }
     
     .toggle-controls .form-check {

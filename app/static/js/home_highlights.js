@@ -15,8 +15,7 @@
         if (!release) return 'Date pending';
         const dateLabel = release.dateLabel || formatDate(release.generatedAt);
         if (!dateLabel || dateLabel === '--') return 'Date pending';
-        const prefix = release.dateKind === 'generated' ? 'Published' : 'Refreshed';
-        return `${prefix} ${dateLabel}`;
+        return dateLabel;
     }
 
     function animateCount(element, value) {
