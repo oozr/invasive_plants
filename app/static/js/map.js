@@ -400,6 +400,10 @@ document.addEventListener('DOMContentLoaded', function () {
         return `/auth/signup?next=${encodeURIComponent(next || '/')}`;
     }
 
+    function enterpriseAccessUrl() {
+        return MAP_CONFIG.enterpriseAccessUrl || '/api';
+    }
+
     function allTogglesOff() {
         return (!toggleState.region && !toggleState.national && !toggleState.international);
     }
@@ -484,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (warningEl) {
             const shouldShowSampleWarning = Boolean(hasAnyData) && isSample && allWeeds.length > 0;
             if (shouldShowSampleWarning) {
-                warningEl.innerHTML = `<strong>Research access sample.</strong> Showing ${allWeeds.length.toLocaleString()} of ${totalCount.toLocaleString()} regulated plants. <a href="${researcherLoginUrl()}">Request research access</a> to view the full website list. Enterprise teams should use Enterprise access for automated compliance checks.`;
+                warningEl.innerHTML = `<strong>Research access sample.</strong> Showing ${allWeeds.length.toLocaleString()} of ${totalCount.toLocaleString()} regulated plants. <a href="${researcherLoginUrl()}">Request research access</a> to view the full website list. Enterprise teams should use <a href="${enterpriseAccessUrl()}">enterprise access</a> for automated compliance checks.`;
                 warningEl.classList.remove('d-none');
             } else {
                 warningEl.innerHTML = '';
