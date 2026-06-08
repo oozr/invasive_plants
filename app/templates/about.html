@@ -160,6 +160,11 @@
                     <label for="message" class="form-label">Message</label>
                     <textarea class="form-control" id="message" name="message" rows="5" required>{{ contact_message }}</textarea>
                 </div>
+                <p class="privacy-submit-note">
+                    We use contact form details to respond to your message and administer access requests.
+                    See the <a href="{{ url_for('home.privacy') }}" target="_blank" rel="noopener">Privacy notice</a>
+                    before submitting.
+                </p>
                 <!-- Honeypot field to catch bots -->
                 <div style="display:none;">
                     <label for="website">Website</label>
@@ -188,5 +193,8 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    window.CONTACT_FORM_DEFAULTS = {{ contact_form_defaults|tojson }};
+</script>
 <script src="{{ url_for('static', filename='js/contact_form.js') }}"></script>
 {% endblock %}

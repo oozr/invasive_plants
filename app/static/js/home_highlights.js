@@ -11,6 +11,14 @@
         });
     }
 
+    function releaseDateText(release) {
+        if (!release) return 'Date pending';
+        const dateLabel = release.dateLabel || formatDate(release.generatedAt);
+        if (!dateLabel || dateLabel === '--') return 'Date pending';
+        const prefix = release.dateKind === 'generated' ? 'Published' : 'Refreshed';
+        return `${prefix} ${dateLabel}`;
+    }
+
     function animateCount(element, value) {
         if (!element || typeof value !== 'number') return;
 
@@ -52,6 +60,9 @@
         const speciesEl = document.getElementById('highlight-species');
         const lastUpdatedEl = document.getElementById('highlight-last-updated');
         const lastUpdatedBadge = document.getElementById('highlight-last-updated-badge');
+        const releaseVersionEl = document.getElementById('highlight-release-version');
+        const releaseDateEl = document.getElementById('highlight-release-date');
+        const releaseSummaryEl = document.getElementById('highlight-release-summary');
 
         const latestCountryEl = document.getElementById('highlight-latest-country');
         const latestCountryLink = document.getElementById('highlight-latest-country-link');
@@ -73,6 +84,14 @@
         if (lastUpdatedEl) lastUpdatedEl.textContent = formattedDate;
         if (lastUpdatedBadge) {
             lastUpdatedBadge.textContent = `Database updated on: ${formattedDate}`;
+        }
+
+        const release = data.release || {};
+        if (releaseVersionEl) releaseVersionEl.textContent = release.version || '--';
+        if (releaseDateEl) releaseDateEl.textContent = releaseDateText(release);
+        if (releaseSummaryEl) {
+            releaseSummaryEl.textContent = release.summary || '';
+            releaseSummaryEl.classList.toggle('d-none', !release.summary);
         }
 
         // Latest country card

@@ -197,6 +197,17 @@ table.dataTable tbody td a:hover,
    color: var(--unu-blue);
 }
 
+.highlight-release-version {
+   display: block;
+   font-size: 1.1rem;
+   line-height: 1.25;
+   overflow-wrap: anywhere;
+}
+
+.highlight-release-date {
+   margin-top: 0.25rem;
+}
+
 .highlight-common {
    display: block;
    font-size: 1rem;
@@ -245,6 +256,16 @@ table.dataTable tbody td a:hover,
 
 textarea.form-control {
    min-height: 120px;
+}
+
+.privacy-submit-note {
+   font-size: 0.9rem;
+   color: var(--text-muted);
+   margin: 0 0 1rem;
+}
+
+.privacy-submit-note a {
+   color: var(--unu-blue);
 }
 
 /* ========================================

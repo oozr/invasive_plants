@@ -15,7 +15,26 @@
 
 <section class="home-highlights mb-4" id="home-highlights">
     <div class="row g-3">
-        <div class="col-12 col-md-6 col-xl-3">
+        <div class="col-12 col-md-6 col-xl">
+            <div class="highlight-card">
+                <p class="highlight-label">Database Release</p>
+                <span class="highlight-value highlight-release-version" id="highlight-release-version">
+                    {{ release_metadata.version or "--" }}
+                </span>
+                <span class="highlight-common highlight-release-date" id="highlight-release-date">
+                    {% if release_metadata.date_label %}
+                        {% if release_metadata.date_kind == "generated" %}Published{% else %}Refreshed{% endif %}
+                        {{ release_metadata.date_label }}
+                    {% else %}
+                        Date pending
+                    {% endif %}
+                </span>
+                <p class="highlight-meta {% if not release_metadata.summary %}d-none{% endif %}" id="highlight-release-summary">
+                    {{ release_metadata.summary }}
+                </p>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl">
             <div class="highlight-card">
                 <p class="highlight-label">Regulatory Coverage</p>
                 <div class="highlight-metric">
@@ -28,7 +47,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-6 col-xl-3">
+        <div class="col-12 col-md-6 col-xl">
             <div class="highlight-card">
                 <p class="highlight-label">Latest Country Added</p>
                 <a href="#" id="highlight-latest-country-link" class="highlight-link">
@@ -36,7 +55,7 @@
                 </a>
             </div>
         </div>
-        <div class="col-12 col-md-6 col-xl-3">
+        <div class="col-12 col-md-6 col-xl">
             <div class="highlight-card">
                 <p class="highlight-label">Most Regulated Taxa</p>
                 <a href="#" id="highlight-top-species-link" class="highlight-link" target="_blank" rel="noopener">
@@ -48,7 +67,7 @@
                 </p>
             </div>
         </div>
-        <div class="col-12 col-md-6 col-xl-3">
+        <div class="col-12 col-md-6 col-xl">
             <div class="highlight-card">
                 <p class="highlight-label">Most Regulated Jurisdiction</p>
                 <a href="#" id="highlight-top-jurisdiction-link" class="highlight-link">

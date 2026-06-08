@@ -60,6 +60,35 @@ def _release_metrics() -> dict:
     return metrics if isinstance(metrics, dict) else {}
 
 
+def _release_contact_label() -> str:
+    release = _release_metadata()
+    version = release.get("version") or "current release"
+    date_label = release.get("date_label")
+    if date_label:
+        return f"{version} ({date_label})"
+    return version
+
+
+def _enterprise_contact_message() -> str:
+    return (
+        "I would like to request Enterprise access for automated plant compliance checks.\n\n"
+        "Organization:\n"
+        "Commercial workflow or platform:\n"
+        "Intended use case:\n"
+        "Expected request volume:"
+    )
+
+
+def _data_correction_contact_message() -> str:
+    return (
+        f"Data release: {_release_contact_label()}\n\n"
+        "Plant or jurisdiction:\n"
+        "Current record:\n"
+        "Correction needed:\n"
+        "Source or reference URL:"
+    )
+
+
 def _bool_arg(name: str, default: bool = True) -> bool:
     v = request.args.get(name, str(default)).strip().lower()
     return v in {"1", "true", "yes", "y", "on"}
@@ -263,6 +292,9 @@ def home_highlights():
                 "release": {
                     "version": release.get("version"),
                     "generatedAt": release.get("timestamp"),
+                    "dateLabel": release.get("date_label"),
+                    "dateKind": release.get("date_kind"),
+                    "summary": release.get("summary"),
                     "metricsSource": "manifest" if has_release_counts else "database",
                 },
                 "latestCountry": {
@@ -605,19 +637,20 @@ def index():
         contact_subject = "general"
 
     contact_message = ""
+    contact_form_defaults = {
+        "api_access": _enterprise_contact_message(),
+        "data": _data_correction_contact_message(),
+    }
     if contact_subject == "api_access":
-        contact_message = (
-            "I would like to request Enterprise access for automated plant compliance checks.\n\n"
-            "Organization:\n"
-            "Commercial workflow or platform:\n"
-            "Intended use case:\n"
-            "Expected request volume:"
-        )
+        contact_message = contact_form_defaults["api_access"]
+    elif contact_subject == "data":
+        contact_message = contact_form_defaults["data"]
 
     return render_template(
         "about.html",
         contact_subject=contact_subject,
         contact_message=contact_message,
+        contact_form_defaults=contact_form_defaults,
     )
 
 

@@ -1,5 +1,5 @@
 # __init__.py
-from flask import Flask
+from flask import Flask, request
 from flask_wtf.csrf import CSRFProtect
 from app.config import Config
 from app.utils.data_manager import DataManager
@@ -68,5 +68,18 @@ def create_app():
             "account_is_admin": current_user_is_admin(),
             "release_metadata": build_release_metadata(app),
         }
+
+    @app.after_request
+    def set_security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+
+        if request.path.startswith(("/auth", "/admin")):
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Pragma"] = "no-cache"
+
+        return response
 
     return app

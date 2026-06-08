@@ -78,6 +78,12 @@
                         >{{ purpose }}</textarea>
                     </div>
 
+                    <p class="privacy-submit-note">
+                        We use these details to review and administer research website access.
+                        See the <a href="{{ url_for('home.privacy') }}" target="_blank" rel="noopener">Privacy notice</a>
+                        before submitting.
+                    </p>
+
                     <div class="auth-action-row">
                         <button type="submit" class="btn btn-primary">Submit request</button>
                         <a class="btn btn-outline-dark" href="{{ url_for('auth.login', next=next_url) }}">Already approved? Log in here</a>

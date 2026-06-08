@@ -138,4 +138,9 @@ def build_release_metadata(app) -> dict:
             if entry.get("current") and entry.get("metrics"):
                 release["metrics"] = entry["metrics"]
                 break
+    release["summary"] = ""
+    for entry in release["history"]:
+        if entry.get("current") and entry.get("summary"):
+            release["summary"] = entry["summary"]
+            break
     return release
