@@ -13,13 +13,11 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
         {% block extra_css %}{% endblock %}
-        <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-CFT0DN3EZY"></script>
         <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-CFT0DN3EZY');
+            window.ANALYTICS_CONFIG = {
+                googleAnalyticsId: {{ google_analytics_id|tojson }},
+                privacyUrl: {{ url_for('home.privacy')|tojson }}
+            };
         </script>
     </head>
 <body>
@@ -120,9 +118,25 @@
         </div>
     </footer>
 
+    {% if google_analytics_id %}
+        <div class="cookie-banner" data-cookie-banner hidden>
+            <p>
+                We use optional analytics cookies to understand site usage.
+                <a href="{{ url_for('home.privacy') }}">Privacy notice</a>
+            </p>
+            <div class="cookie-banner-actions">
+                <button type="button" class="btn btn-sm btn-outline-dark" data-analytics-reject>Reject analytics</button>
+                <button type="button" class="btn btn-sm btn-primary" data-analytics-accept>Accept analytics</button>
+            </div>
+        </div>
+    {% endif %}
+
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% if google_analytics_id %}
+        <script src="{{ url_for('static', filename='js/analytics_consent.js') }}"></script>
+    {% endif %}
     
     <!-- Add script to auto-hide flash messages after a few seconds -->
     <script>

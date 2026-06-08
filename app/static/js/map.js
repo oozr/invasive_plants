@@ -289,7 +289,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function metricsEnabled() {
-        return MAP_CONFIG.oozrMetricsEnabled === true;
+        return (
+            MAP_CONFIG.oozrMetricsEnabled === true
+            && typeof window.analyticsConsentGranted === 'function'
+            && window.analyticsConsentGranted()
+        );
     }
 
     function oozrBaseUrl() {

@@ -39,6 +39,7 @@ class Config:
    SITE_NAME = "Regulated Plants Database"
    SITE_AUTHOR = "Regulated Plants Database Team"
    BASE_URL = os.getenv('BASE_URL', 'https://regulatedplants.unu.edu')
+   GOOGLE_ANALYTICS_ID = os.getenv('GOOGLE_ANALYTICS_ID', 'G-CFT0DN3EZY')
    OOZR_BASE_URL = os.getenv('OOZR_BASE_URL', '').rstrip('/')
    OOZR_PROJECT_SLUG = os.getenv('OOZR_PROJECT_SLUG', 'regulatedplants')
    OOZR_METRICS_ENABLED = os.getenv('OOZR_METRICS_ENABLED', '0')

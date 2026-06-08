@@ -67,6 +67,7 @@ def create_app():
             "account_logged_in": account_logged_in(),
             "account_is_admin": current_user_is_admin(),
             "release_metadata": build_release_metadata(app),
+            "google_analytics_id": app.config.get("GOOGLE_ANALYTICS_ID", ""),
         }
 
     @app.after_request
