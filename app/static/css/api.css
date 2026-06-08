@@ -48,6 +48,20 @@
    text-align: left;
 }
 
+.release-card-meta {
+   margin: -0.1rem 0 0.6rem;
+   color: var(--text-medium);
+   font-size: 0.88rem;
+   font-weight: 600;
+   line-height: 1.35;
+}
+
+.release-card-meta span {
+   display: block;
+   color: var(--text-muted);
+   font-weight: 500;
+}
+
 .api-grid {
    display: grid;
    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

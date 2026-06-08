@@ -264,72 +264,77 @@ class StateDatabase(DatabaseBase):
         region_part = self._slugify(region) if region else "country"
         return f"{j_type}:{country_part}:{region_part}"
 
-    def get_highlight_metrics(self) -> Dict:
+    def get_highlight_metrics(self, include_counts: bool = True) -> Dict:
         conn = self.get_connection()
         try:
-            species_count = conn.execute(
-                """
-                SELECT COUNT(*) AS count
-                FROM plants
-                """
-            ).fetchone()["count"] or 0
+            species_count = None
+            regulation_count = None
+            jurisdiction_count = None
 
-            regulation_count = conn.execute(
-                """
-                SELECT COUNT(*) AS count
-                FROM regulations
-                WHERE is_webapp_scoped = 1
-                """
-            ).fetchone()["count"] or 0
+            if include_counts:
+                species_count = conn.execute(
+                    """
+                    SELECT COUNT(*) AS count
+                    FROM plants
+                    """
+                ).fetchone()["count"] or 0
 
-            region_j = conn.execute(
-                """
-                SELECT COUNT(DISTINCT j.country || '::' || j.region) AS count
-                FROM jurisdictions j
-                WHERE j.jurisdiction_type = 'region'
-                  AND j.country IS NOT NULL AND TRIM(j.country) != ''
-                  AND j.region IS NOT NULL AND TRIM(j.region) != ''
-                  AND EXISTS (
-                      SELECT 1
-                      FROM regulations r
-                      WHERE r.jurisdiction_id = j.id
-                        AND r.is_webapp_scoped = 1
-                  )
-                """
-            ).fetchone()["count"] or 0
+                regulation_count = conn.execute(
+                    """
+                    SELECT COUNT(*) AS count
+                    FROM regulations
+                    WHERE is_webapp_scoped = 1
+                    """
+                ).fetchone()["count"] or 0
 
-            national_j = conn.execute(
-                """
-                SELECT COUNT(DISTINCT j.country) AS count
-                FROM jurisdictions j
-                WHERE j.jurisdiction_type = 'national'
-                  AND j.country IS NOT NULL AND TRIM(j.country) != ''
-                  AND EXISTS (
-                      SELECT 1
-                      FROM regulations r
-                      WHERE r.jurisdiction_id = j.id
-                        AND r.is_webapp_scoped = 1
-                  )
-                """
-            ).fetchone()["count"] or 0
+                region_j = conn.execute(
+                    """
+                    SELECT COUNT(DISTINCT j.country || '::' || j.region) AS count
+                    FROM jurisdictions j
+                    WHERE j.jurisdiction_type = 'region'
+                      AND j.country IS NOT NULL AND TRIM(j.country) != ''
+                      AND j.region IS NOT NULL AND TRIM(j.region) != ''
+                      AND EXISTS (
+                          SELECT 1
+                          FROM regulations r
+                          WHERE r.jurisdiction_id = j.id
+                            AND r.is_webapp_scoped = 1
+                      )
+                    """
+                ).fetchone()["count"] or 0
 
-            international_j = conn.execute(
-                """
-                SELECT COUNT(
-                    DISTINCT COALESCE(NULLIF(TRIM(j.jurisdiction_group), ''), NULLIF(TRIM(j.country), ''), 'International')
-                ) AS count
-                FROM jurisdictions j
-                WHERE j.jurisdiction_type = 'international'
-                  AND EXISTS (
-                      SELECT 1
-                      FROM regulations r
-                      WHERE r.jurisdiction_id = j.id
-                        AND r.is_webapp_scoped = 1
-                  )
-                """
-            ).fetchone()["count"] or 0
+                national_j = conn.execute(
+                    """
+                    SELECT COUNT(DISTINCT j.country) AS count
+                    FROM jurisdictions j
+                    WHERE j.jurisdiction_type = 'national'
+                      AND j.country IS NOT NULL AND TRIM(j.country) != ''
+                      AND EXISTS (
+                          SELECT 1
+                          FROM regulations r
+                          WHERE r.jurisdiction_id = j.id
+                            AND r.is_webapp_scoped = 1
+                      )
+                    """
+                ).fetchone()["count"] or 0
 
-            jurisdiction_count = region_j + national_j + international_j
+                international_j = conn.execute(
+                    """
+                    SELECT COUNT(
+                        DISTINCT COALESCE(NULLIF(TRIM(j.jurisdiction_group), ''), NULLIF(TRIM(j.country), ''), 'International')
+                    ) AS count
+                    FROM jurisdictions j
+                    WHERE j.jurisdiction_type = 'international'
+                      AND EXISTS (
+                          SELECT 1
+                          FROM regulations r
+                          WHERE r.jurisdiction_id = j.id
+                            AND r.is_webapp_scoped = 1
+                      )
+                    """
+                ).fetchone()["count"] or 0
+
+                jurisdiction_count = region_j + national_j + international_j
 
             latest_country_row = conn.execute(
                 """

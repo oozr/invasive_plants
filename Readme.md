@@ -138,11 +138,21 @@ and Methodology page:
 {
   "version": "20260528T124621Z",
   "generated_at": "2026-05-28T12:46:21Z",
+  "metrics": {
+    "taxa": 2047,
+    "jurisdictions": 103,
+    "regulation_rows": 5523
+  },
   "release_history": [
     {
       "version": "20260528T124621Z",
       "generated_at": "2026-05-28T12:46:21Z",
-      "summary": "Current public data release"
+      "summary": "Current public data release",
+      "metrics": {
+        "taxa": 2047,
+        "jurisdictions": 103,
+        "regulation_rows": 5523
+      }
     }
   ]
 }

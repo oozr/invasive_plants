@@ -35,6 +35,26 @@ def _release_timestamp(entry: dict) -> str:
     )
 
 
+def _int_or_none(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _normalize_metrics(metrics) -> dict:
+    if not isinstance(metrics, dict):
+        return {}
+
+    output = {}
+    for key in ("taxa", "jurisdictions", "regulation_rows"):
+        value = _int_or_none(metrics.get(key))
+        if value is not None:
+            output[key] = value
+
+    return output
+
+
 def _normalize_history_entry(entry: dict) -> dict:
     entry = entry if isinstance(entry, dict) else {}
     version = str(entry.get("version") or entry.get("id") or "").strip()
@@ -50,6 +70,7 @@ def _normalize_history_entry(entry: dict) -> dict:
         "timestamp": timestamp,
         "date_label": _date_label(timestamp),
         "date_kind": date_kind,
+        "metrics": _normalize_metrics(entry.get("metrics")),
         "current": bool(entry.get("current")),
     }
 
@@ -79,6 +100,7 @@ def _normalize_history(history, current_release: dict) -> list:
                 "timestamp": current_release.get("timestamp"),
                 "date_label": current_release.get("date_label"),
                 "date_kind": current_release.get("date_kind"),
+                "metrics": current_release.get("metrics", {}),
                 "current": True,
             },
         )
@@ -107,7 +129,13 @@ def build_release_metadata(app) -> dict:
         "timestamp": timestamp,
         "date_label": _date_label(timestamp),
         "date_kind": date_kind,
+        "metrics": _normalize_metrics(app.config.get("DATA_RELEASE_METRICS")),
     }
 
     release["history"] = _normalize_history(app.config.get("DATA_RELEASE_HISTORY"), release)
+    if not release["metrics"]:
+        for entry in release["history"]:
+            if entry.get("current") and entry.get("metrics"):
+                release["metrics"] = entry["metrics"]
+                break
     return release

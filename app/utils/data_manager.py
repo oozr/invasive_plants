@@ -162,6 +162,7 @@ class DataManager:
             "version": version or manifest.get("version"),
             "generated_at": manifest.get("generated_at") or manifest.get("generatedAt"),
             "last_updated": manifest.get("last_updated") or manifest.get("lastUpdated"),
+            "metrics": manifest.get("metrics"),
             "history": (
                 manifest.get("release_history")
                 or manifest.get("releaseHistory")
@@ -185,6 +186,10 @@ class DataManager:
             self.app.config["DATA_RELEASE_VERSION"] = release_metadata["version"]
         self.app.config["DATA_RELEASE_GENERATED_AT"] = release_metadata.get("generated_at")
         self.app.config["DATA_RELEASE_LAST_UPDATED"] = release_metadata.get("last_updated")
+        if isinstance(release_metadata.get("metrics"), dict):
+            self.app.config["DATA_RELEASE_METRICS"] = release_metadata["metrics"]
+        else:
+            self.app.config.pop("DATA_RELEASE_METRICS", None)
         if isinstance(release_metadata.get("history"), list):
             self.app.config["DATA_RELEASE_HISTORY"] = release_metadata["history"]
         else:

@@ -38,6 +38,14 @@
         <div class="col-12 col-md-4">
             <div class="highlight-card">
                 <p class="highlight-label">Current Release</p>
+                {% if api_release_metrics.version %}
+                    <p class="release-card-meta">
+                        Data release {{ api_release_metrics.version }}
+                        {% if api_release_metrics.date_label %}
+                            <span>{{ api_release_metrics.date_kind|capitalize }} {{ api_release_metrics.date_label }}</span>
+                        {% endif %}
+                    </p>
+                {% endif %}
                 <div class="highlight-metric"><span>{{ api_release_metrics.species }}</span><small>taxa monitored</small></div>
                 <div class="highlight-metric"><span>{{ api_release_metrics.jurisdictions }}</span><small>jurisdictions</small></div>
                 <div class="highlight-metric"><span>{{ api_release_metrics.regulations }}</span><small>regulation rows</small></div>

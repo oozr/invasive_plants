@@ -55,6 +55,11 @@ def _release_metadata() -> dict:
     return build_release_metadata(current_app)
 
 
+def _release_metrics() -> dict:
+    metrics = _release_metadata().get("metrics")
+    return metrics if isinstance(metrics, dict) else {}
+
+
 def _bool_arg(name: str, default: bool = True) -> bool:
     v = request.args.get(name, str(default)).strip().lower()
     return v in {"1", "true", "yes", "y", "on"}
@@ -226,9 +231,15 @@ def home_highlights():
     Homepage highlight cards.
     """
     try:
-        metrics = _get_state_db().get_highlight_metrics()
+        release = _release_metadata()
+        release_metrics = _release_metrics()
+        has_release_counts = bool(
+            release_metrics.get("taxa") is not None
+            and release_metrics.get("jurisdictions") is not None
+        )
+        metrics = _get_state_db().get_highlight_metrics(include_counts=not has_release_counts)
 
-        last_updated = _release_metadata().get("timestamp") or None
+        last_updated = release.get("timestamp") or None
 
         override_country = current_app.config.get("LATEST_COUNTRY_NAME")
         if override_country:
@@ -243,8 +254,16 @@ def home_highlights():
         return jsonify(
             {
                 "stats": {
-                    "species": metrics.get("species_count", 0),
-                    "jurisdictions": metrics.get("jurisdiction_count", 0),
+                    "species": release_metrics.get("taxa", metrics.get("species_count", 0)),
+                    "jurisdictions": release_metrics.get(
+                        "jurisdictions",
+                        metrics.get("jurisdiction_count", 0),
+                    ),
+                },
+                "release": {
+                    "version": release.get("version"),
+                    "generatedAt": release.get("timestamp"),
+                    "metricsSource": "manifest" if has_release_counts else "database",
                 },
                 "latestCountry": {
                     "name": latest_country_name,
@@ -421,16 +440,36 @@ def _format_count(value) -> str:
 
 
 def _api_release_metrics() -> dict:
-    try:
-        metrics = _get_state_db().get_highlight_metrics()
-    except Exception as exc:
-        current_app.logger.warning("Unable to load API release metrics: %s", exc)
-        metrics = {}
+    release = _release_metadata()
+    release_metrics = _release_metrics()
+
+    missing_counts = [
+        key
+        for key in ("taxa", "jurisdictions", "regulation_rows")
+        if release_metrics.get(key) is None
+    ]
+    database_metrics = {}
+    if missing_counts:
+        try:
+            database_metrics = _get_state_db().get_highlight_metrics()
+        except Exception as exc:
+            current_app.logger.warning("Unable to load API release metrics: %s", exc)
+            database_metrics = {}
 
     return {
-        "species": _format_count(metrics.get("species_count")),
-        "jurisdictions": _format_count(metrics.get("jurisdiction_count")),
-        "regulations": _format_count(metrics.get("regulation_count")),
+        "version": release.get("version"),
+        "date_label": release.get("date_label"),
+        "date_kind": release.get("date_kind"),
+        "species": _format_count(
+            release_metrics.get("taxa", database_metrics.get("species_count"))
+        ),
+        "jurisdictions": _format_count(
+            release_metrics.get("jurisdictions", database_metrics.get("jurisdiction_count"))
+        ),
+        "regulations": _format_count(
+            release_metrics.get("regulation_rows", database_metrics.get("regulation_count"))
+        ),
+        "source": "manifest" if not missing_counts else "database_fallback",
     }
 
 
