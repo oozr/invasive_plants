@@ -24,6 +24,7 @@
                 <div class="api-action-row">
                     <a href="{{ url_for('about.index', subject='api_access') }}#contact" class="btn btn-primary">Request Enterprise Access</a>
                     <a href="{{ url_for('api_page.docs') }}" class="btn btn-outline-dark">Developer documentation</a>
+                    <a href="{{ url_for('api_page.terms') }}" class="btn btn-outline-dark">API terms</a>
                 </div>
             </div>
         </div>
@@ -64,8 +65,11 @@
             <div class="highlight-card">
                 <p class="highlight-label">Access Model</p>
                 <span class="highlight-common">
-                    Enterprise usage is token protected. Approved organizations receive an API token;
-                    paid subscriptions and metered billing will be connected later.
+                    Enterprise usage is manually approved and token protected. Approved
+                    organizations receive an API token from Menacon under written access
+                    terms. Pricing, quotas, support, and renewal terms are handled by
+                    quote, invoice, payment link, or agreement. Self-serve billing may
+                    be added later. <a href="{{ url_for('api_page.terms') }}">API terms apply</a>.
                 </span>
             </div>
         </div>
@@ -199,6 +203,7 @@
         <div class="api-action-row">
             <a href="{{ url_for('about.index', subject='api_access') }}#contact" class="btn btn-primary">Request Enterprise Access</a>
             <a href="{{ url_for('api_page.docs') }}" class="btn btn-outline-dark">Developer documentation</a>
+            <a href="{{ url_for('api_page.terms') }}" class="btn btn-outline-dark">API terms</a>
         </div>
     </div>
 </section>

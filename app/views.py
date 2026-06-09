@@ -608,6 +608,11 @@ def docs():
     return render_template("api_docs.html")
 
 
+@api_page.route("/terms")
+def terms():
+    return render_template("api_terms.html")
+
+
 @api_page.route("/openapi.json")
 def openapi_json():
     spec_path = current_app.config.get("API_OPENAPI_PATH")

@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <p class="mb-0">
                     Detailed website jurisdiction lists are available through Research Access.
                     <a href="${loginUrl}">Request research access</a>. Enterprise teams can
-                    <a href="${apiRequestUrl}">request Enterprise access</a> for automated compliance checks.
+                    <a href="${apiRequestUrl}">request enterprise access</a> for automated compliance checks.
                 </p>
             </div>
         `;
