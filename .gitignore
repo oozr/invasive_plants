@@ -44,6 +44,7 @@ instance/
 # raw data files (keep private by default)
 preprocessing_utils/data/*.csv
 preprocessing_utils/data/**/*.csv
-
+app/templates/token 
+scripts/test_regulated_plants_api.py
 # cached remote artifacts
 data_cache/
