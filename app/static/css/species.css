@@ -227,9 +227,14 @@
       height: auto;
    }
 
+   /* Explicit rows rather than a height on the tile itself: a tile taller than
+      its row overflows and the next row paints over its caption. */
+   .species-gallery-grid.is-featured {
+      grid-template-rows: 11rem 7rem 7rem;
+   }
+
    .species-gallery-grid.is-featured .species-photo:first-child {
       grid-column: span 2;
       grid-row: span 1;
-      height: 11rem;
    }
 }
