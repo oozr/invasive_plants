@@ -114,6 +114,111 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/(^|[\s\-\/,(])([a-z])/g, (_, prefix, letter) => `${prefix}${letter.toUpperCase()}`);
     }
 
+    /******************************
+     * PHOTO GALLERY (GBIF)
+     ******************************/
+    // Guards against a slow gallery response landing after the user has already
+    // moved on to a different species.
+    let galleryRequestToken = 0;
+
+    function openPhotoModal(photo, speciesName) {
+        const modalElement = document.getElementById('speciesPhotoModal');
+        if (!modalElement || typeof bootstrap === 'undefined') return;
+
+        document.getElementById('speciesPhotoModalLabel').textContent = speciesName || 'Photograph';
+
+        const image = document.getElementById('speciesPhotoModalImage');
+        image.src = photo.full_url;
+        image.alt = speciesName ? `Photograph of ${speciesName}` : 'Species photograph';
+
+        const credit = document.getElementById('speciesPhotoModalCredit');
+        credit.textContent = '';
+        credit.appendChild(document.createTextNode(`${photo.creator} — `));
+
+        const licenceLink = document.createElement('a');
+        licenceLink.href = photo.licence_url;
+        licenceLink.target = '_blank';
+        licenceLink.rel = 'noopener';
+        licenceLink.textContent = photo.licence;
+        credit.appendChild(licenceLink);
+
+        credit.appendChild(document.createTextNode(' — '));
+
+        const occurrenceLink = document.createElement('a');
+        occurrenceLink.href = photo.occurrence_url;
+        occurrenceLink.target = '_blank';
+        occurrenceLink.rel = 'noopener';
+        occurrenceLink.textContent = 'view occurrence on GBIF';
+        credit.appendChild(occurrenceLink);
+
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+    }
+
+    function buildPhotoTile(photo, speciesName) {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'species-photo';
+        tile.setAttribute('role', 'listitem');
+
+        const image = document.createElement('img');
+        image.src = photo.thumbnail_url;
+        image.alt = speciesName ? `Photograph of ${speciesName}` : 'Species photograph';
+        image.loading = 'lazy';
+        image.decoding = 'async';
+        // GBIF's image cache occasionally cannot resolve a source image; drop the
+        // tile rather than leaving a broken frame in the grid.
+        image.addEventListener('error', function () {
+            tile.remove();
+        });
+        tile.appendChild(image);
+
+        const caption = document.createElement('span');
+        caption.className = 'species-photo-caption';
+        caption.appendChild(document.createTextNode(`${photo.creator} `));
+
+        const licence = document.createElement('span');
+        licence.className = 'licence';
+        licence.textContent = photo.licence;
+        caption.appendChild(licence);
+        tile.appendChild(caption);
+
+        tile.addEventListener('click', function () {
+            openPhotoModal(photo, speciesName);
+        });
+
+        return tile;
+    }
+
+    function renderGallery(usageKey, speciesName) {
+        const gallery = document.getElementById('speciesGallery');
+        const grid = document.getElementById('speciesGalleryGrid');
+        if (!gallery || !grid) return;
+
+        gallery.classList.add('d-none');
+        grid.innerHTML = '';
+
+        if (!usageKey) return;
+
+        const token = ++galleryRequestToken;
+
+        fetch(`/species/api/photos/by-key/${encodeURIComponent(usageKey)}`)
+            .then(response => (response.ok ? response.json() : { photos: [] }))
+            .then(data => {
+                if (token !== galleryRequestToken) return;
+
+                const photos = Array.isArray(data.photos) ? data.photos : [];
+                if (photos.length === 0) return;
+
+                photos.forEach(photo => grid.appendChild(buildPhotoTile(photo, speciesName)));
+                grid.classList.toggle('is-featured', photos.length === 5);
+                gallery.classList.remove('d-none');
+            })
+            .catch(error => {
+                // A missing gallery is cosmetic; never let it surface as an error.
+                console.warn('Species photos unavailable:', error);
+            });
+    }
+
     function formatJurisdictionCount(count) {
         const number = Number(count || 0);
         return `${number.toLocaleString()} ${number === 1 ? 'jurisdiction' : 'jurisdictions'}`;
@@ -210,6 +315,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // GBIF link
         const gbifLink = document.getElementById('gbifLink');
         gbifLink.href = `https://www.gbif.org/species/${selectedWeed.usage_key}`;
+
+        // Photos are fetched independently so a slow or failing GBIF call never
+        // delays the regulation summary, which is the page's real payload.
+        renderGallery(selectedWeed.usage_key, selectedWeed.canonical_name);
 
         // Fetch regulation jurisdictions by stable species_id. GBIF is not unique.
         const speciesLookupId = selectedWeed.species_id || selectedWeed.id;

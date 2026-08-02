@@ -58,6 +58,19 @@ class Config:
    AUTH_ROR_ALLOWED_TYPES = os.getenv('AUTH_ROR_ALLOWED_TYPES', 'education,government,facility,healthcare,nonprofit')
    ROR_API_BASE_URL = os.getenv('ROR_API_BASE_URL', 'https://api.ror.org/v2/organizations')
    ROR_API_TIMEOUT_SECONDS = int(os.getenv('ROR_API_TIMEOUT_SECONDS', '4'))
+
+   # GBIF species photo gallery
+   GBIF_API_BASE_URL = os.getenv('GBIF_API_BASE_URL', 'https://api.gbif.org/v1')
+   GBIF_API_TIMEOUT_SECONDS = int(os.getenv('GBIF_API_TIMEOUT_SECONDS', '8'))
+   # 5 tiles fill the featured gallery layout exactly (one 2x2 + four 1x1).
+   GBIF_PHOTO_LIMIT = int(os.getenv('GBIF_PHOTO_LIMIT', '5'))
+   GBIF_PHOTO_CACHE_TTL_SECONDS = int(os.getenv('GBIF_PHOTO_CACHE_TTL_SECONDS', '86400'))
+   GBIF_PHOTOS_ENABLED = os.getenv('GBIF_PHOTOS_ENABLED', '1').strip().lower() in {
+      '1',
+      'true',
+      'yes',
+      'on',
+   }
    AUTH_DEV_SHOW_MAGIC_LINK = os.getenv('AUTH_DEV_SHOW_MAGIC_LINK', '0').strip().lower() in {
       '1',
       'true',

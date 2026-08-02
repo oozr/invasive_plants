@@ -12,6 +12,7 @@ from app.utils.state_database import StateDatabase
 from app.utils.species_database import SpeciesDatabase
 from app.utils.generate_blog import BlogGenerator
 from app.utils.email_sender import send_email
+from app.utils.gbif_media import fetch_species_photos
 from app.utils.release_metadata import build_release_metadata
 
 # Blueprints
@@ -334,6 +335,35 @@ def species_by_id(species_id: str):
     if not result:
         return jsonify({"error": "Species not found"}), 404
     return jsonify(result)
+
+
+@species.route("/api/photos/by-key/<int:usage_key>")
+@limiter.limit("240 per hour")
+def species_photos(usage_key: int):
+    """Photographs of a species, sourced from GBIF occurrence media.
+
+    Public on purpose: unlike regulation detail, these are third-party CC-licensed
+    images that carry no dataset value of ours. Keyed by GBIF usage key rather than
+    species_id because GBIF itself only knows the taxon key -- the small number of
+    hybrids that share a parent key will show the parent taxon's photos, which is
+    the right answer anyway.
+    """
+    if not current_app.config.get("GBIF_PHOTOS_ENABLED", True):
+        return jsonify({"photos": []})
+
+    photos = fetch_species_photos(
+        usage_key,
+        base_url=current_app.config.get("GBIF_API_BASE_URL"),
+        timeout_seconds=current_app.config.get("GBIF_API_TIMEOUT_SECONDS", 6),
+        limit=current_app.config.get("GBIF_PHOTO_LIMIT", 6),
+        cache_ttl_seconds=current_app.config.get("GBIF_PHOTO_CACHE_TTL_SECONDS", 86400),
+    )
+
+    response = jsonify({"photos": photos})
+    # Let the browser hold onto this too; the underlying images are already
+    # served from GBIF's CDN with long-lived caching.
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return response
 
 
 def _jurisdiction_count(regulations_by_group: dict) -> int:

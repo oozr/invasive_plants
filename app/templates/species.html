@@ -25,6 +25,18 @@
 <div class="row mt-4">
     <div class="col-12">
         <div id="results" class="results-container species-results d-none">
+            <section id="speciesGallery" class="species-gallery d-none" aria-labelledby="speciesGalleryHeading">
+                <div class="species-gallery-head">
+                    <h4 id="speciesGalleryHeading" class="species-card-title mb-0">Photographs</h4>
+                    <p class="species-gallery-source mb-0">
+                        Occurrence images via <a href="https://www.gbif.org/" target="_blank" rel="noopener">GBIF</a>
+                    </p>
+                </div>
+                <div id="speciesGalleryGrid" class="species-gallery-grid" role="list">
+                    <!-- Tiles inserted by species_search.js -->
+                </div>
+            </section>
+
             <div class="scientific-details">
                 <div class="species-detail-grid">
                     <section class="species-card">
@@ -52,6 +64,21 @@
                  data-researcher-login-url="{{ url_for('auth.signup', next=request.full_path if request.query_string else request.path) }}"
                  data-api-request-url="{{ url_for('about.index', subject='api_access') }}#contact">
                 <!-- States will be inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade species-photo-modal" id="speciesPhotoModal" tabindex="-1" aria-labelledby="speciesPhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="speciesPhotoModalLabel">Photograph</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="speciesPhotoModalImage" src="" alt="">
+                <p class="species-photo-credit" id="speciesPhotoModalCredit"></p>
             </div>
         </div>
     </div>
