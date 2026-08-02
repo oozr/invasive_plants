@@ -62,6 +62,16 @@ class Config:
    # GBIF species photo gallery
    GBIF_API_BASE_URL = os.getenv('GBIF_API_BASE_URL', 'https://api.gbif.org/v1')
    GBIF_API_TIMEOUT_SECONDS = int(os.getenv('GBIF_API_TIMEOUT_SECONDS', '8'))
+   # GBIF asks integrators to put a contact URL or email in the User-Agent so they
+   # can reach us about problem traffic rather than just blocking the app. Kept
+   # separate from CONTACT_EMAIL (the contact-form recipient) so the address is
+   # always present, even where mail is unconfigured.
+   GBIF_CONTACT_EMAIL = os.getenv('GBIF_CONTACT_EMAIL', 'lindley@menacon.com')
+   GBIF_API_USER_AGENT = os.getenv('GBIF_API_USER_AGENT') or (
+      f"regulated-plants-app/1.0 (+{BASE_URL}"
+      + (f"; mailto:{GBIF_CONTACT_EMAIL}" if GBIF_CONTACT_EMAIL else "")
+      + ")"
+   )
    # 5 tiles fill the featured gallery layout exactly (one 2x2 + four 1x1).
    GBIF_PHOTO_LIMIT = int(os.getenv('GBIF_PHOTO_LIMIT', '5'))
    GBIF_PHOTO_CACHE_TTL_SECONDS = int(os.getenv('GBIF_PHOTO_CACHE_TTL_SECONDS', '86400'))

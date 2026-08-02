@@ -88,6 +88,13 @@ Copy `.env.example` to `.env` (or export variables another way) and set:
 | `AUTH_ROR_ALLOWED_TYPES` | Comma-separated ROR organization types eligible for domain matching (default `education,government,facility,healthcare,nonprofit`) |
 | `ROR_API_BASE_URL` | ROR organizations API base URL (default `https://api.ror.org/v2/organizations`) |
 | `ROR_API_TIMEOUT_SECONDS` | Timeout for ROR API calls (default `4`) |
+| `GBIF_PHOTOS_ENABLED` | Show the GBIF photo gallery on the species page (`1`/`0`, default `1`) |
+| `GBIF_API_BASE_URL` | GBIF API base URL (default `https://api.gbif.org/v1`) |
+| `GBIF_API_TIMEOUT_SECONDS` | Timeout for GBIF API calls (default `8`) |
+| `GBIF_CONTACT_EMAIL` | Address GBIF can use to reach the maintainers (default `lindley@menacon.com`) |
+| `GBIF_API_USER_AGENT` | Full override of the contact string sent to GBIF. GBIF asks integrators to include a URL or email so they can get in touch about problem traffic. Defaults to `regulated-plants-app/1.0 (+BASE_URL; mailto:GBIF_CONTACT_EMAIL)` |
+| `GBIF_PHOTO_LIMIT` | Photos per species (default `5`, which fills the gallery layout exactly) |
+| `GBIF_PHOTO_CACHE_TTL_SECONDS` | In-process cache lifetime for photo lookups (default `86400`) |
 
 The app reads these via `Config` in `app/config.py`.
 

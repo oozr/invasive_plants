@@ -357,6 +357,7 @@ def species_photos(usage_key: int):
         timeout_seconds=current_app.config.get("GBIF_API_TIMEOUT_SECONDS", 6),
         limit=current_app.config.get("GBIF_PHOTO_LIMIT", 6),
         cache_ttl_seconds=current_app.config.get("GBIF_PHOTO_CACHE_TTL_SECONDS", 86400),
+        user_agent=current_app.config.get("GBIF_API_USER_AGENT"),
     )
 
     response = jsonify({"photos": photos})

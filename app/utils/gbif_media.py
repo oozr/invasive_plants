@@ -2,7 +2,8 @@
 
 The public surface is one function::
 
-    fetch_species_photos(usage_key, base_url=..., timeout_seconds=..., limit=...)
+    fetch_species_photos(usage_key, base_url=..., timeout_seconds=..., limit=...,
+                         cache_ttl_seconds=..., user_agent=...)
         -> list of {"thumbnail_url", "full_url", "creator", "licence", "licence_url",
                     "occurrence_url", "publisher"}
 
@@ -35,11 +36,18 @@ import json
 import re
 import threading
 import time
+from typing import NamedTuple
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 DEFAULT_BASE_URL = "https://api.gbif.org/v1"
+
+# GBIF asks integrators to identify themselves with a contact URL or email in the
+# User-Agent, so they can get in touch about problematic traffic instead of simply
+# blocking it. Callers should override this with a real address -- see
+# GBIF_API_USER_AGENT in app/config.py.
+DEFAULT_USER_AGENT = "regulated-plants-app/1.0 (+https://regulatedplants.unu.edu)"
 
 # Square crop for the grid tiles (2x a ~240px tile), letterboxed for the lightbox.
 THUMBNAIL_TRANSFORM = "480x480"
@@ -77,19 +85,27 @@ _PUBLIC_DOMAIN_LABELS = {
 # ----------------------------
 # HTTP
 # ----------------------------
-def _fetch_json(url: str, timeout_seconds: int) -> dict:
+class _Endpoint(NamedTuple):
+    """Where and how we talk to GBIF. Grouped so it threads as one argument."""
+
+    base_url: str
+    timeout_seconds: int
+    user_agent: str
+
+
+def _fetch_json(endpoint: _Endpoint, path: str) -> dict:
     request = Request(
-        url,
+        f"{endpoint.base_url}{path}",
         headers={
             "Accept": "application/json",
-            "User-Agent": "regulated-plants-app/1.0 (+https://regulatedplants.unu.edu)",
+            "User-Agent": endpoint.user_agent or DEFAULT_USER_AGENT,
         },
     )
-    with urlopen(request, timeout=max(1, int(timeout_seconds or 6))) as response:
+    with urlopen(request, timeout=max(1, int(endpoint.timeout_seconds or 8))) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
-def _resolve_accepted_key(usage_key: int, base_url: str, timeout_seconds: int) -> int:
+def _resolve_accepted_key(endpoint: _Endpoint, usage_key: int) -> int:
     """Follow a synonym key to the taxon GBIF currently accepts.
 
     GBIF's backbone periodically reclassifies a name as a synonym of another
@@ -110,7 +126,7 @@ def _resolve_accepted_key(usage_key: int, base_url: str, timeout_seconds: int) -
 
     resolved = int(usage_key)
     try:
-        record = _fetch_json(f"{base_url}/species/{int(usage_key)}", timeout_seconds)
+        record = _fetch_json(endpoint, f"/species/{int(usage_key)}")
         status = str(record.get("taxonomicStatus") or "").upper()
         accepted = record.get("acceptedKey")
         if accepted and status.endswith("SYNONYM"):
@@ -122,7 +138,7 @@ def _resolve_accepted_key(usage_key: int, base_url: str, timeout_seconds: int) -
     return resolved
 
 
-def _search_occurrences(usage_key: int, base_url: str, timeout_seconds: int, human_only: bool) -> list:
+def _search_occurrences(endpoint: _Endpoint, usage_key: int, human_only: bool) -> list:
     params = {
         "taxonKey": int(usage_key),
         "mediaType": "StillImage",
@@ -134,8 +150,7 @@ def _search_occurrences(usage_key: int, base_url: str, timeout_seconds: int, hum
         # to recognise a weed in a field.
         params["basisOfRecord"] = "HUMAN_OBSERVATION"
 
-    url = f"{base_url.rstrip('/')}/occurrence/search?{urlencode(params)}"
-    payload = _fetch_json(url, timeout_seconds)
+    payload = _fetch_json(endpoint, f"/occurrence/search?{urlencode(params)}")
     results = payload.get("results")
     return results if isinstance(results, list) else []
 
@@ -286,9 +301,10 @@ _cache = _PhotoCache()
 def fetch_species_photos(
     usage_key,
     base_url: str = DEFAULT_BASE_URL,
-    timeout_seconds: int = 6,
+    timeout_seconds: int = 8,
     limit: int = 6,
     cache_ttl_seconds: int = 86400,
+    user_agent: str = DEFAULT_USER_AGENT,
 ) -> list:
     """Return up to ``limit`` display-ready photographs for a GBIF taxon key.
 
@@ -309,19 +325,23 @@ def fetch_species_photos(
     if cached is not None:
         return cached
 
-    base_url = (base_url or DEFAULT_BASE_URL).rstrip("/")
-    search_key = _resolve_accepted_key(key, base_url, timeout_seconds)
+    endpoint = _Endpoint(
+        base_url=(base_url or DEFAULT_BASE_URL).rstrip("/"),
+        timeout_seconds=timeout_seconds,
+        user_agent=user_agent or DEFAULT_USER_AGENT,
+    )
+    search_key = _resolve_accepted_key(endpoint, key)
     seen_creators = set()
     photos = []
 
     for human_only in (True, False):
         try:
-            records = _search_occurrences(search_key, base_url, timeout_seconds, human_only)
+            records = _search_occurrences(endpoint, search_key, human_only)
         except (HTTPError, URLError, TimeoutError, OSError, ValueError):
             # Includes json.JSONDecodeError (a ValueError) and socket timeouts.
             records = []
 
-        photos.extend(_collect_photos(records, base_url, limit - len(photos), seen_creators))
+        photos.extend(_collect_photos(records, endpoint.base_url, limit - len(photos), seen_creators))
         if len(photos) >= _MIN_PHOTOS_BEFORE_FALLBACK:
             break
 
